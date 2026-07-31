@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>TIZIM — Ишлаб чиқариш бошқаруви · INNASOFT</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+<script defer src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="/static/css/style.css">
+<script defer src="/static/js/core/globals.js"></script>
+<script defer src="/static/js/core/auth.js"></script>
+<script defer src="/static/js/core/router.js"></script>
+<script defer src="/static/js/core/ui.js"></script>
+
+<script defer src="/static/js/pages/init.js"></script>
+<script defer src="/static/js/pages/dash.js"></script>
+<script defer src="/static/js/pages/orders.js"></script>
+<script defer src="/static/js/pages/wh.js"></script>
+<script defer src="/static/js/pages/calc.js"></script>
+<script defer src="/static/js/pages/crm.js"></script>
+<script defer src="/static/js/pages/mat.js"></script>
+<script defer src="/static/js/pages/zakup.js"></script>
+<script defer src="/static/js/pages/hr.js"></script>
+<script defer src="/static/js/pages/fin.js"></script>
+<script defer src="/static/js/pages/kassa.js"></script>
+<script defer src="/static/js/pages/exp.js"></script>
+<script defer src="/static/js/pages/settings.js"></script>
+<script defer src="/static/js/pages/help.js"></script>
+
+<script defer src="/static/js/app.js"></script>
+</head>
+<body>
+
+<!-- Kraft-karton SVG fon -->
+<svg class="paper-bg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1440 900" aria-hidden="true">
+  <defs>
+    <filter id="kraftTex" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" seed="9" stitchTiles="stitch" result="n"/>
+      <feDiffuseLighting in="n" lighting-color="#efe4cb" surfaceScale="1.6" diffuseConstant="1.04" result="l">
+        <feDistantLight azimuth="235" elevation="58"/>
+      </feDiffuseLighting>
+      <feColorMatrix in="l" type="saturate" values="0.8"/>
+    </filter>
+    <radialGradient id="warmth" cx="40%" cy="18%" r="95%">
+      <stop offset="0%" stop-color="#F8F0DD"/><stop offset="55%" stop-color="#ECDFC4"/><stop offset="100%" stop-color="#D4C49E"/>
+    </radialGradient>
+    <radialGradient id="lavTR" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#C2C6FF" stop-opacity="0.5"/><stop offset="100%" stop-color="#C2C6FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1440" height="900" fill="#ecdfc6" filter="url(#kraftTex)"/>
+  <rect width="1440" height="900" fill="url(#warmth)" style="mix-blend-mode:multiply" opacity="0.5"/>
+  <rect x="980" y="-260" width="700" height="700" fill="url(#lavTR)"/>
+  <rect x="-300" y="520" width="720" height="720" fill="url(#lavTR)" opacity=".6"/>
+  <!-- gofra qutilar illyustratsiyasi -->
+  <g transform="translate(1150 700)" opacity="0.38" stroke="#8a6a40" stroke-width="3" fill="#E3CFA3" stroke-linejoin="round">
+    <ellipse cx="10" cy="150" rx="230" ry="22" fill="#6b572f" stroke="none" opacity="0.12"/>
+    <path d="M-160 40 l90 -42 90 42 v78 l-90 42 -90 -42 z" fill="#E8D6AC"/>
+    <path d="M-160 40 l90 42 90 -42 M-70 82 v78" fill="none"/>
+    <path d="M-160 40 l38 -20 90 42 -38 20 z" fill="#F2E4C2"/>
+    <path d="M20 66 l80 -37 80 37 v70 l-80 37 -80 -37 z" fill="#DFC998"/>
+    <path d="M20 66 l80 37 80 -37 M100 103 v70" fill="none"/>
+    <g stroke-width="2" opacity=".7"><path d="M-150 96 q4 -5 8 0 t8 0 t8 0 t8 0" fill="none"/><path d="M30 118 q4 -5 8 0 t8 0 t8 0" fill="none"/></g>
+  </g>
+</svg>
+
+<!-- ============ LOGIN ============ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card glass">
+    <div class="logo-xl" id="loginLogo"></div>
+    <h1>TIZIM</h1>
+    <div class="kicker">Ишлаб чиқариш бошқаруви</div>
+    <div style="text-align:left">
+      <label class="fl">Логин</label>
+      <input class="fld" id="lg" placeholder="login" autocomplete="username"/>
+      <label class="fl">Пароль</label>
+      <input class="fld" id="pw" type="password" placeholder="••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn pri" style="width:100%;justify-content:center;margin-top:16px;padding:12px" onclick="doLogin()">Кириш</button>
+
+    <div class="muted" style="font-size:10.5px;margin-top:12px">© INNASOFT MChJ · v1.0 · 2026</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="app">
+  <aside class="side glass">
+    <div class="brand">
+      <div class="logo" id="brandLogo"></div>
+      <div><h1>TIZIM</h1><small>Бошқарув панели</small></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">© INNASOFT MChJ<br>TIZIM · v1.0</div>
+  </aside>
+  <div class="main">
+    <header class="topbar glass">
+      <div><div class="page-title" id="ptitle">—</div><div class="page-sub" id="psub"></div></div>
+      <div class="spacer"></div>
+      <select class="fld" id="firmSel" style="width:auto;padding:8px 12px;font-size:12px;font-weight:600;display:none"
+        onchange="setFirm(this.value)"></select>
+      <div class="userchip"><div class="av" id="uav">?</div><span id="uname">—</span><small id="urole"></small></div>
+      <button class="btn sm ghost" onclick="logout()" title="Chiqish">⎋</button>
+    </header>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+<nav class="bottom-nav glass" id="bottomNav"></nav>
+<div class="toasts" id="toasts"></div>
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()"><div class="modal glass" id="modalBox"></div></div>
+
+</body>
+</html>

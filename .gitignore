@@ -1,0 +1,42 @@
+# Bazalar — hech qachon repozitoriyaga tushmasin (mijoz ma'lumoti!)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Sirlar
+.env
+.env.*
+!.env.example
+
+# Zaxira va vaqtinchalik nusxalar
+*.bak
+*.bak_*
+*.oldin_*
+zaxira/
+backups/
+
+# Yuklangan fayllar (mijoz rasmlari)
+uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# OS / muharrir
+.DS_Store
+.vscode/
+.idea/
+
+# Loglar
+*.log
+remote_logs.txt
+
+# Mijozning maxfiy biznes ma'lumoti: yangi platformaga tegishli emas
+app/real_data.json
+real_data*.json
