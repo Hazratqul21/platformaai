@@ -20,6 +20,8 @@ from ..db import get_db
 from ..auth import get_user
 from .. import models as m
 from .. import services as s
+from .. import domain
+from ..domain import soha_oqi
 
 # Bazada lotin saqlanadi, hujjatda kirill chiqadi (ilova bilan bir xil)
 _KIR = {
@@ -100,7 +102,7 @@ def warehouse_xlsx(db: Session = Depends(get_db), user=Depends(get_user)):
     ws2.append(["Buyurtma", "Mijoz", "O'lcham", "Marka", "Soni", "Summa"])
     for o in db.query(m.Order).filter(m.Order.status == m.ST_OMBORDA).all():
         ws2.append([f"#{o.id}", o.client.company,
-                    f"{o.length_mm}x{o.width_mm}x{o.height_mm}", o.grade, o.qty, float(o.total)])
+                    domain.olcham_matni(o, "x"), soha_oqi(o, "grade"), o.qty, float(o.total)])
     style_header(ws2)
     return xlsx_response(wb, f"sklad_{date.today()}.xlsx")
 
@@ -140,7 +142,7 @@ def sverka_xlsx(client_id: int, db: Session = Depends(get_db), user=Depends(get_
         if d > 0:
             qism = f" ({d}/{o.qty})" if d < o.qty else ""
             rows.append(((o.delivered_at or o.created_at.date()), f"Буюртма #{o.id}{qism}",
-                         f"{d} дона {o.length_mm}×{o.width_mm}×{o.height_mm}",
+                         f"{d} дона {domain.olcham_matni(o)}",
                          float(Decimal(o.unit_price) * d), 0))
     for p in c.payments:
         rows.append((p.paid_at, f"Тўлов #{p.id}", kir_pay(p.method), 0, float(p.amount)))
@@ -246,8 +248,7 @@ def act_pdf(order_id: int, db: Session = Depends(get_db), user=Depends(get_user)
         ("Масъул шахс:", f"{c.contact or '—'} · {c.phone or '—'}"),
         ("Тўлов тури:", kir_pay(c.pay_type)),
         ("", ""),
-        ("Маҳсулот:", f"Гофра қути {o.length_mm}×{o.width_mm}×{o.height_mm} мм, "
-                      f"{o.layers}-қават, {o.grade}" + (f", {o.colors} рангли босма" if o.colors else "")),
+        ("Маҳсулот:", f"Гофра қути {domain.olcham_matni(o)} мм, {domain.tarkib_matni(o)}"),
         ("Миқдори:", f"{o.qty:,} дона".replace(",", " ")),
         ("Нархи (1 дона):", f"{float(o.unit_price):,.0f} сўм".replace(",", " ")),
         ("Жами сумма:", f"{float(o.total):,.0f} сўм".replace(",", " ")),
@@ -305,9 +306,10 @@ def _nakladnoy_data(db: Session, order_id: int):
     if not o:
         raise HTTPException(404, "Буюртма топилмади")
     c = o.client
-    product = (f"Картон қути {o.length_mm}×{o.width_mm}×{o.height_mm} мм, "
-               f"{o.layers}-қават, {o.grade}"
-               + (f", {o.colors} рангли босма" if o.colors else ""))
+    # DIQQAT: bu yerda "Картон қути", boshqa hujjatda "Гофра қути" — eskidan
+    # shunday. Ataylab birlashtirilmadi: foydalanuvchi ko'radigan matn
+    # refaktorda o'zgarib ketmasin. Sohaga ko'chirilganda hal qilinadi.
+    product = f"Картон қути {domain.olcham_matni(o)} мм, {domain.tarkib_matni(o)}"
     return o, c, product
 
 

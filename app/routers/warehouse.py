@@ -8,6 +8,8 @@ from ..db import get_db
 from ..auth import get_user, require_roles
 from .. import models as m
 from .. import services as s
+from .. import domain
+from ..domain import soha_oqi
 from .. import kassa_sync as ks
 
 router = APIRouter(prefix="/api/warehouse", tags=["Ombor"])
@@ -82,8 +84,8 @@ def finished_stock(db: Session = Depends(get_db), user=Depends(get_user)):
     rows = db.query(m.Order).filter(m.Order.status == m.ST_OMBORDA).all()
     return [{
         "order_id": o.id, "company": o.client.company,
-        "size": f"{o.length_mm}×{o.width_mm}×{o.height_mm}", "layers": o.layers,
-        "grade": o.grade, "qty": o.qty, "total": float(o.total),
+        "size": domain.olcham_matni(o), "layers": soha_oqi(o, "layers"),
+        "grade": soha_oqi(o, "grade"), "qty": o.qty, "total": float(o.total),
     } for o in rows]
 
 

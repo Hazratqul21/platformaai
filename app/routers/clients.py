@@ -7,6 +7,8 @@ from ..db import get_db
 from ..auth import get_user, require_roles
 from .. import models as m
 from .. import services as s
+from .. import domain
+from ..domain import soha_oqi
 
 router = APIRouter(prefix="/api/clients", tags=["CRM"])
 
@@ -108,9 +110,10 @@ def get_client(cid: int, db: Session = Depends(get_db), user=Depends(get_user)):
         raise HTTPException(404, "Мижоз топилмади")
     out = client_out(db, c)
     out["orders"] = [{
-        "id": o.id, "size": f"{o.length_mm}x{o.width_mm}x{o.height_mm}",
-        "product_name": o.product_name, "layers": o.layers, "grade": o.grade,
-        "colors": o.colors, "is_offset": o.is_offset, "qty": o.qty,
+        "id": o.id, "size": domain.olcham_matni(o, "x"),
+        "product_name": o.product_name, "layers": soha_oqi(o, "layers"),
+        "grade": soha_oqi(o, "grade"), "colors": soha_oqi(o, "colors"),
+        "is_offset": soha_oqi(o, "is_offset"), "qty": o.qty,
         "unit_price": float(o.unit_price), "total": float(o.total), "status": o.status,
         "created_at": o.created_at.isoformat(),
         "due_date": o.due_date.isoformat() if o.due_date else None,
@@ -147,14 +150,14 @@ def client_detail_ledger(cid: int, db: Session = Depends(get_db), user=Depends(g
         berilgan = o.delivered_qty or 0
         if berilgan <= 0:      # topshirilmagan mol qarzga kirmaydi
             continue
-        fmt = f"{o.length_mm}x{o.width_mm}x{o.height_mm}"
+        fmt = domain.olcham_matni(o, "x")
         qism = f" ({berilgan}/{o.qty})" if berilgan < o.qty else ""
         sana = o.delivered_at if o.delivered_at else o.created_at.date()
         mollar.append({
             "sana": sana.isoformat(),
             "nakladnoy": o.id,
             "mahsulot": (o.product_name or "") + qism,
-            "olchov": f"{o.tur or str(o.layers) + ' слой'} {fmt}",
+            "olchov": f"{domain.tur_matni(o)} {fmt}",
             "dona": berilgan,
             "narxi": float(o.unit_price),
             "jami": float(Decimal(o.unit_price) * berilgan),
@@ -176,8 +179,8 @@ def client_detail_ledger(cid: int, db: Session = Depends(get_db), user=Depends(g
             if qolgan > 0:
                 tayyor.append({
                     "id": o.id, "product_name": o.product_name,
-                    "size": f"{o.length_mm}x{o.width_mm}x{o.height_mm}",
-                    "tur": o.tur or f"{o.layers} слой",
+                    "size": domain.olcham_matni(o, "x"),
+                    "tur": domain.tur_matni(o),
                     "qolgan_qty": qolgan, "unit_price": float(o.unit_price),
                     "summa": float(Decimal(o.unit_price) * qolgan),
                     "status": o.status,

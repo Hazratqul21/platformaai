@@ -10,6 +10,8 @@ from decimal import Decimal
 
 from .db import SessionLocal
 from . import models as m
+from . import domain
+from .domain import soha_oqi
 
 log = logging.getLogger("gofra.bot")
 
@@ -37,8 +39,8 @@ def notify_order(order_id: int):
             ]])
             text = (
                 f"📦 Yangi smeta — Buyurtma #{o.id}\n\n"
-                f"O'lcham: {o.length_mm}×{o.width_mm}×{o.height_mm} mm\n"
-                f"Qavat: {o.layers} · Marka: {o.grade}\n"
+                f"O'lcham: {domain.olcham_matni(o)} mm\n"
+                f"Qavat: {soha_oqi(o, 'layers')} · Marka: {soha_oqi(o, 'grade')}\n"
                 f"Soni: {o.qty:,} dona\n"
                 f"Narx: {float(o.unit_price):,.0f} so'm/dona\n"
                 f"💰 Jami: {float(o.total):,.0f} so'm"
@@ -115,9 +117,9 @@ async def run_bot():
             if o.status in (m.ST_KUTISHDA, m.ST_MUZOKARA):
                 from . import services as s
                 brak = Decimal("1") + s.dset(db, "brak_percent") / 100
-                need = (Decimal(o.m2_per_box) * o.qty * brak).quantize(Decimal("0.0001"))
+                need = (soha_oqi(o, "m2_per_box") * o.qty * brak).quantize(Decimal("0.0001"))
                 try:
-                    s.fifo_writeoff(db, o.grade, need, order_id=o.id,
+                    s.fifo_writeoff(db, soha_oqi(o, "grade"), need, order_id=o.id,
                                     note=f"Bot orqali tasdiqlash (Buyurtma #{o.id})")
                 except ValueError as e:
                     db.add(m.AuditLog(who=o.client.company, action="Bot: xomashyo yetmadi",

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from . import models as m
 from . import services as s
 from .auth import hash_pw
-from .domain import soha_yoz
+from .domain import soha_yoz, soha_oqi
 
 
 def seed_catalogs(db: Session):
@@ -326,9 +326,9 @@ def seed(db: Session):
     for o in orders:
         if o.status in (m.ST_SEXDA, m.ST_OMBORDA, m.ST_YETKAZILDI):
             brak = Decimal("1.05")
-            need = (Decimal(o.m2_per_box) * o.qty * brak).quantize(Decimal("0.0001"))
+            need = (soha_oqi(o, "m2_per_box") * o.qty * brak).quantize(Decimal("0.0001"))
             try:
-                s.fifo_writeoff(db, o.grade, need, order_id=o.id,
+                s.fifo_writeoff(db, soha_oqi(o, "grade"), need, order_id=o.id,
                                 note=f"Buyurtma #{o.id} spisaniya")
             except ValueError:
                 pass
