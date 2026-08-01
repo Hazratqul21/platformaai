@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from . import models as m
 from . import services as s
 from .auth import hash_pw
+from .domain import soha_yoz
 
 
 def seed_catalogs(db: Session):
@@ -316,6 +317,10 @@ def seed(db: Session):
         db.add(o)
         orders.append(o)
     db.flush()
+    # 2-qadam: soha maydonlarini attributes ga ham yozamiz. flush'dan keyin —
+    # bu yerda `tur`/`is_offset` berilmagan, ular ustun standartidan keladi.
+    for o in orders:
+        soha_yoz(o)
 
     # --- spisaniya (sotilganlar uchun FIFO retrospektiv emas — soddalashtirib bugungi lotlardan) ---
     for o in orders:

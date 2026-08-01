@@ -57,3 +57,28 @@ def run_migrations(engine) -> list[str]:
     if not qoshildi:
         log.info("Migratsiya: baza allaqachon yangi — o'zgarish yo'q")
     return qoshildi
+
+
+def backfill_soha(db) -> int:
+    """Eski buyurtmalarning `attributes` ini ustunlardan to'ldiradi.
+
+    NEGA KERAK: 2-qadam faqat YANGI va TAHRIRLANGAN buyurtmalarni ikki
+    joyga yozadi. Undan oldin yaratilganlarda `attributes` bo'sh `{}` bo'lib
+    qoladi. 4-qadamda ustunlar o'chirilsa o'sha buyurtmalarning o'lchamlari
+    butunlay yo'qolardi — qaytarib bo'lmaydigan ma'lumot yo'qotish.
+
+    Idempotent: faqat BO'SH `attributes` to'ldiriladi. To'lgan yozuvga
+    tegilmaydi — aks holda 4-qadamdan keyin (ustunlar yo'q paytda) bu
+    funksiya to'g'ri ma'lumot ustiga bo'sh qiymat yozib yuborardi.
+    """
+    from . import models as m
+    from .domain import soha_yoz
+
+    orders = [o for o in db.query(m.Order).all() if not o.attributes]
+    for o in orders:
+        soha_yoz(o)
+    if orders:
+        db.commit()
+        log.info("Backfill: %d buyurtmaning soha maydonlari to'ldirildi",
+                 len(orders))
+    return len(orders)

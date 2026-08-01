@@ -8,6 +8,7 @@ from ..auth import get_user, require_roles
 from .. import models as m
 from .. import services as s
 from .. import kassa_sync as ks
+from ..domain import soha_yoz
 
 router = APIRouter(prefix="/api/orders", tags=["Buyurtmalar"])
 
@@ -175,6 +176,10 @@ def create_order(data: OrderIn, db: Session = Depends(get_db),
         payment_due_date=date.today() + timedelta(days=data.payment_due_days),
     )
     db.add(o)
+    # flush ustun standart qiymatlarini (tur, layers...) qo'yadi — soha_yoz
+    # ulardan o'qiydi, shuning uchun flush'dan KEYIN chaqirilishi shart.
+    db.flush()
+    soha_yoz(o)   # 2-qadam: ustunga ham, attributes ga ham
     db.add(m.AuditLog(who=user.name, action="Buyurtma yaratildi",
                       detail=f"{c.company} · {data.qty} dona · {float(total):,.0f} so'm"))
     db.commit()
@@ -246,6 +251,7 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
     o.unit_cost = res["unit_cost"]
     o.unit_price = Decimal(str(data.unit_price)) if data.unit_price else res["unit_price"]
     o.total = (o.unit_price * qty).quantize(Decimal("0.01"))
+    soha_yoz(o)   # 2-qadam: tahrirda ham ikkala joy yangilanadi
     if data.note is not None:
         o.note = data.note
     if data.due_days is not None:

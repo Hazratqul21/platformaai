@@ -15,7 +15,7 @@ load_dotenv()
 
 from .db import Base, engine, get_db, SessionLocal  # noqa: E402
 from . import auth as auth_mod  # noqa: E402
-from .migrate import run_migrations  # noqa: E402
+from .migrate import run_migrations, backfill_soha  # noqa: E402
 from .seed import seed  # noqa: E402
 from .bot import start_bot_bg  # noqa: E402
 from .routers import (clients, orders, warehouse, hr, finance, reports,  # noqa: E402
@@ -33,6 +33,7 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         seed(db)
+        backfill_soha(db)   # eski buyurtmalar attributes'siz qolmasin
     finally:
         db.close()
     start_bot_bg()
