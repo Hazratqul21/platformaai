@@ -8,7 +8,8 @@ from ..auth import get_user, require_roles
 from .. import models as m
 from .. import services as s
 from .. import kassa_sync as ks
-from ..domain import soha_yoz
+from .. import domain
+from ..domain import soha_yoz, soha_oqi
 
 router = APIRouter(prefix="/api/orders", tags=["Buyurtmalar"])
 
@@ -80,6 +81,7 @@ def make_quote(q: QuoteIn, db: Session = Depends(get_db), user=Depends(get_user)
 
 
 def order_out(o: m.Order) -> dict:
+    soha = domain.soha_hammasi(o)   # soha maydonlari — attributes dan
     delivered = o.delivered_qty or 0
     delivered_value = float(o.unit_price) * delivered
     paid_for_order = float(sum(Decimal(p.amount) for p in o.payments)) if o.payments else 0.0
@@ -90,9 +92,10 @@ def order_out(o: m.Order) -> dict:
     return {
         "id": o.id, "client_id": o.client_id, "company": o.client.company,
         "product_name": o.product_name,
-        "size": f"{o.length_mm}×{o.width_mm}×{o.height_mm}",
-        "length_mm": o.length_mm, "width_mm": o.width_mm, "height_mm": o.height_mm,
-        "tur": o.tur or f"{o.layers} слой",
+        "size": domain.olcham_matni(o),
+        "length_mm": soha["length_mm"], "width_mm": soha["width_mm"],
+        "height_mm": soha["height_mm"],
+        "tur": domain.tur_matni(o),
         # Asosiy rasm: eski o.photo maydonidagi fayl endi mavjud bo'lmasligi mumkin
         # (fayl o'chirilgan/ko'chirilgan). Shunda mavjud rasmlardan birinchisini
         # ko'rsatamiz — aks holda buzuq rasm belgisi va 404 chiqadi.
@@ -100,12 +103,17 @@ def order_out(o: m.Order) -> dict:
         "photo_url": f"/uploads/{asosiy_rasm}" if asosiy_rasm else None,
         "photos": [{"filename": p.filename, "url": f"/uploads/{p.filename}"} for p in o.photos]
                   or ([{"filename": asosiy_rasm, "url": f"/uploads/{asosiy_rasm}"}] if asosiy_rasm else []),
-        "layers": o.layers, "grade": o.grade, "colors": o.colors, "is_offset": o.is_offset, "qty": o.qty,
+        "layers": soha["layers"], "grade": soha["grade"], "colors": soha["colors"],
+        "is_offset": soha["is_offset"], "qty": o.qty,
+        # Soha maydonlari xom holda ham beriladi: kelajakda frontend har
+        # sohaga moslashishi uchun yuqoridagi qattiq kalitlar o'rniga shuni
+        # o'qiydi (3-bosqich, UI). Hozircha ikkalasi ham chiqadi.
+        "attributes": o.attributes or {},
         "delivered_qty": delivered, "qolgan_qty": o.qty - delivered,
         # topshirilgan mol qiymati vs shu buyurtmaga bog'langan to'lov
         "delivered_value": delivered_value, "paid_for_order": paid_for_order,
         "tolanmadi": delivered > 0 and paid_for_order + 1 < delivered_value,
-        "m2_per_box": float(o.m2_per_box), "unit_cost": float(o.unit_cost),
+        "m2_per_box": float(soha["m2_per_box"] or 0), "unit_cost": float(o.unit_cost),
         "unit_price": float(o.unit_price), "total": float(o.total),
         "margin": round((float(o.unit_price) / float(o.unit_cost) - 1) * 100, 1) if float(o.unit_cost) else 0,
         "prepaid_percent": o.prepaid_percent, "status": o.status, "note": o.note,
@@ -222,14 +230,14 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
         raise HTTPException(400, "Етказилган ёки бекор қилинган буюртмани таҳрирлаб бўлмайди")
 
     # o'lchov/tur/marka o'zgarsa — smetani qayta hisoblaymiz
-    tur = data.tur if data.tur is not None else (o.tur or f"{o.layers} слой")
+    tur = data.tur if data.tur is not None else domain.tur_matni(o)
     if data.tur is not None and tur not in m.ORDER_TURLARI:
         raise HTTPException(400, f"Буюртма тури нотўғри. Мумкин: {', '.join(m.ORDER_TURLARI)}")
-    L = data.length_mm if data.length_mm is not None else o.length_mm
-    W = data.width_mm if data.width_mm is not None else o.width_mm
-    H = data.height_mm if data.height_mm is not None else o.height_mm
-    grade = (data.grade if data.grade is not None else o.grade)
-    colors = data.colors if data.colors is not None else o.colors
+    L = data.length_mm if data.length_mm is not None else soha_oqi(o, "length_mm")
+    W = data.width_mm if data.width_mm is not None else soha_oqi(o, "width_mm")
+    H = data.height_mm if data.height_mm is not None else soha_oqi(o, "height_mm")
+    grade = (data.grade if data.grade is not None else soha_oqi(o, "grade"))
+    colors = data.colors if data.colors is not None else soha_oqi(o, "colors")
     qty = data.qty if data.qty is not None else o.qty
     if not (10 <= L <= 5000 and 10 <= W <= 5000 and 10 <= H <= 5000):
         raise HTTPException(400, "Ўлчамлар 10–5000 мм оралиғида бўлсин")
@@ -322,11 +330,11 @@ def check_stock(oid: int, db: Session = Depends(get_db), user=Depends(get_user))
         raise HTTPException(404, "Буюртма топилмади")
     
     brak = Decimal("1") + s.dset(db, "brak_percent") / 100
-    need_m2 = (Decimal(o.m2_per_box) * o.qty * brak).quantize(Decimal("0.0001"))
+    need_m2 = (soha_oqi(o, "m2_per_box") * o.qty * brak).quantize(Decimal("0.0001"))
     
     # fifo_writeoff simulyatsiyasi: har lotning o'z grammaji bilan m2->kg o'giriladi
     remaining_m2 = need_m2
-    lots = db.query(m.RawLot).filter(m.RawLot.grade == o.grade, m.RawLot.remaining_kg > 0).order_by(m.RawLot.received_at, m.RawLot.id).all()
+    lots = db.query(m.RawLot).filter(m.RawLot.grade == soha_oqi(o, "grade"), m.RawLot.remaining_kg > 0).order_by(m.RawLot.received_at, m.RawLot.id).all()
     
     missing_kg = Decimal("0")
     for lot in lots:
@@ -375,9 +383,9 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
     if status == m.ST_SEXDA:
         # ishlab chiqarishga berilganda xomashyo FIFO bo'yicha yechiladi (brak bilan)
         brak = Decimal("1") + s.dset(db, "brak_percent") / 100
-        need = (Decimal(o.m2_per_box) * o.qty * brak).quantize(Decimal("0.0001"))
+        need = (soha_oqi(o, "m2_per_box") * o.qty * brak).quantize(Decimal("0.0001"))
         try:
-            s.fifo_writeoff(db, o.grade, need, order_id=o.id,
+            s.fifo_writeoff(db, soha_oqi(o, "grade"), need, order_id=o.id,
                             note=f"Buyurtma #{o.id} spisaniya (5% brak bilan)")
         except ValueError as e:
             raise HTTPException(409, str(e))

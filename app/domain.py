@@ -118,3 +118,37 @@ def soha_oqi(order, kalit: str, standart=None):
 def soha_hammasi(order) -> dict:
     """Hamma soha maydonlari, Python turlarida. Hisobot/eksport uchun."""
     return {maydon.kalit: soha_oqi(order, maydon.kalit) for maydon in PROFIL}
+
+
+# ---------------------------------------------------------------------
+# Mahsulotni SO'Z bilan tasvirlash
+#
+# Bu ham soha bilimi: «300×200×150» karton uchun ma'noli, non zavodi uchun
+# esa yo'q — u «bug'doy noni, 600 g» deb yozadi. Shuning uchun yadro
+# (hisobot, chek, bot xabari, ombor ro'yxati) matnni O'ZI YIG'MAYDI,
+# shu funksiyalardan so'raydi.
+#
+# Ilgari `f"{o.length_mm}×{o.width_mm}×{o.height_mm}"` naqshi kod bo'ylab
+# 8 joyda takrorlangan edi — har biri kartonni bilishga majbur edi.
+# ---------------------------------------------------------------------
+
+def olcham_matni(order, ajratgich: str = "×") -> str:
+    """«300×200×150». Ajratgich turlicha: hisobotlarda × , eksportda x."""
+    o = soha_hammasi(order)
+    return ajratgich.join(
+        str(o[k] or 0) for k in ("length_mm", "width_mm", "height_mm"))
+
+
+def tur_matni(order) -> str:
+    """Buyurtma turi. Eski yozuvlarda `tur` bo'sh — qavatdan tiklanadi."""
+    o = soha_hammasi(order)
+    return o["tur"] or f"{o['layers']} слой"
+
+
+def tarkib_matni(order) -> str:
+    """«3-қават, K1, 2 рангли босма» — hujjat/chek uchun."""
+    o = soha_hammasi(order)
+    matn = f"{o['layers']}-қават, {o['grade']}"
+    if o["colors"]:
+        matn += f", {o['colors']} рангли босма"
+    return matn
