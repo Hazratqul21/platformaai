@@ -60,6 +60,60 @@ def run_migrations(engine) -> list[str]:
     return qoshildi
 
 
+def jadvalni_qayta_qur(engine, jadval: str, modeldan) -> bool:
+    """Jadvalni model ta'rifi bo'yicha QAYTA QURADI — ustun turini
+    o'zgartirish yoki ustun o'chirish uchun.
+
+    NEGA KERAK: SQLite da `ALTER TABLE ... ALTER COLUMN` yo'q.
+    `qty` ni butun sondan kasrga o'tkazish (2.5 m³ beton) yoki karton
+    ustunlarini o'chirish (1-bosqich 4-qadami) shusiz mumkin emas.
+
+    Ishlash tartibi (SQLite qo'llanmasidagi xavfsiz usul):
+      1. yangi nomdagi jadval model bo'yicha yaratiladi
+      2. IKKALA jadvalda ham bor ustunlar ko'chiriladi
+      3. eskisi o'chiriladi, yangisi nomlanadi
+    Hammasi BITTA tranzaksiyada — yarim yo'lda uzilsa hech narsa
+    o'zgarmaydi.
+
+    `True` qaytadi — qayta qurildi; `False` — kerak bo'lmadi.
+    """
+    insp = inspect(engine)
+    if jadval not in insp.get_table_names():
+        return False
+
+    bazadagi = [c["name"] for c in insp.get_columns(jadval)]
+    modeldagi = [c.name for c in modeldan.__table__.columns]
+    if bazadagi == modeldagi:
+        # Ustunlar to'plami bir xil. Turini bu yerda solishtirmaymiz:
+        # SQLite turlari erkin va noto'g'ri "farq bor" degan xulosa
+        # keraksiz qayta qurishga olib kelardi. Tur o'zgarganda
+        # chaqiruvchi `majbur=True` bilan chaqiradi.
+        return False
+
+    kochadi = [c for c in modeldagi if c in bazadagi]
+    vaqtinchalik = f"{jadval}__yangi"
+
+    with engine.begin() as conn:
+        conn.execute(text(f'DROP TABLE IF EXISTS "{vaqtinchalik}"'))
+        eski_nom = modeldan.__table__.name
+        try:
+            modeldan.__table__.name = vaqtinchalik
+            modeldan.__table__.create(conn)
+        finally:
+            modeldan.__table__.name = eski_nom
+        ustunlar = ", ".join(f'"{c}"' for c in kochadi)
+        conn.execute(text(f'INSERT INTO "{vaqtinchalik}" ({ustunlar}) '
+                          f'SELECT {ustunlar} FROM "{jadval}"'))
+        conn.execute(text(f'DROP TABLE "{jadval}"'))
+        conn.execute(text(f'ALTER TABLE "{vaqtinchalik}" RENAME TO "{jadval}"'))
+
+    tashlandi = [c for c in bazadagi if c not in modeldagi]
+    log.info("Jadval qayta qurildi: %s (%d ustun ko'chdi%s)", jadval,
+             len(kochadi),
+             f", tashlandi: {', '.join(tashlandi)}" if tashlandi else "")
+    return True
+
+
 def profillarni_yukla(db) -> int:
     """`app/profiles/*.json` shablonlarini bazaga ko'chiradi.
 

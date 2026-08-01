@@ -50,6 +50,12 @@
       "standart": "Qora"
     }
   ],
+  "olchov": {
+    "birlik": "juft",
+    "kasrli": false,
+    "min": "1",
+    "max": "1000000"
+  },
   "narx": {
     "usul": "qolda"
   },

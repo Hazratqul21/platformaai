@@ -36,7 +36,7 @@ class OrderIn(BaseModel):
     quyida `attributes` ga yig'iladi. Frontend ko'chgach olib tashlanadi.
     """
     client_id: int
-    qty: int = 1000
+    qty: float = 1000
     product_name: str = ""
     attributes: dict | None = None
     unit_price: float | None = None   # menejer qo'lda o'zgartirsa
@@ -66,14 +66,15 @@ def soha_qiymatlari(data) -> dict:
     return qiymatlar
 
 
-def tekshir_yoki_400(qiymatlar: dict, qty: int) -> dict:
-    """Tirajni (yadro) va soha maydonlarini (profil) tekshiradi."""
-    if not (1 <= qty <= 1_000_000):
-        raise HTTPException(400, "Тираж 1 дан 1 000 000 гача бўлсин")
+def tekshir_yoki_400(qiymatlar: dict, qty) -> tuple[dict, Decimal]:
+    """Miqdorni va soha maydonlarini profil qoidalari bo'yicha tekshiradi."""
+    miqdor, xato = domain.miqdor_tekshir(qty)
+    if xato:
+        raise HTTPException(400, xato)
     tayyor, xato = domain.tayyorla(qiymatlar)
     if xato:
         raise HTTPException(400, xato)
-    return tayyor
+    return tayyor, miqdor
 
 
 # 4-QADAMGACHA YASHAYDIGAN KO'PRIK.
@@ -127,7 +128,7 @@ def make_quote(q: QuoteIn, db: Session = Depends(get_db), user=Depends(get_user)
     if domain.profil().narx.get("usul") != "karton_formula":
         raise HTTPException(400, "Бу профилда смета калкулятори йўқ — "
                                  "нарх қўлда киритилади")
-    tayyor = tekshir_yoki_400(soha_qiymatlari(q), q.qty)
+    tayyor, miqdor = tekshir_yoki_400(soha_qiymatlari(q), q.qty)
     category = "Standart"
     credit = None
     if q.client_id:
@@ -135,7 +136,7 @@ def make_quote(q: QuoteIn, db: Session = Depends(get_db), user=Depends(get_user)
         if c:
             category = c.category
     res = s.quote(db, tayyor["length_mm"], tayyor["width_mm"], tayyor["height_mm"],
-                  tayyor["layers"], tayyor["grade"], tayyor["colors"], q.qty, category)
+                  tayyor["layers"], tayyor["grade"], tayyor["colors"], miqdor, category)
     if q.client_id:
         c = db.get(m.Client, q.client_id)
         if c:
@@ -149,8 +150,11 @@ def make_quote(q: QuoteIn, db: Session = Depends(get_db), user=Depends(get_user)
 
 def order_out(o: m.Order) -> dict:
     soha = domain.soha_hammasi(o)   # soha maydonlari — attributes dan
-    delivered = o.delivered_qty or 0
-    delivered_value = float(o.unit_price) * delivered
+    # Miqdorlar endi Decimal (kasrli bo'lishi mumkin) — pul hisobida
+    # float bilan ARALASHTIRILMAYDI, aks holda TypeError va aniqlik
+    # yo'qolishi. JSON ga chiqishda bir marta float qilinadi.
+    delivered = Decimal(str(o.delivered_qty or 0))
+    delivered_value = float(Decimal(str(o.unit_price)) * delivered)
     paid_for_order = float(sum(Decimal(p.amount) for p in o.payments)) if o.payments else 0.0
     # Asosiy rasm sifatida ko'rsatiladigan fayl (pastdagi izohga qarang)
     asosiy_rasm = o.photo or ""
@@ -177,12 +181,14 @@ def order_out(o: m.Order) -> dict:
                   or ([{"filename": asosiy_rasm, "url": f"/uploads/{asosiy_rasm}"}] if asosiy_rasm else []),
         "layers": soha.get("layers"), "grade": soha.get("grade"),
         "colors": soha.get("colors"), "is_offset": soha.get("is_offset"),
-        "qty": o.qty,
+        "qty": float(o.qty),
         # Soha maydonlari xom holda ham beriladi: kelajakda frontend har
         # sohaga moslashishi uchun yuqoridagi qattiq kalitlar o'rniga shuni
         # o'qiydi (3-bosqich, UI). Hozircha ikkalasi ham chiqadi.
         "attributes": o.attributes or {},
-        "delivered_qty": delivered, "qolgan_qty": o.qty - delivered,
+        "delivered_qty": float(delivered),
+        "qolgan_qty": float(Decimal(str(o.qty)) - delivered),
+        "qty_birlik": domain.profil().birlik,
         # topshirilgan mol qiymati vs shu buyurtmaga bog'langan to'lov
         "delivered_value": delivered_value, "paid_for_order": paid_for_order,
         "tolanmadi": delivered > 0 and paid_for_order + 1 < delivered_value,
@@ -237,20 +243,20 @@ def create_order(data: OrderIn, db: Session = Depends(get_db),
     if data.unit_price is not None and data.unit_price <= 0:
         raise HTTPException(400, "Нарх 0 дан катта бўлсин")
 
-    tayyor = tekshir_yoki_400(soha_qiymatlari(data), data.qty)
-    narx = narxla(db, tayyor, data.qty, c.category, data.unit_price)
+    tayyor, miqdor = tekshir_yoki_400(soha_qiymatlari(data), data.qty)
+    narx = narxla(db, tayyor, miqdor, c.category, data.unit_price)
     tayyor.update(narx["hisoblangan"])   # m2_per_box va h.k.
 
     unit_price = (Decimal(str(data.unit_price)) if data.unit_price
                   else narx["unit_price"])
-    total = (unit_price * data.qty).quantize(Decimal("0.01"))
+    total = (unit_price * miqdor).quantize(Decimal("0.01"))
     check = s.credit_check(db, c, total)
     if check["blocked"]:
         reason = "qora ro'yxatda" if check["blacklisted"] else "kredit limitidan oshadi"
         raise HTTPException(409, f"Buyurtma bloklandi: mijoz {reason}. Rahbar tasdig'i kerak.")
 
     o = m.Order(
-        client_id=c.id, qty=data.qty,
+        client_id=c.id, qty=miqdor,
         # Boshlang'ich maqom ustun standartidan EMAS, ish tartibidan:
         # sexda «Kutishda», savdoda «Yangi buyurtma», servisda «Qabul qilindi».
         status=domain.boshlangich_status(),
@@ -265,7 +271,7 @@ def create_order(data: OrderIn, db: Session = Depends(get_db),
     db.add(o)
     db.flush()
     db.add(m.AuditLog(who=user.name, action="Buyurtma yaratildi",
-                      detail=f"{c.company} · {data.qty} dona · {float(total):,.0f} so'm"))
+                      detail=f"{c.company} · {miqdor} {domain.profil().birlik} · {float(total):,.0f} so'm"))
     db.commit()
     # mijozga botdan smeta yuboriladi (bot yoqilgan va mijoz bog'langan bo'lsa)
     try:
@@ -282,7 +288,7 @@ class OrderEditIn(BaseModel):
     """Tahrir — yaratish kabi soha-neytral."""
     product_name: str | None = None
     attributes: dict | None = None
-    qty: int | None = None
+    qty: float | None = None
     unit_price: float | None = None
     note: str | None = None
     due_days: int | None = None
@@ -316,9 +322,9 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
     qiymatlar.update(soha_qiymatlari(data))
 
     qty = data.qty if data.qty is not None else o.qty
-    if qty < (o.delivered_qty or 0):
+    if Decimal(str(qty)) < Decimal(str(o.delivered_qty or 0)):
         raise HTTPException(400, f"Тираж топширилган миқдордан ({o.delivered_qty}) кам бўлмасин")
-    tayyor = tekshir_yoki_400(qiymatlar, qty)
+    tayyor, qty = tekshir_yoki_400(qiymatlar, qty)
     narx = narxla(db, tayyor, qty, o.client.category, data.unit_price)
     tayyor.update(narx["hisoblangan"])
 
@@ -347,7 +353,7 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
 
     ogoh = None
     if tugagan:
-        ogoh = (f"Тираж топширилган миқдорга ({o.delivered_qty:,} дона) тенглашди. "
+        ogoh = (f"Тираж топширилган миқдорга ({o.delivered_qty} {domain.profil().birlik}) тенглашди. "
                 f"Буюртмани ёпиш учун «Якунлаш» тугмасини босинг — шунда архивга ўтади."
                 ).replace(",", " ")
     elif domain.manosi(o.status) == "ishlab_chiqarish":
@@ -740,7 +746,7 @@ def deliver_to_client(oid: int, data: DeliverIn, db: Session = Depends(get_db),
     kech = kun != date.today()
     db.add(m.AuditLog(who=user.name, action="Mijozga topshirildi",
                       detail=f"Буюртма #{o.id} · {o.client.company} · {beriladi:,} дона"
-                             f"{' (тўлиқ)' if hammasi_berildi else f' (қолди {o.qty - o.delivered_qty:,})'}"
+                             f"{' (тўлиқ)' if hammasi_berildi else f' (қолди {o.qty - o.delivered_qty})'}"
                              f" · олинган пул: {data.paid_amount:,.0f}".replace(",", " ")
                              + (f" · берилган сана: {kun.strftime('%d.%m.%Y')} (кейин киритилди)" if kech else "")))
     db.commit()
@@ -779,7 +785,7 @@ def deliver_batch(data: TopshirIn, db: Session = Depends(get_db),
             raise HTTPException(400, f"№{o.id} буюртма тайёр эмас (ҳозир: {o.status})")
 
     client_id = orders[0].client_id
-    jami = sum(int(o.qty - (o.delivered_qty or 0)) for o in orders)
+    jami = sum(Decimal(str(o.qty)) - Decimal(str(o.delivered_qty or 0)) for o in orders)
     for o in orders:
         o.delivered_qty = o.qty
         o.status = domain.status_nomi("topshirildi")

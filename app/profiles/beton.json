@@ -46,6 +46,12 @@
       "standart": true
     }
   ],
+  "olchov": {
+    "birlik": "m³",
+    "kasrli": true,
+    "min": "0.001",
+    "max": "1000000"
+  },
   "narx": {
     "usul": "qolda"
   },

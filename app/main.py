@@ -15,7 +15,9 @@ load_dotenv()
 
 from .db import Base, engine, get_db, SessionLocal  # noqa: E402
 from . import auth as auth_mod  # noqa: E402
-from .migrate import run_migrations, backfill_soha, profillarni_yukla  # noqa: E402
+from .migrate import (run_migrations, backfill_soha,  # noqa: E402
+                      profillarni_yukla, jadvalni_qayta_qur)
+from . import models as m  # noqa: E402
 from . import domain  # noqa: E402
 from .seed import seed  # noqa: E402
 from .bot import start_bot_bg  # noqa: E402
@@ -31,6 +33,9 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(engine)   # yangi jadvallar
     run_migrations(engine)             # mavjud jadvallarga yangi ustunlar
+    # `orders.qty` butun sondan kasrga o'tdi (2.5 m³ beton) — SQLite da
+    # ustun turini o'zgartirish uchun jadval qayta quriladi.
+    jadvalni_qayta_qur(engine, "orders", m.Order)
     db = SessionLocal()
     try:
         # Profil seed'dan OLDIN yuklanadi: seed buyurtma yaratganda

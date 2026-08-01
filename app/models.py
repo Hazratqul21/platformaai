@@ -7,7 +7,8 @@ from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
-D = Numeric(18, 2)  # barcha pul summalari uchun DECIMAL — float ishlatilmaydi
+D = Numeric(18, 2)   # pul summalari — float ishlatilmaydi
+Q3 = Numeric(18, 3)  # miqdorlar (dona, kg, m³, metr — kasrli bo'lishi mumkin)
 
 # ---- Buyurtma statuslari (treker bosqichlari TZ 1.3) ----
 ST_KUTISHDA = "Kutishda"            # smeta yuborildi, mijoz javobi kutilmoqda
@@ -152,8 +153,11 @@ class Order(Base):
     # ---- YADRO: har biznesda bor ----------------------------------------
     # Mahsulot rasmi — sexda telefonda olinadi, keyin ko'rsatish uchun (fayl nomi)
     photo: Mapped[str] = mapped_column(String(200), default="")
-    qty: Mapped[int] = mapped_column(Integer)                 # tiraj (jami buyurtma)
-    delivered_qty: Mapped[int] = mapped_column(Integer, default=0)  # mijozga topshirilgan dona
+    # MIQDOR KASRLI. Karton «dona» bilan o'lchanadi, lekin beton m³,
+    # kabel metr, mato metr, go'sht kg bilan — 2.5 m³ beton butun songa
+    # sig'maydi. O'lchov birligi profilda (`olchov.birlik`).
+    qty: Mapped[Decimal] = mapped_column(Q3)                   # jami buyurtma
+    delivered_qty: Mapped[Decimal] = mapped_column(Q3, default=Decimal("0"))  # topshirilgan
     # Hisob-kitob (buyurtma paytida qotiriladi). Bular YADRO: qanday
     # o'lchangani soha ishi, lekin "1 dona qancha turadi" hamma biznesda bor.
     unit_cost: Mapped[Decimal] = mapped_column(D)             # 1 dona tannarx
@@ -320,7 +324,6 @@ class CustomRecord(Base):
 #  (hammasi admin tomonidan sozlanadi — qattiq kodlanmagan)
 # ============================================================
 
-Q3 = Numeric(18, 3)  # miqdorlar uchun (kg, dona, m² — kasrli)
 
 DEFAULT_UNITS = ["dona", "kg", "m²", "litr", "rulon", "paket", "list", "metr"]
 DEFAULT_POSITIONS = ["Stanokchi", "Yordamchi", "Kleychi", "Kashirovkachi",

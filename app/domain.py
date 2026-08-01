@@ -202,6 +202,13 @@ class Profil:
         # Yadro shunda spisaniyani o'tkazib yuboradi, buyurtma esa
         # oddiy ishlayveradi.
         self.xomashyo = tarif.get("xomashyo", {})
+        # Buyurtma MIQDORI qanday o'lchanadi. Karton «dona», beton «m³»,
+        # kabel «metr», go'sht «kg». `kasrli` — 2.5 m³ mumkinmi.
+        olchov = tarif.get("olchov", {})
+        self.birlik = olchov.get("birlik", "dona")
+        self.kasrli = bool(olchov.get("kasrli", False))
+        self.min_miqdor = Decimal(str(olchov.get("min", "0.001")))
+        self.max_miqdor = Decimal(str(olchov.get("max", "1000000")))
         # Qaysi ish tartibi bilan ishlaydi (app/modules/*.json)
         self.modul_kaliti = tarif.get("modul", ZAXIRA_MODUL)
         self.modul: Modul | None = None   # yuklanganda to'ldiriladi
@@ -368,6 +375,27 @@ def tayyorla(qiymatlar: dict) -> tuple[dict, str | None]:
     if xato:
         return q, xato
     return hosila_hisobla(q), None
+
+
+def miqdor_tekshir(qty) -> tuple[Decimal | None, str | None]:
+    """Buyurtma miqdorini profil qoidalari bo'yicha tekshiradi.
+
+    Ilgari bu `1 <= qty <= 1_000_000` deb kodda yozilgan edi va `qty`
+    BUTUN son edi — natijada «2.5 m³ beton» buyurtma qilib bo'lmasdi.
+    Endi birlik ham, kasrlilik ham, chegara ham profildan.
+    """
+    p = profil()
+    try:
+        miqdor = Decimal(str(qty))
+    except (ArithmeticError, ValueError, TypeError):
+        return None, "Miqdor noto'g'ri"
+    if not p.kasrli and miqdor != miqdor.to_integral_value():
+        return None, f"Miqdor butun son bo'lsin ({p.birlik})"
+    if miqdor < p.min_miqdor:
+        return None, f"Miqdor {p.min_miqdor} {p.birlik} dan kam bo'lmasin"
+    if miqdor > p.max_miqdor:
+        return None, f"Miqdor {p.max_miqdor} {p.birlik} dan ko'p bo'lmasin"
+    return miqdor, None
 
 
 def tekshir(qiymatlar: dict) -> str | None:
