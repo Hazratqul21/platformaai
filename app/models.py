@@ -3,9 +3,14 @@ from decimal import Decimal
 from sqlalchemy import (
     String, Integer, Numeric, Boolean, ForeignKey, Date, DateTime, Text, JSON
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
+
+# PostgreSQL da JSONB — indekslanadi, ichidan qidirish mumkin va tezroq.
+# SQLite da oddiy JSON. Bitta ta'rif ikkala bazada ham to'g'ri tushadi.
+JSONB_ = JSON().with_variant(JSONB, "postgresql")
 
 D = Numeric(18, 2)   # pul summalari — float ishlatilmaydi
 Q3 = Numeric(18, 3)  # miqdorlar (dona, kg, m³, metr — kasrli bo'lishi mumkin)
@@ -132,7 +137,7 @@ class Order(Base):
     # MutableDict: usiz `order.attributes["x"] = 1` deb o'zgartirilsa
     # SQLAlchemy buni SEZMAYDI va commit'da saqlanmaydi — jimgina yo'qoladi.
     attributes: Mapped[dict] = mapped_column(
-        MutableDict.as_mutable(JSON), default=dict, nullable=False)
+        MutableDict.as_mutable(JSONB_), default=dict, nullable=False)
 
     # ---- Quyidagi ustunlar SOHA QATLAMIGA (attributes) ko'chirilmoqda -----
     # 1-bosqich, 4-qadamda o'chiriladi. Yangi kod bularni O'QIMASIN —
@@ -414,7 +419,7 @@ class Material(Base):
     # da saqlanib, retsept m² so'rashi mumkin. Konversiyasiz har soha
     # o'z birligiga majbur bo'lardi.
     konversiya: Mapped[dict] = mapped_column(
-        MutableDict.as_mutable(JSON), default=dict, nullable=False)
+        MutableDict.as_mutable(JSONB_), default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

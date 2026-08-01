@@ -3,7 +3,8 @@ import json
 import urllib.parse
 import urllib.request
 
-BASE = "http://localhost:8000"
+import os
+BASE = os.getenv("BASE", "http://localhost:8000")
 FAILS = []
 
 

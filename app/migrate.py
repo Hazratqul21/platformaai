@@ -27,10 +27,31 @@ log = logging.getLogger("gofra.migrate")
 #
 # Default MAJBURIY: mavjud qatorlarga nima yozilishini aytadi. Aks holda
 # eski qatorlarda NULL qoladi va kod `dict` kutgan joyda NULL topadi.
+# Tur yozuvi ikkala bazaga ham to'g'ri kelishi kerak. Farqli joylari
+# `_ddl_tur()` da tarjima qilinadi (PostgreSQL da JSON o'rniga JSONB va
+# standart qiymatga aniq tur ko'rsatish shart: '{}'::jsonb).
 MIGRATSIYALAR: list[tuple[str, str, str]] = [
     # 1-bosqich, 1-qadam: Order ga soha qatlami maydoni
     ("orders", "attributes", "JSON NOT NULL DEFAULT '{}'"),
 ]
+
+
+def _postgres(engine) -> bool:
+    return engine.dialect.name == "postgresql"
+
+
+def _ddl_tur(engine, tur: str) -> str:
+    """Ustun turini bazaga mos yozuvga o'giradi.
+
+    PostgreSQL da:
+      JSON  -> JSONB  (indekslanadi, tezroq, taqqoslash mumkin)
+      '{}'  -> '{}'::jsonb  (aniq tur ko'rsatilmasa «column has type
+               jsonb but default expression has type text» xatosi)
+    SQLite da o'zgarishsiz — u turlarga erkin qaraydi.
+    """
+    if not _postgres(engine):
+        return tur
+    return tur.replace("JSON", "JSONB").replace("'{}'", "'{}'::jsonb")
 
 
 def run_migrations(engine) -> list[str]:
@@ -51,7 +72,8 @@ def run_migrations(engine) -> list[str]:
             ustunlar = {c["name"] for c in insp.get_columns(jadval)}
             if ustun in ustunlar:
                 continue
-            conn.execute(text(f"ALTER TABLE {jadval} ADD COLUMN {ustun} {tur}"))
+            conn.execute(text(f"ALTER TABLE {jadval} ADD COLUMN "
+                              f"{ustun} {_ddl_tur(engine, tur)}"))
             qoshildi.append(f"{jadval}.{ustun}")
             log.info("Migratsiya: %s.%s ustuni qo'shildi", jadval, ustun)
 
@@ -90,6 +112,23 @@ def jadvalni_qayta_qur(engine, jadval: str, modeldan) -> bool:
         # chaqiruvchi `majbur=True` bilan chaqiradi.
         return False
 
+    tashlanadi = [c for c in bazadagi if c not in modeldagi]
+
+    if _postgres(engine):
+        # PostgreSQL da jadvalni qayta qurish SHART EMAS — unda
+        # `ALTER TABLE ... DROP COLUMN` bor va u chet el kalitlari,
+        # indekslar, ketma-ketliklarni o'zi saqlaydi. Qayta qurish esa
+        # ularni yo'qotardi. Yangi ustunlarni `run_migrations` qo'shadi.
+        if not tashlanadi:
+            return False
+        with engine.begin() as conn:
+            for ustun in tashlanadi:
+                conn.execute(text(
+                    f'ALTER TABLE "{jadval}" DROP COLUMN "{ustun}"'))
+        log.info("Jadval tozalandi: %s (tashlandi: %s)",
+                 jadval, ", ".join(tashlanadi))
+        return True
+
     kochadi = [c for c in modeldagi if c in bazadagi]
     vaqtinchalik = f"{jadval}__yangi"
 
@@ -107,10 +146,9 @@ def jadvalni_qayta_qur(engine, jadval: str, modeldan) -> bool:
         conn.execute(text(f'DROP TABLE "{jadval}"'))
         conn.execute(text(f'ALTER TABLE "{vaqtinchalik}" RENAME TO "{jadval}"'))
 
-    tashlandi = [c for c in bazadagi if c not in modeldagi]
     log.info("Jadval qayta qurildi: %s (%d ustun ko'chdi%s)", jadval,
              len(kochadi),
-             f", tashlandi: {', '.join(tashlandi)}" if tashlandi else "")
+             f", tashlandi: {', '.join(tashlanadi)}" if tashlanadi else "")
     return True
 
 
