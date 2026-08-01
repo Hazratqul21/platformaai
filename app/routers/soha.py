@@ -116,10 +116,14 @@ def profil_qosh(data: ProfilIn, db: Session = Depends(get_db),
     tarif_json = json.dumps(data.tarif, ensure_ascii=False)
     if mavjud:
         mavjud.nom, mavjud.tarif_json = tekshirilgan.nom, tarif_json
+        # Belgilaymiz: bundan keyin dastur yangilanganda shablon buni
+        # ustidan yozmaydi — mijozning sozlamasi saqlanib qoladi.
+        mavjud.ozgartirilgan = True
         harakat = "Soha profili yangilandi"
     else:
         db.add(m.SohaProfil(kalit=tekshirilgan.kalit, nom=tekshirilgan.nom,
-                            tarif_json=tarif_json, faol=False))
+                            tarif_json=tarif_json, faol=False,
+                            ozgartirilgan=True))
         harakat = "Soha profili qo'shildi"
     db.add(m.AuditLog(who=user.name, action=harakat, detail=tekshirilgan.kalit))
     db.commit()

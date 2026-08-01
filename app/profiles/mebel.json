@@ -84,6 +84,26 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "{material}",
+      "birlik": "m²",
+      "miqdor": "(2*en_mm*boy_mm + 2*boy_mm*chuqurlik_mm + 2*en_mm*chuqurlik_mm) / 1000000 * qty",
+      "brak_foiz": 8,
+      "izoh": "Panel yuzasi, kesishdagi chiqindi 8%"
+    },
+    {
+      "material": "Kromka lentasi",
+      "birlik": "metr",
+      "miqdor": "(2*(en_mm+boy_mm) + 2*(en_mm+chuqurlik_mm)) / 1000 * qty",
+      "brak_foiz": 5
+    },
+    {
+      "material": "Furnitura komplekti",
+      "birlik": "komplekt",
+      "miqdor": "qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{en_mm}×{boy_mm}×{chuqurlik_mm}",
     "tarkib": "{material}, {rang}, {furnitura} furnitura",

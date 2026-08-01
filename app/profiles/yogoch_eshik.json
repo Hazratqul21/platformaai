@@ -77,6 +77,25 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "{yogoch}",
+      "birlik": "m²",
+      "miqdor": "en_mm * boy_mm / 1000000 * qty",
+      "brak_foiz": 10
+    },
+    {
+      "material": "Lak",
+      "birlik": "kg",
+      "miqdor": "en_mm * boy_mm / 1000000 * 2 * 0.12 * qty",
+      "izoh": "Ikki tomon, 120 g/m²"
+    },
+    {
+      "material": "Qulf",
+      "birlik": "dona",
+      "miqdor": "qulf * qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{en_mm}×{boy_mm}",
     "tarkib": "{yogoch}, {qoplama}",

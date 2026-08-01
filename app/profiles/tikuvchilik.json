@@ -61,6 +61,26 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Mato",
+      "birlik": "metr",
+      "miqdor": "1.4 * qty",
+      "brak_foiz": 7,
+      "izoh": "1 buyumga ~1.4 m, bichishda 7% chiqindi"
+    },
+    {
+      "material": "Ip",
+      "birlik": "dona",
+      "miqdor": "0.05 * qty",
+      "izoh": "1 g'altak ~20 buyumga"
+    },
+    {
+      "material": "Tugma",
+      "birlik": "dona",
+      "miqdor": "6 * qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{olcham}",
     "tarkib": "{model}, {mato}, {rang}",

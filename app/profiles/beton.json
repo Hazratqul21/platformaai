@@ -55,6 +55,29 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Sement",
+      "birlik": "kg",
+      "miqdor": "350 * qty",
+      "brak_foiz": 2
+    },
+    {
+      "material": "Qum",
+      "birlik": "m³",
+      "miqdor": "0.55 * qty"
+    },
+    {
+      "material": "Shag'al",
+      "birlik": "m³",
+      "miqdor": "0.8 * qty"
+    },
+    {
+      "material": "Suv",
+      "birlik": "litr",
+      "miqdor": "180 * qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{hajm_m3} m³",
     "tarkib": "Beton {marka}, qo'shimcha: {qoshimcha}",

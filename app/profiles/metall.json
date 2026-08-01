@@ -79,6 +79,25 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "{metall}",
+      "birlik": "kg",
+      "miqdor": "en_mm * boy_mm * qalinlik_mm / 1000000000 * 7850 * qty",
+      "brak_foiz": 10,
+      "izoh": "Po'lat 7850 kg/m³, kesishda 10% chiqindi"
+    },
+    {
+      "material": "Elektrod",
+      "birlik": "kg",
+      "miqdor": "(en_mm + boy_mm) / 1000 * 0.05 * qty"
+    },
+    {
+      "material": "Bo'yoq",
+      "birlik": "kg",
+      "miqdor": "2 * (en_mm * boy_mm) / 1000000 * 0.15 * qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{en_mm}×{boy_mm}",
     "tarkib": "{metall}, {qalinlik_mm} mm, {qoplama}",

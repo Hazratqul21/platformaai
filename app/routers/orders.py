@@ -425,6 +425,58 @@ def check_stock(oid: int, db: Session = Depends(get_db), user=Depends(get_user))
         
     return {"ok": missing_kg <= 0, "missing_kg": float(missing_kg)}
 
+@router.get("/{oid}/retsept")
+def order_retsept(oid: int, db: Session = Depends(get_db), user=Depends(get_user)):
+    """Buyurtmaga qancha material ketishi — ishlab chiqarishdan OLDIN.
+
+    Menejer «sexga berish» tugmasini bosishdan oldin nima yetishmasligini
+    ko'rishi kerak. Ilgari buni faqat status o'zgartirib, 409 xatosini
+    olib bilish mumkin edi.
+    """
+    o = db.get(m.Order, oid)
+    if not o:
+        raise HTTPException(404, "Буюртма топилмади")
+
+    qatorlar = domain.retsept_qatorlari(o)
+    if not qatorlar:
+        return {"order_id": oid, "retsept_bor": False, "qatorlar": [],
+                "yetadi": True}
+
+    natija = []
+    yetadi = True
+    for q in qatorlar:
+        mat = s.material_top(db, q["material"])
+        qator = {"material": q["material"], "birlik": q["birlik"],
+                 "kerak": float(q["miqdor"]), "xato": q.get("xato")}
+        if mat is None:
+            qator.update({"omborda": 0.0, "yetadi": False,
+                          "izoh": "ombor kartochkasi yo'q"})
+            yetadi = False
+        else:
+            try:
+                koef = s._konversiya(mat, q["birlik"])
+            except ValueError as e:
+                qator.update({"omborda": float(mat.stock_qty or 0),
+                              "yetadi": False, "izoh": str(e)})
+                yetadi = False
+                natija.append(qator)
+                continue
+            kerak_mat = Decimal(str(q["miqdor"])) * koef
+            bor = Decimal(str(mat.stock_qty or 0))
+            qator.update({
+                "material_birligi": mat.unit,
+                "kerak_material_birligida": float(kerak_mat),
+                "omborda": float(bor),
+                "yetadi": bor >= kerak_mat,
+            })
+            if bor < kerak_mat:
+                yetadi = False
+        natija.append(qator)
+
+    return {"order_id": oid, "retsept_bor": True, "qatorlar": natija,
+            "yetadi": yetadi}
+
+
 @router.post("/{oid}/status")
 def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depends(get_user)):
     o = db.get(m.Order, oid)

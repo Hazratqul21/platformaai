@@ -82,6 +82,30 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "PVX profil {profil}",
+      "birlik": "metr",
+      "miqdor": "2*(en_mm+boy_mm) / 1000 * qty",
+      "brak_foiz": 8
+    },
+    {
+      "material": "Shisha paket",
+      "birlik": "m²",
+      "miqdor": "en_mm * boy_mm / 1000000 * qty",
+      "brak_foiz": 5
+    },
+    {
+      "material": "Furnitura komplekti",
+      "birlik": "komplekt",
+      "miqdor": "qty"
+    },
+    {
+      "material": "Moskit to'r",
+      "birlik": "m²",
+      "miqdor": "moskitka * en_mm * boy_mm / 1000000 * qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{en_mm}×{boy_mm}",
     "tarkib": "{profil} profil, {kamera} kamera, {shisha_paket}",

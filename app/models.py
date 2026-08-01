@@ -339,6 +339,12 @@ class SohaProfil(Base):
     nom: Mapped[str] = mapped_column(String(120))
     tarif_json: Mapped[str] = mapped_column(Text)
     faol: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Foydalanuvchi (yoki AI agent) shu profilni TAHRIRLAGANMI.
+    # Tahrirlanmagan profil dastur yangilanganda shablondan yangilanadi —
+    # shunday qilib retsept/formula tuzatishlari mavjud mijozlarga ham
+    # yetib boradi. Tahrirlangani esa HECH QACHON ustidan yozilmaydi,
+    # aks holda mijozning sozlamasi jimgina yo'qolardi.
+    ozgartirilgan: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

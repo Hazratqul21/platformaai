@@ -44,6 +44,13 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "{nomi}",
+      "birlik": "dona",
+      "miqdor": "qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{birlik}",
     "tarkib": "{nomi}, {kategoriya}",

@@ -33,6 +33,8 @@ log = logging.getLogger("gofra.migrate")
 MIGRATSIYALAR: list[tuple[str, str, str]] = [
     # 1-bosqich, 1-qadam: Order ga soha qatlami maydoni
     ("orders", "attributes", "JSON NOT NULL DEFAULT '{}'"),
+    # Profil shablondan yangilanishi mumkinmi (foydalanuvchi tegmagan bo'lsa)
+    ("soha_profillar", "ozgartirilgan", "BOOLEAN NOT NULL DEFAULT FALSE"),
 ]
 
 
@@ -164,21 +166,35 @@ def profillarni_yukla(db) -> int:
     Bu Rustam akaning tizimi ko'chganda xulq o'zgarmasligi uchun.
     """
     from . import models as m
-    from .domain import shablonlar, ZAXIRA_KALIT
+    from .domain import shablonlar, retsept_ziddiyatlari, ZAXIRA_KALIT
 
-    bor = {p.kalit for p in db.query(m.SohaProfil).all()}
-    qoshildi = 0
+    # Retseptlar bir-biriga zid emasmi — ishga tushishda bilinsin.
+    # Aks holda xatoni faqat o'sha soha mijozi, ishlab chiqarish
+    # bosqichida yiqilgandan keyin bilib qolardi.
+    for ogoh in retsept_ziddiyatlari():
+        log.warning("Retsept ziddiyati: %s", ogoh)
+
+    bor = {p.kalit: p for p in db.query(m.SohaProfil).all()}
+    qoshildi = yangilandi = 0
     for kalit, tarif in shablonlar().items():
-        if kalit in bor:
-            continue
-        db.add(m.SohaProfil(kalit=kalit, nom=tarif.get("nom", kalit),
-                            tarif_json=json.dumps(tarif, ensure_ascii=False),
-                            faol=False))
-        qoshildi += 1
+        tarif_json = json.dumps(tarif, ensure_ascii=False)
+        mavjud = bor.get(kalit)
+        if mavjud is None:
+            db.add(m.SohaProfil(kalit=kalit, nom=tarif.get("nom", kalit),
+                                tarif_json=tarif_json, faol=False))
+            qoshildi += 1
+        elif not mavjud.ozgartirilgan and mavjud.tarif_json != tarif_json:
+            # Foydalanuvchi tegmagan profil — dastur yangilanganda
+            # shablondagi tuzatish (retsept, formula, chegara) unga ham
+            # yetib borishi kerak. Tahrirlanganiga TEGILMAYDI.
+            mavjud.nom = tarif.get("nom", kalit)
+            mavjud.tarif_json = tarif_json
+            yangilandi += 1
 
-    if qoshildi:
+    if qoshildi or yangilandi:
         db.commit()
-        log.info("Profil shabloni yuklandi: %d ta", qoshildi)
+        log.info("Profil shabloni: %d ta qo'shildi, %d ta yangilandi",
+                 qoshildi, yangilandi)
 
     if not db.query(m.SohaProfil).filter(m.SohaProfil.faol.is_(True)).first():
         zaxira = db.query(m.SohaProfil).filter(

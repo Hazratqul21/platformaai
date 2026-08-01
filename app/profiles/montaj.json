@@ -56,6 +56,15 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Qurilish materiali",
+      "birlik": "m²",
+      "miqdor": "material_bizdan * qty",
+      "brak_foiz": 8,
+      "izoh": "Material buyurtmachidan bo'lsa 0 chiqadi"
+    }
+  ],
   "matnlar": {
     "olcham": "{maydon_m2} m²",
     "tarkib": "{ish_turi}, obyekt: {obyekt}",

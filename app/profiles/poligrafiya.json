@@ -75,6 +75,21 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Qog'oz",
+      "birlik": "kg",
+      "miqdor": "qogoz_zichligi * 0.0625 / 1000 * qty",
+      "brak_foiz": 6,
+      "izoh": "A4 = 0.0625 m²; zichlik g/m² -> kg"
+    },
+    {
+      "material": "Bo'yoq",
+      "birlik": "kg",
+      "miqdor": "0.002 * qty",
+      "brak_foiz": 3
+    }
+  ],
   "matnlar": {
     "olcham": "{format}",
     "tarkib": "{qogoz_zichligi} g/m², {ranglilik}, laminatsiya {laminatsiya}",

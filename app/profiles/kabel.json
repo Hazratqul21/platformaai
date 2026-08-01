@@ -66,6 +66,21 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Mis",
+      "birlik": "kg",
+      "miqdor": "kesim_mm2 * tomir / 1000000 * 8960 * qty",
+      "brak_foiz": 3,
+      "izoh": "Mis 8960 kg/m³, qty metrda"
+    },
+    {
+      "material": "{izolyatsiya} izolyatsiya",
+      "birlik": "kg",
+      "miqdor": "kesim_mm2 * tomir / 1000000 * 1400 * 0.6 * qty",
+      "brak_foiz": 4
+    }
+  ],
   "matnlar": {
     "olcham": "{tomir}×{kesim_mm2}",
     "tarkib": "{marka} {olcham}, {izolyatsiya}",

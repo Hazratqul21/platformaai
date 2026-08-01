@@ -90,15 +90,19 @@ def profilni_sina(kalit, nom, token):
     # Aks holda «ishlab chiqarish» bosqichida xomashyo yetmay 409 chiqadi.
     # Bu testning o'z vazifasi: profil TALAB qilgan narsani ta'minlash.
     for qator in joriy.get("retsept") or []:
-        nom = qator["material"]
-        if "{" in nom:
+        # DIQQAT: bu yerda `nom`/`kalit` NOMLARI ISHLATILMAYDI — ular
+        # funksiya parametrlari (profil nomi va kaliti). Ilgari shu yerda
+        # qayta ishlatilib, natijada test oxirida profil o'rniga oxirgi
+        # material nomi chop etilardi.
+        mat_nom = qator["material"]
+        if "{" in mat_nom:
             # material nomi soha maydonidan olinadi (karton: "{grade}")
-            for kalit, qiymat in attrs.items():
-                nom = nom.replace("{" + kalit + "}", str(qiymat))
+            for md_kalit, qiymat in attrs.items():
+                mat_nom = mat_nom.replace("{" + md_kalit + "}", str(qiymat))
         s, d = call("POST", "/api/warehouse/material-lot",
-                    {"material": nom, "qty": 1_000_000, "price_per_unit": 1000,
+                    {"material": mat_nom, "qty": 1_000_000, "price_per_unit": 1000,
                      "unit": qator.get("birlik") or "dona"}, token)
-        tekshir(kalit_profil, f"ombor to'ldirish «{nom}»", s == 200, str(d)[:120])
+        tekshir(kalit_profil, f"ombor to'ldirish «{mat_nom}»", s == 200, str(d)[:120])
 
     s, c = call("POST", "/api/clients",
                 {"company": f"Sinov mijoz ({kalit})", "phone": "901234567"}, token)

@@ -59,6 +59,30 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "{material}",
+      "birlik": "dm²",
+      "miqdor": "16 * qty",
+      "brak_foiz": 12,
+      "izoh": "1 juftga ~16 dm² material, bichishda 12% chiqindi"
+    },
+    {
+      "material": "Tovon ({tovon})",
+      "birlik": "juft",
+      "miqdor": "qty"
+    },
+    {
+      "material": "Ip",
+      "birlik": "dona",
+      "miqdor": "0.1 * qty"
+    },
+    {
+      "material": "Yelim",
+      "birlik": "kg",
+      "miqdor": "0.03 * qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{olcham}-o'lcham",
     "tarkib": "{model}, {material}, {tovon} tovon, {rang}",

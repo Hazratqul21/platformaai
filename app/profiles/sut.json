@@ -67,6 +67,19 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Xom sut",
+      "birlik": "litr",
+      "miqdor": "hajm_ml / 1000 * qty",
+      "brak_foiz": 3
+    },
+    {
+      "material": "Qadoq",
+      "birlik": "dona",
+      "miqdor": "qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{hajm_ml} ml",
     "tarkib": "{mahsulot} {yoglilik}%, {qadoq}",

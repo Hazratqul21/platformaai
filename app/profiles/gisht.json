@@ -61,6 +61,21 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Gil",
+      "birlik": "kg",
+      "miqdor": "2.6 * qty",
+      "brak_foiz": 4,
+      "izoh": "1 dona g'isht ~2.6 kg gil"
+    },
+    {
+      "material": "Qum",
+      "birlik": "m³",
+      "miqdor": "0.0003 * qty",
+      "izoh": "1 dona g'ishtga ~0.3 litr qum (beton profili bilan bir xil birlik)"
+    }
+  ],
   "matnlar": {
     "olcham": "{olcham_mm}",
     "tarkib": "{marka}, {rang}, F{sovuqbardosh}",

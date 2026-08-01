@@ -71,6 +71,30 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "{gosht_turi} go'shti",
+      "birlik": "kg",
+      "miqdor": "0.75 * qty",
+      "brak_foiz": 6,
+      "izoh": "Tayyor mahsulotning 75% go'sht (qty kg da)"
+    },
+    {
+      "material": "Tuz",
+      "birlik": "kg",
+      "miqdor": "0.02 * qty"
+    },
+    {
+      "material": "Ziravor",
+      "birlik": "kg",
+      "miqdor": "0.008 * qty"
+    },
+    {
+      "material": "Qobiq",
+      "birlik": "metr",
+      "miqdor": "3 * qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{ogirlik_g} g",
     "tarkib": "{mahsulot}, {gosht_turi} go'shti, {qobiq} qobiq",

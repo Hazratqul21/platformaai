@@ -48,6 +48,13 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Ehtiyot qism",
+      "birlik": "komplekt",
+      "miqdor": "qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{brend}",
     "tarkib": "{texnika}, nosozlik: {nosozlik}",

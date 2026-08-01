@@ -250,6 +250,35 @@ def shablonlar() -> dict[str, dict]:
     return natija
 
 
+def retsept_ziddiyatlari(hamma: dict[str, dict] | None = None) -> list[str]:
+    """Profillar bir xil materialni TURLI BIRLIKDA so'rayaptimi — tekshiradi.
+
+    NEGA MUHIM: ombor bitta. «Qum» m³ da saqlansa, kg so'ragan profil
+    ishlab chiqarish bosqichida yiqiladi — va buni faqat o'sha soha
+    mijozi, ishlatib ko'rgandan keyin bilib qoladi.
+
+    Aynan shu xato beton (Qum m³) va g'isht (Qum kg) profillarida
+    bo'lgan. Endi ishga tushishda ogohlantiriladi.
+    """
+    hamma = hamma if hamma is not None else shablonlar()
+    birliklar: dict[str, dict[str, list[str]]] = {}
+    for kalit, tarif in hamma.items():
+        for qator in tarif.get("retsept", []) or []:
+            nom = (qator.get("material") or "").strip()
+            birlik = (qator.get("birlik") or "").strip()
+            if not nom or "{" in nom:
+                continue   # nomi maydondan keladi — oldindan bilib bo'lmaydi
+            birliklar.setdefault(nom.lower(), {}).setdefault(birlik, []).append(kalit)
+
+    ziddiyat = []
+    for nom, xarita in sorted(birliklar.items()):
+        if len(xarita) > 1:
+            tafsilot = "; ".join(
+                f"{b or '—'}: {', '.join(sorted(p))}" for b, p in sorted(xarita.items()))
+            ziddiyat.append(f"«{nom}» turli birlikda so'ralgan — {tafsilot}")
+    return ziddiyat
+
+
 ZAXIRA_KALIT = "karton"   # baza bo'sh bo'lsa ishlatiladigan profil
 
 _KESH: Profil | None = None

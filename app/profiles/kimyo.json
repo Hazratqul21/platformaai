@@ -68,6 +68,29 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Asosiy modda",
+      "birlik": "kg",
+      "miqdor": "hajm_ml / 1000 * 0.25 * qty",
+      "brak_foiz": 2
+    },
+    {
+      "material": "Suv",
+      "birlik": "litr",
+      "miqdor": "hajm_ml / 1000 * 0.75 * qty"
+    },
+    {
+      "material": "Qadoq",
+      "birlik": "dona",
+      "miqdor": "qty"
+    },
+    {
+      "material": "Yorliq",
+      "birlik": "dona",
+      "miqdor": "qty"
+    }
+  ],
   "matnlar": {
     "olcham": "{hajm_ml} ml",
     "tarkib": "{mahsulot}, {hid}, {qadoq}",
