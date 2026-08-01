@@ -1,8 +1,9 @@
 from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy import (
-    String, Integer, Numeric, Boolean, ForeignKey, Date, DateTime, Text
+    String, Integer, Numeric, Boolean, ForeignKey, Date, DateTime, Text, JSON
 )
+from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
@@ -120,22 +121,41 @@ class Order(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"))
     product_name: Mapped[str] = mapped_column(String(100), default="")
+
+    # ---- SOHA QATLAMI ----------------------------------------------------
+    # Har biznesning o'z o'lchov maydonlari shu yerda. Karton sexi uchun
+    # length_mm/grade/layers..., non zavodi uchun "non turi"/"og'irligi",
+    # mebel uchun "material"/"o'lcham" — YADRO ularning ma'nosini bilmaydi,
+    # shunchaki saqlaydi va ko'rsatadi.
+    #
+    # MutableDict: usiz `order.attributes["x"] = 1` deb o'zgartirilsa
+    # SQLAlchemy buni SEZMAYDI va commit'da saqlanmaydi — jimgina yo'qoladi.
+    attributes: Mapped[dict] = mapped_column(
+        MutableDict.as_mutable(JSON), default=dict, nullable=False)
+
+    # ---- Quyidagi ustunlar SOHA QATLAMIGA (attributes) ko'chirilmoqda -----
+    # 1-bosqich, 4-qadamda o'chiriladi. Yangi kod bularni O'QIMASIN —
+    # `attributes` dan foydalaning (app/domain.py).
     # Quti parametrlari (mm)
     length_mm: Mapped[int] = mapped_column(Integer)
     width_mm: Mapped[int] = mapped_column(Integer)
     height_mm: Mapped[int] = mapped_column(Integer)
     # Buyurtma turi: "3 слой" / "Самоклейка" / "Офсет" ... (ORDER_TURLARI)
     tur: Mapped[str] = mapped_column(String(30), default=TUR_DEFAULT)
-    # Mahsulot rasmi — sexda telefonda olinadi, keyin ko'rsatish uchun (fayl nomi)
-    photo: Mapped[str] = mapped_column(String(200), default="")
     layers: Mapped[int] = mapped_column(Integer, default=3)   # tur dan kelib chiqadi (1/2/3/5)
     grade: Mapped[str] = mapped_column(String(50), default="K1")
     colors: Mapped[int] = mapped_column(Integer, default=0)   # flekso bosma ranglar soni
     is_offset: Mapped[bool] = mapped_column(Boolean, default=False)  # eski maydon: tur=="Офсет"
+    m2_per_box: Mapped[Decimal] = mapped_column(Numeric(18, 4))  # karton o'lchovi
+    # ---- ko'chiriladigan ustunlar tugadi ---------------------------------
+
+    # ---- YADRO: har biznesda bor ----------------------------------------
+    # Mahsulot rasmi — sexda telefonda olinadi, keyin ko'rsatish uchun (fayl nomi)
+    photo: Mapped[str] = mapped_column(String(200), default="")
     qty: Mapped[int] = mapped_column(Integer)                 # tiraj (jami buyurtma)
     delivered_qty: Mapped[int] = mapped_column(Integer, default=0)  # mijozga topshirilgan dona
-    # Hisob-kitob (buyurtma paytida qotiriladi)
-    m2_per_box: Mapped[Decimal] = mapped_column(Numeric(18, 4))
+    # Hisob-kitob (buyurtma paytida qotiriladi). Bular YADRO: qanday
+    # o'lchangani soha ishi, lekin "1 dona qancha turadi" hamma biznesda bor.
     unit_cost: Mapped[Decimal] = mapped_column(D)             # 1 dona tannarx
     unit_price: Mapped[Decimal] = mapped_column(D)            # 1 dona sotuv narxi
     total: Mapped[Decimal] = mapped_column(D)

@@ -15,6 +15,7 @@ load_dotenv()
 
 from .db import Base, engine, get_db, SessionLocal  # noqa: E402
 from . import auth as auth_mod  # noqa: E402
+from .migrate import run_migrations  # noqa: E402
 from .seed import seed  # noqa: E402
 from .bot import start_bot_bg  # noqa: E402
 from .routers import (clients, orders, warehouse, hr, finance, reports,  # noqa: E402
@@ -27,7 +28,8 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(engine)   # yangi jadvallar
+    run_migrations(engine)             # mavjud jadvallarga yangi ustunlar
     db = SessionLocal()
     try:
         seed(db)
