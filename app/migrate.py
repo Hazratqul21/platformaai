@@ -16,6 +16,7 @@ Bu yerda faqat USTUN QO'SHISH bor. Ustun o'chirish / nom almashtirish
 ataylab qo'shilmagan: ular ma'lumot yo'qotadi va alohida, qo'lda yozilgan,
 zaxira bilan bajariladigan ish. (1-bosqich 4-qadami aynan shunday bo'ladi.)
 """
+import json
 import logging
 
 from sqlalchemy import inspect, text
@@ -56,6 +57,44 @@ def run_migrations(engine) -> list[str]:
 
     if not qoshildi:
         log.info("Migratsiya: baza allaqachon yangi — o'zgarish yo'q")
+    return qoshildi
+
+
+def profillarni_yukla(db) -> int:
+    """`app/profiles/*.json` shablonlarini bazaga ko'chiradi.
+
+    Shablon fayl — faqat BOSHLANG'ICH nusxa. Bazaga tushgach haqiqat
+    bazada bo'ladi: foydalanuvchi (yoki AI agent) profilni o'zgartirsa,
+    keyingi ishga tushishda fayl uni QAYTA YOZIB YUBORMASLIGI kerak.
+    Shuning uchun faqat YO'Q profil qo'shiladi, mavjudiga tegilmaydi.
+
+    Hech qaysi profil faol bo'lmasa — zaxira (karton) faollashtiriladi.
+    Bu Rustam akaning tizimi ko'chganda xulq o'zgarmasligi uchun.
+    """
+    from . import models as m
+    from .domain import shablonlar, ZAXIRA_KALIT
+
+    bor = {p.kalit for p in db.query(m.SohaProfil).all()}
+    qoshildi = 0
+    for kalit, tarif in shablonlar().items():
+        if kalit in bor:
+            continue
+        db.add(m.SohaProfil(kalit=kalit, nom=tarif.get("nom", kalit),
+                            tarif_json=json.dumps(tarif, ensure_ascii=False),
+                            faol=False))
+        qoshildi += 1
+
+    if qoshildi:
+        db.commit()
+        log.info("Profil shabloni yuklandi: %d ta", qoshildi)
+
+    if not db.query(m.SohaProfil).filter(m.SohaProfil.faol.is_(True)).first():
+        zaxira = db.query(m.SohaProfil).filter(
+            m.SohaProfil.kalit == ZAXIRA_KALIT).first()
+        if zaxira:
+            zaxira.faol = True
+            db.commit()
+            log.info("Faol profil belgilanmagan edi — '%s' yoqildi", ZAXIRA_KALIT)
     return qoshildi
 
 

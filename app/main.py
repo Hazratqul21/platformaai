@@ -15,11 +15,12 @@ load_dotenv()
 
 from .db import Base, engine, get_db, SessionLocal  # noqa: E402
 from . import auth as auth_mod  # noqa: E402
-from .migrate import run_migrations, backfill_soha  # noqa: E402
+from .migrate import run_migrations, backfill_soha, profillarni_yukla  # noqa: E402
+from . import domain  # noqa: E402
 from .seed import seed  # noqa: E402
 from .bot import start_bot_bg  # noqa: E402
 from .routers import (clients, orders, warehouse, hr, finance, reports,  # noqa: E402
-                      users, constructor, catalog, purchase, kassa)
+                      users, constructor, catalog, purchase, kassa, soha)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,6 +33,10 @@ async def lifespan(app: FastAPI):
     run_migrations(engine)             # mavjud jadvallarga yangi ustunlar
     db = SessionLocal()
     try:
+        # Profil seed'dan OLDIN yuklanadi: seed buyurtma yaratganda
+        # soha_yoz() allaqachon to'g'ri profilni bilishi kerak.
+        profillarni_yukla(db)
+        domain.qayta_yukla(db)
         seed(db)
         backfill_soha(db)   # eski buyurtmalar attributes'siz qolmasin
     finally:
@@ -98,7 +103,7 @@ def change_password(data: ChangePasswordIn, user=Depends(auth_mod.get_user),
 
 
 for r in (clients, orders, warehouse, hr, finance, reports, users,
-          constructor, catalog, purchase, kassa):
+          constructor, catalog, purchase, kassa, soha):
     app.include_router(r.router)
 
 

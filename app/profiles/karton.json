@@ -1,0 +1,121 @@
+{
+  "kalit": "karton",
+  "nom": "Karton / gofra qutilar",
+  "izoh": "Gofra-karton sexi: quti o'lchami, qavat, qog'oz markasi, flekso bosma.",
+  "maydonlar": [
+    {
+      "kalit": "length_mm",
+      "nom": "Uzunlik",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 10,
+      "max": 5000,
+      "majburiy": true
+    },
+    {
+      "kalit": "width_mm",
+      "nom": "Kenglik",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 10,
+      "max": 5000,
+      "majburiy": true
+    },
+    {
+      "kalit": "height_mm",
+      "nom": "Balandlik",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 10,
+      "max": 5000,
+      "majburiy": true
+    },
+    {
+      "kalit": "tur",
+      "nom": "Buyurtma turi",
+      "tur": "matn",
+      "standart": "3 слой",
+      "variantlar": [
+        "1 слой",
+        "2 слой",
+        "3 слой",
+        "5 слой",
+        "Самоклейка",
+        "Офсет",
+        "Картон Меловка"
+      ]
+    },
+    {
+      "kalit": "layers",
+      "nom": "Qavatlar",
+      "tur": "butun",
+      "variantlar": [
+        1,
+        2,
+        3,
+        5
+      ]
+    },
+    {
+      "kalit": "grade",
+      "nom": "Qog'oz markasi",
+      "tur": "matn",
+      "standart": "K1",
+      "majburiy": true
+    },
+    {
+      "kalit": "colors",
+      "nom": "Ranglar soni",
+      "tur": "butun",
+      "standart": 0,
+      "min": 0,
+      "max": 6
+    },
+    {
+      "kalit": "is_offset",
+      "nom": "Ofset",
+      "tur": "mantiq",
+      "standart": false
+    },
+    {
+      "kalit": "m2_per_box",
+      "nom": "1 dona m²",
+      "tur": "kasr",
+      "birlik": "m²",
+      "hisoblanadi": true
+    }
+  ],
+  "hosila": {
+    "layers": {
+      "manba": "tur",
+      "jadval": {
+        "1 слой": 1,
+        "2 слой": 2,
+        "3 слой": 3,
+        "5 слой": 5
+      },
+      "standart": 1
+    },
+    "is_offset": {
+      "manba": "tur",
+      "teng": "Офсет"
+    }
+  },
+  "narx": {
+    "usul": "karton_formula"
+  },
+  "xomashyo": {
+    "usul": "m2_marka",
+    "izoh": "Har dona uchun m2_per_box m² qog'oz, grade markasidan, FIFO bilan yechiladi",
+    "olcham_maydoni": "m2_per_box",
+    "marka_maydoni": "grade"
+  },
+  "matnlar": {
+    "olcham": "{length_mm}×{width_mm}×{height_mm}",
+    "tarkib": "{layers}-қават, {grade}, {colors} рангли босма",
+    "tur": "{tur}",
+    "tur_zaxira": "{layers} слой",
+    "hujjat_mahsulot": "Гофра қути {olcham} мм, {tarkib}",
+    "nakladnoy_mahsulot": "Картон қути {olcham} мм, {tarkib}"
+  }
+}

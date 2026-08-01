@@ -248,7 +248,7 @@ def act_pdf(order_id: int, db: Session = Depends(get_db), user=Depends(get_user)
         ("Масъул шахс:", f"{c.contact or '—'} · {c.phone or '—'}"),
         ("Тўлов тури:", kir_pay(c.pay_type)),
         ("", ""),
-        ("Маҳсулот:", f"Гофра қути {domain.olcham_matni(o)} мм, {domain.tarkib_matni(o)}"),
+        ("Маҳсулот:", domain.mahsulot_matni(o, "hujjat_mahsulot")),
         ("Миқдори:", f"{o.qty:,} дона".replace(",", " ")),
         ("Нархи (1 дона):", f"{float(o.unit_price):,.0f} сўм".replace(",", " ")),
         ("Жами сумма:", f"{float(o.total):,.0f} сўм".replace(",", " ")),
@@ -306,10 +306,10 @@ def _nakladnoy_data(db: Session, order_id: int):
     if not o:
         raise HTTPException(404, "Буюртма топилмади")
     c = o.client
-    # DIQQAT: bu yerda "Картон қути", boshqa hujjatda "Гофра қути" — eskidan
-    # shunday. Ataylab birlashtirilmadi: foydalanuvchi ko'radigan matn
-    # refaktorda o'zgarib ketmasin. Sohaga ko'chirilganda hal qilinadi.
-    product = f"Картон қути {domain.olcham_matni(o)} мм, {domain.tarkib_matni(o)}"
+    # Ikki hujjatda ikki xil atama ("Гофра қути" / "Картон қути") — eskidan
+    # shunday. Endi ikkalasi ham PROFILDA, shuning uchun karton uchun matn
+    # bayt-ma-bayt o'sha-o'sha, non uchun esa "Нон: ..." bo'ladi.
+    product = domain.mahsulot_matni(o, "nakladnoy_mahsulot")
     return o, c, product
 
 

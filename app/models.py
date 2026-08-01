@@ -273,6 +273,28 @@ class Setting(Base):
     value: Mapped[str] = mapped_column(String(200))
 
 
+class SohaProfil(Base):
+    """SOHA SHABLONI — biznes turining ta'rifi, KOD EMAS, MA'LUMOT.
+
+    Har bazada bir nechta profil turishi mumkin, lekin faqat BITTASI faol
+    (`faol=True`). Sabab: bitta baza = bitta mijoz = bitta biznes turi
+    (2-bosqich, «har mijozga alohida baza» qarori).
+
+    `tarif_json` — profilning to'liq ta'rifi:
+      {"kalit","nom","maydonlar":[...],"matnlar":{...}}
+    Tuzilishi va misollar: app/profiles/*.json
+
+    AI agent (4-bosqich) aynan shu yozuvni to'ldiradi — kod yozmaydi.
+    """
+    __tablename__ = "soha_profillar"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kalit: Mapped[str] = mapped_column(String(50), unique=True)
+    nom: Mapped[str] = mapped_column(String(120))
+    tarif_json: Mapped[str] = mapped_column(Text)
+    faol: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class CustomSection(Base):
     """Konstruktor: boshqaruvchi o'zi ochadigan qo'shimcha bo'lim.
     fields — JSON: [{"key":"f1","label":"Nomi","type":"matn|raqam|pul|sana"}]"""

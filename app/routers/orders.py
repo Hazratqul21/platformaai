@@ -28,47 +28,114 @@ class QuoteIn(BaseModel):
     client_id: int | None = None
 
 
-class OrderIn(QuoteIn):
+class OrderIn(BaseModel):
+    """Buyurtma yaratish — SOHA-NEYTRAL.
+
+    Soha maydonlari `attributes` da keladi. Eski (tekis) karton maydonlari
+    ham qabul qilinadi, chunki hozirgi frontend shunday yuboradi — ular
+    quyida `attributes` ga yig'iladi. Frontend ko'chgach olib tashlanadi.
+    """
     client_id: int
+    qty: int = 1000
+    product_name: str = ""
+    attributes: dict | None = None
     unit_price: float | None = None   # menejer qo'lda o'zgartirsa
     prepaid_percent: int = 0
     due_days: int = 15          # tayyorlash muddati
     payment_due_days: int = 15  # to'lov muddati
     note: str = ""
 
+    # --- eski karton maydonlari (frontend moslashuvi uchun) ---
+    length_mm: int | None = None
+    width_mm: int | None = None
+    height_mm: int | None = None
+    tur: str | None = None
+    layers: int | None = None
+    grade: str | None = None
+    colors: int | None = None
+    is_offset: bool | None = None
 
-def validate_box(q: QuoteIn):
-    if not (10 <= q.length_mm <= 5000 and 10 <= q.width_mm <= 5000 and 10 <= q.height_mm <= 5000):
-        raise HTTPException(400, "Ўлчамлар 10–5000 мм оралиғида бўлсин")
-    if not (1 <= q.qty <= 1_000_000):
+
+def soha_qiymatlari(data) -> dict:
+    """So'rovdan soha maydonlarini yig'adi: `attributes` + tekis maydonlar."""
+    qiymatlar = dict(getattr(data, "attributes", None) or {})
+    for kalit in domain.profil().kalitlar:
+        qiymat = getattr(data, kalit, None)
+        if qiymat is not None and kalit not in qiymatlar:
+            qiymatlar[kalit] = qiymat
+    return qiymatlar
+
+
+def tekshir_yoki_400(qiymatlar: dict, qty: int) -> dict:
+    """Tirajni (yadro) va soha maydonlarini (profil) tekshiradi."""
+    if not (1 <= qty <= 1_000_000):
         raise HTTPException(400, "Тираж 1 дан 1 000 000 гача бўлсин")
-    if q.tur not in m.ORDER_TURLARI:
-        raise HTTPException(400, f"Буюртма тури нотўғри. Мумкин: {', '.join(m.ORDER_TURLARI)}")
-    if q.layers not in (1, 2, 3, 5):
-        raise HTTPException(400, "Қават 1, 2, 3 ёки 5 бўлади")
-    if not (q.grade or "").strip():
-        raise HTTPException(400, "Қоғоз маркаси бўш бўлмасин")
-    if not (0 <= q.colors <= 6):
-        raise HTTPException(400, "Ранглар сони 0–6 оралиғида")
+    tayyor, xato = domain.tayyorla(qiymatlar)
+    if xato:
+        raise HTTPException(400, xato)
+    return tayyor
 
 
-def tur_layers(tur: str) -> int:
-    """Qavat soni turdan kelib chiqadi: gofra bo'lmagan materiallar bir qatlamli."""
-    return m.TUR_LAYERS.get(tur, 1)
+# 4-QADAMGACHA YASHAYDIGAN KO'PRIK.
+# Bu ustunlarni endi HECH KIM O'QIMAYDI (3-qadam), lekin bazada hamon
+# NOT NULL turibdi, shuning uchun to'ldirilmasa INSERT yiqiladi.
+# Karton bo'lmagan profilda bu kalitlar umuman bo'lmaydi — nolga
+# to'ldiriladi. 4-qadamda ustunlar bilan birga bu funksiya ham o'chadi.
+ESKI_USTUNLAR = ("length_mm", "width_mm", "height_mm", "tur", "layers",
+                 "grade", "colors", "is_offset", "m2_per_box")
+ESKI_ZAXIRA = {"length_mm": 0, "width_mm": 0, "height_mm": 0,
+               "m2_per_box": Decimal("0")}
+
+
+def eski_ustunlarga_yoz(o, qiymatlar: dict) -> None:
+    for kalit in ESKI_USTUNLAR:
+        qiymat = qiymatlar.get(kalit, ESKI_ZAXIRA.get(kalit))
+        if qiymat is not None:
+            setattr(o, kalit, qiymat)
+
+
+def narxla(db, qiymatlar: dict, qty: int, category: str,
+           qolda_narx: float | None) -> dict:
+    """Tannarx va narxni profil belgilagan usul bilan hisoblaydi.
+
+    "karton_formula" — hozirgi m²/FIFO/ustama hisobi (o'zgarmagan).
+    "qolda"          — menejer narxni o'zi kiritadi; tizim formulani
+                       bilmaydi. Har qanday yangi soha shu bilan darrov
+                       ishlay boshlaydi, keyin o'z formulasi qo'shiladi.
+    """
+    usul = domain.profil().narx.get("usul", "qolda")
+    if usul == "karton_formula":
+        res = s.quote(db, qiymatlar["length_mm"], qiymatlar["width_mm"],
+                      qiymatlar["height_mm"], qiymatlar["layers"],
+                      qiymatlar["grade"], qiymatlar["colors"], qty, category)
+        return {"unit_cost": res["unit_cost"], "unit_price": res["unit_price"],
+                "hisoblangan": {"m2_per_box": res["m2_per_box"]}, "xom": res}
+    if qolda_narx is None:
+        raise HTTPException(400, "Нарх киритилсин (профилда формула йўқ)")
+    return {"unit_cost": Decimal("0"), "unit_price": Decimal(str(qolda_narx)),
+            "hisoblangan": {}, "xom": None}
 
 
 @router.post("/quote")
 def make_quote(q: QuoteIn, db: Session = Depends(get_db), user=Depends(get_user)):
-    """Smeta kalkulyatori. Menejer ekrani: tannarx + marja ham qaytariladi."""
-    validate_box(q)
+    """Smeta kalkulyatori — KARTONGA XOS (m² × qog'oz narxi × ustama).
+
+    Boshqa profilda bu hisob ma'nosiz, shuning uchun rad etiladi: non
+    zavodi narxni qo'lda kiritadi (`narx.usul = "qolda"`). Har sohaning
+    o'z kalkulyatori bo'lishi — keyingi ish.
+    """
+    if domain.profil().narx.get("usul") != "karton_formula":
+        raise HTTPException(400, "Бу профилда смета калкулятори йўқ — "
+                                 "нарх қўлда киритилади")
+    tayyor = tekshir_yoki_400(soha_qiymatlari(q), q.qty)
     category = "Standart"
     credit = None
     if q.client_id:
         c = db.get(m.Client, q.client_id)
         if c:
             category = c.category
-    res = s.quote(db, q.length_mm, q.width_mm, q.height_mm, tur_layers(q.tur), q.grade,
-                  q.colors, q.qty, category)
+    res = s.quote(db, tayyor["length_mm"], tayyor["width_mm"], tayyor["height_mm"],
+                  tayyor["layers"], tayyor["grade"], tayyor["colors"], q.qty, category)
     if q.client_id:
         c = db.get(m.Client, q.client_id)
         if c:
@@ -93,9 +160,14 @@ def order_out(o: m.Order) -> dict:
         "id": o.id, "client_id": o.client_id, "company": o.client.company,
         "product_name": o.product_name,
         "size": domain.olcham_matni(o),
-        "length_mm": soha["length_mm"], "width_mm": soha["width_mm"],
-        "height_mm": soha["height_mm"],
+        # DIQQAT: quyidagi tekis kalitlar KARTONGA XOS. Ular faqat hozirgi
+        # (karton uchun yozilgan) frontend uchun turibdi va profilda bunday
+        # maydon bo'lmasa `None` bo'ladi — shuning uchun `.get()`.
+        # Sohaga bog'liq bo'lmagan yagona to'g'ri manba — `attributes`.
+        "length_mm": soha.get("length_mm"), "width_mm": soha.get("width_mm"),
+        "height_mm": soha.get("height_mm"),
         "tur": domain.tur_matni(o),
+        "tarkib": domain.tarkib_matni(o),
         # Asosiy rasm: eski o.photo maydonidagi fayl endi mavjud bo'lmasligi mumkin
         # (fayl o'chirilgan/ko'chirilgan). Shunda mavjud rasmlardan birinchisini
         # ko'rsatamiz — aks holda buzuq rasm belgisi va 404 chiqadi.
@@ -103,8 +175,9 @@ def order_out(o: m.Order) -> dict:
         "photo_url": f"/uploads/{asosiy_rasm}" if asosiy_rasm else None,
         "photos": [{"filename": p.filename, "url": f"/uploads/{p.filename}"} for p in o.photos]
                   or ([{"filename": asosiy_rasm, "url": f"/uploads/{asosiy_rasm}"}] if asosiy_rasm else []),
-        "layers": soha["layers"], "grade": soha["grade"], "colors": soha["colors"],
-        "is_offset": soha["is_offset"], "qty": o.qty,
+        "layers": soha.get("layers"), "grade": soha.get("grade"),
+        "colors": soha.get("colors"), "is_offset": soha.get("is_offset"),
+        "qty": o.qty,
         # Soha maydonlari xom holda ham beriladi: kelajakda frontend har
         # sohaga moslashishi uchun yuqoridagi qattiq kalitlar o'rniga shuni
         # o'qiydi (3-bosqich, UI). Hozircha ikkalasi ham chiqadi.
@@ -113,7 +186,7 @@ def order_out(o: m.Order) -> dict:
         # topshirilgan mol qiymati vs shu buyurtmaga bog'langan to'lov
         "delivered_value": delivered_value, "paid_for_order": paid_for_order,
         "tolanmadi": delivered > 0 and paid_for_order + 1 < delivered_value,
-        "m2_per_box": float(soha["m2_per_box"] or 0), "unit_cost": float(o.unit_cost),
+        "m2_per_box": float(soha.get("m2_per_box") or 0), "unit_cost": float(o.unit_cost),
         "unit_price": float(o.unit_price), "total": float(o.total),
         "margin": round((float(o.unit_price) / float(o.unit_cost) - 1) * 100, 1) if float(o.unit_cost) else 0,
         "prepaid_percent": o.prepaid_percent, "status": o.status, "note": o.note,
@@ -157,37 +230,36 @@ def list_orders(status: str | None = None, firm: str | None = None,
 @router.post("")
 def create_order(data: OrderIn, db: Session = Depends(get_db),
                  user=Depends(require_roles("Menejer"))):
-    validate_box(data)
     c = db.get(m.Client, data.client_id)
     if not c:
         raise HTTPException(404, "Мижоз топилмади")
     if data.unit_price is not None and data.unit_price <= 0:
         raise HTTPException(400, "Нарх 0 дан катта бўлсин")
-    layers = tur_layers(data.tur)
-    res = s.quote(db, data.length_mm, data.width_mm, data.height_mm, layers,
-                  data.grade, data.colors, data.qty, c.category)
-    unit_price = Decimal(str(data.unit_price)) if data.unit_price else res["unit_price"]
+
+    tayyor = tekshir_yoki_400(soha_qiymatlari(data), data.qty)
+    narx = narxla(db, tayyor, data.qty, c.category, data.unit_price)
+    tayyor.update(narx["hisoblangan"])   # m2_per_box va h.k.
+
+    unit_price = (Decimal(str(data.unit_price)) if data.unit_price
+                  else narx["unit_price"])
     total = (unit_price * data.qty).quantize(Decimal("0.01"))
     check = s.credit_check(db, c, total)
     if check["blocked"]:
         reason = "qora ro'yxatda" if check["blacklisted"] else "kredit limitidan oshadi"
         raise HTTPException(409, f"Buyurtma bloklandi: mijoz {reason}. Rahbar tasdig'i kerak.")
+
     o = m.Order(
-        client_id=c.id, length_mm=data.length_mm, width_mm=data.width_mm,
-        height_mm=data.height_mm, tur=data.tur, layers=layers, grade=data.grade,
-        colors=data.colors, is_offset=(data.tur == "Офсет"), qty=data.qty,
-        m2_per_box=res["m2_per_box"],
-        unit_cost=res["unit_cost"], unit_price=unit_price, total=total,
+        client_id=c.id, qty=data.qty,
+        unit_cost=narx["unit_cost"], unit_price=unit_price, total=total,
         prepaid_percent=data.prepaid_percent, note=data.note,
         product_name=data.product_name,
         due_date=date.today() + timedelta(days=data.due_days),
         payment_due_date=date.today() + timedelta(days=data.payment_due_days),
     )
+    soha_yoz(o, tayyor)          # soha maydonlari -> attributes
+    eski_ustunlarga_yoz(o, tayyor)   # 4-qadamgacha ustunlar ham to'ldiriladi
     db.add(o)
-    # flush ustun standart qiymatlarini (tur, layers...) qo'yadi — soha_yoz
-    # ulardan o'qiydi, shuning uchun flush'dan KEYIN chaqirilishi shart.
     db.flush()
-    soha_yoz(o)   # 2-qadam: ustunga ham, attributes ga ham
     db.add(m.AuditLog(who=user.name, action="Buyurtma yaratildi",
                       detail=f"{c.company} · {data.qty} dona · {float(total):,.0f} so'm"))
     db.commit()
@@ -203,18 +275,23 @@ def create_order(data: OrderIn, db: Session = Depends(get_db),
 
 
 class OrderEditIn(BaseModel):
+    """Tahrir — yaratish kabi soha-neytral."""
     product_name: str | None = None
-    length_mm: int | None = None
-    width_mm: int | None = None
-    height_mm: int | None = None
-    tur: str | None = None
-    grade: str | None = None
-    colors: int | None = None
+    attributes: dict | None = None
     qty: int | None = None
     unit_price: float | None = None
     note: str | None = None
     due_days: int | None = None
     payment_due_days: int | None = None
+
+    # --- eski karton maydonlari (frontend moslashuvi uchun) ---
+    length_mm: int | None = None
+    width_mm: int | None = None
+    height_mm: int | None = None
+    tur: str | None = None
+    layers: int | None = None
+    grade: str | None = None
+    colors: int | None = None
 
 
 @router.put("/{oid}")
@@ -229,37 +306,25 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
     if o.status in (m.ST_YETKAZILDI, m.ST_BEKOR):
         raise HTTPException(400, "Етказилган ёки бекор қилинган буюртмани таҳрирлаб бўлмайди")
 
-    # o'lchov/tur/marka o'zgarsa — smetani qayta hisoblaymiz
-    tur = data.tur if data.tur is not None else domain.tur_matni(o)
-    if data.tur is not None and tur not in m.ORDER_TURLARI:
-        raise HTTPException(400, f"Буюртма тури нотўғри. Мумкин: {', '.join(m.ORDER_TURLARI)}")
-    L = data.length_mm if data.length_mm is not None else soha_oqi(o, "length_mm")
-    W = data.width_mm if data.width_mm is not None else soha_oqi(o, "width_mm")
-    H = data.height_mm if data.height_mm is not None else soha_oqi(o, "height_mm")
-    grade = (data.grade if data.grade is not None else soha_oqi(o, "grade"))
-    colors = data.colors if data.colors is not None else soha_oqi(o, "colors")
+    # Mavjud soha qiymatlari ustiga so'rovdagilarni qo'yamiz — berilmagani
+    # o'zgarmaydi. Tekshiruv va hosila hisobi yaratishdagi bilan bir xil.
+    qiymatlar = domain.soha_hammasi(o)
+    qiymatlar.update(soha_qiymatlari(data))
+
     qty = data.qty if data.qty is not None else o.qty
-    if not (10 <= L <= 5000 and 10 <= W <= 5000 and 10 <= H <= 5000):
-        raise HTTPException(400, "Ўлчамлар 10–5000 мм оралиғида бўлсин")
-    if not (1 <= qty <= 1_000_000):
-        raise HTTPException(400, "Тираж 1 дан 1 000 000 гача бўлсин")
-    if not (grade or "").strip():
-        raise HTTPException(400, "Қоғоз маркаси бўш бўлмасин")
     if qty < (o.delivered_qty or 0):
         raise HTTPException(400, f"Тираж топширилган миқдордан ({o.delivered_qty}) кам бўлмасин")
-
-    layers = tur_layers(tur)
-    res = s.quote(db, L, W, H, layers, grade, colors, qty, o.client.category)
+    tayyor = tekshir_yoki_400(qiymatlar, qty)
+    narx = narxla(db, tayyor, qty, o.client.category, data.unit_price)
+    tayyor.update(narx["hisoblangan"])
 
     o.product_name = data.product_name if data.product_name is not None else o.product_name
-    o.length_mm, o.width_mm, o.height_mm = L, W, H
-    o.tur, o.layers, o.grade, o.colors, o.qty = tur, layers, grade, colors, qty
-    o.is_offset = (tur == "Офсет")
-    o.m2_per_box = res["m2_per_box"]
-    o.unit_cost = res["unit_cost"]
-    o.unit_price = Decimal(str(data.unit_price)) if data.unit_price else res["unit_price"]
+    o.qty = qty
+    o.unit_cost = narx["unit_cost"]
+    o.unit_price = Decimal(str(data.unit_price)) if data.unit_price else narx["unit_price"]
     o.total = (o.unit_price * qty).quantize(Decimal("0.01"))
-    soha_yoz(o)   # 2-qadam: tahrirda ham ikkala joy yangilanadi
+    soha_yoz(o, tayyor)
+    eski_ustunlarga_yoz(o, tayyor)
     if data.note is not None:
         o.note = data.note
     if data.due_days is not None:
@@ -329,12 +394,18 @@ def check_stock(oid: int, db: Session = Depends(get_db), user=Depends(get_user))
     if not o:
         raise HTTPException(404, "Буюртма топилмади")
     
+    xom, marka = domain.xomashyo_kerak(o)
+    if xom is None:
+        # Bu soha ombordan avtomatik xomashyo yechmaydi — tekshiradigan
+        # narsa yo'q, «yetarli» deb javob beramiz.
+        return {"ok": True, "missing_kg": 0.0, "xomashyo_hisobi": False}
+
     brak = Decimal("1") + s.dset(db, "brak_percent") / 100
-    need_m2 = (soha_oqi(o, "m2_per_box") * o.qty * brak).quantize(Decimal("0.0001"))
-    
+    need_m2 = (xom * brak).quantize(Decimal("0.0001"))
+
     # fifo_writeoff simulyatsiyasi: har lotning o'z grammaji bilan m2->kg o'giriladi
     remaining_m2 = need_m2
-    lots = db.query(m.RawLot).filter(m.RawLot.grade == soha_oqi(o, "grade"), m.RawLot.remaining_kg > 0).order_by(m.RawLot.received_at, m.RawLot.id).all()
+    lots = db.query(m.RawLot).filter(m.RawLot.grade == marka, m.RawLot.remaining_kg > 0).order_by(m.RawLot.received_at, m.RawLot.id).all()
     
     missing_kg = Decimal("0")
     for lot in lots:
@@ -381,14 +452,17 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
         db.add(m.AuditLog(who=user.name, action="Xomashyo qaytarildi",
                           detail=f"Buyurtma #{o.id} bekor — {float(returned):.1f} kg omborga qaytdi"))
     if status == m.ST_SEXDA:
-        # ishlab chiqarishga berilganda xomashyo FIFO bo'yicha yechiladi (brak bilan)
-        brak = Decimal("1") + s.dset(db, "brak_percent") / 100
-        need = (soha_oqi(o, "m2_per_box") * o.qty * brak).quantize(Decimal("0.0001"))
-        try:
-            s.fifo_writeoff(db, soha_oqi(o, "grade"), need, order_id=o.id,
-                            note=f"Buyurtma #{o.id} spisaniya (5% brak bilan)")
-        except ValueError as e:
-            raise HTTPException(409, str(e))
+        # ishlab chiqarishga berilganda xomashyo FIFO bo'yicha yechiladi (brak bilan).
+        # Profil xomashyo iste'molini e'lon qilmagan bo'lsa — spisaniya yo'q.
+        xom, marka = domain.xomashyo_kerak(o)
+        if xom is not None:
+            brak = Decimal("1") + s.dset(db, "brak_percent") / 100
+            need = (xom * brak).quantize(Decimal("0.0001"))
+            try:
+                s.fifo_writeoff(db, marka, need, order_id=o.id,
+                                note=f"Buyurtma #{o.id} spisaniya (5% brak bilan)")
+            except ValueError as e:
+                raise HTTPException(409, str(e))
     if status == m.ST_YETKAZILDI:
         o.delivered_at = date.today()
     o.status = status

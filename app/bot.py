@@ -117,9 +117,12 @@ async def run_bot():
             if o.status in (m.ST_KUTISHDA, m.ST_MUZOKARA):
                 from . import services as s
                 brak = Decimal("1") + s.dset(db, "brak_percent") / 100
-                need = (soha_oqi(o, "m2_per_box") * o.qty * brak).quantize(Decimal("0.0001"))
+                xom, marka = domain.xomashyo_kerak(o)
+                if xom is None:
+                    return   # bu sohada avtomatik spisaniya yo'q
+                need = (xom * brak).quantize(Decimal("0.0001"))
                 try:
-                    s.fifo_writeoff(db, soha_oqi(o, "grade"), need, order_id=o.id,
+                    s.fifo_writeoff(db, marka, need, order_id=o.id,
                                     note=f"Bot orqali tasdiqlash (Buyurtma #{o.id})")
                 except ValueError as e:
                     db.add(m.AuditLog(who=o.client.company, action="Bot: xomashyo yetmadi",

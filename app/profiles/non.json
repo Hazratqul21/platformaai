@@ -1,0 +1,73 @@
+{
+  "kalit": "non",
+  "nom": "Non zavodi",
+  "izoh": "Sinov profili: kartondan butunlay boshqa maydonlar, boshqa narx usuli. Yadro shu profilni ham KODGA TEGMASDAN boshqara olishi kerak — 1-bosqichning qabul sinovi.",
+  "maydonlar": [
+    {
+      "kalit": "non_turi",
+      "nom": "Non turi",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Bug'doy noni",
+        "Javdar noni",
+        "Patir",
+        "Lavash",
+        "Baton"
+      ]
+    },
+    {
+      "kalit": "ogirlik_g",
+      "nom": "Og'irlik",
+      "tur": "butun",
+      "birlik": "g",
+      "min": 50,
+      "max": 5000,
+      "majburiy": true
+    },
+    {
+      "kalit": "un_navi",
+      "nom": "Un navi",
+      "tur": "matn",
+      "standart": "oliy",
+      "variantlar": [
+        "oliy",
+        "1-nav",
+        "2-nav",
+        "to'liq don"
+      ]
+    },
+    {
+      "kalit": "pishirish_daq",
+      "nom": "Pishirish vaqti",
+      "tur": "butun",
+      "birlik": "daq",
+      "standart": 25,
+      "min": 1,
+      "max": 300
+    },
+    {
+      "kalit": "kepakli",
+      "nom": "Kepakli",
+      "tur": "mantiq",
+      "standart": false
+    }
+  ],
+  "hosila": {
+    "kepakli": {
+      "manba": "un_navi",
+      "teng": "to'liq don"
+    }
+  },
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{ogirlik_g} g",
+    "tarkib": "{non_turi}, {un_navi} un",
+    "tur": "{non_turi}",
+    "tur_zaxira": "non",
+    "hujjat_mahsulot": "Нон: {tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "Нон: {tarkib}, {olcham}"
+  }
+}
