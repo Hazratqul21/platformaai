@@ -1,0 +1,70 @@
+{
+  "kalit": "savdo",
+  "nom": "Savdo (ulgurji / chakana)",
+  "izoh": "Tovar omborda bor. Buyurtma -> yig'ildi -> jo'natildi -> topshirildi.",
+  "statuslar": [
+    {
+      "nom": "Yangi buyurtma",
+      "mano": "boshlanish",
+      "keyingi": [
+        "Yig'ilmoqda",
+        "Muzokara",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Muzokara",
+      "mano": "muzokara",
+      "keyingi": [
+        "Yangi buyurtma",
+        "Yig'ilmoqda",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Yig'ilmoqda",
+      "mano": "ishlab_chiqarish",
+      "keyingi": [
+        "Jo'natishga tayyor",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer",
+        "Sklad mudiri"
+      ]
+    },
+    {
+      "nom": "Jo'natishga tayyor",
+      "mano": "tayyor",
+      "keyingi": [
+        "Topshirildi"
+      ],
+      "rollar": [
+        "Sklad mudiri"
+      ]
+    },
+    {
+      "nom": "Topshirildi",
+      "mano": "topshirildi",
+      "keyingi": [],
+      "rollar": [
+        "Sklad mudiri"
+      ]
+    },
+    {
+      "nom": "Bekor qilindi",
+      "mano": "bekor",
+      "keyingi": [],
+      "rollar": [
+        "Menejer",
+        "Sklad mudiri"
+      ]
+    }
+  ]
+}

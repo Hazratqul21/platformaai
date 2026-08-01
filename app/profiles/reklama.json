@@ -1,0 +1,61 @@
+{
+  "kalit": "reklama",
+  "nom": "Reklama agentligi",
+  "modul": "xizmat",
+  "izoh": "Dizayn, banner, SMM, video.",
+  "maydonlar": [
+    {
+      "kalit": "xizmat",
+      "nom": "Xizmat turi",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Logotip",
+        "Banner dizayn",
+        "SMM",
+        "Video roleik",
+        "Sayt",
+        "Poligrafiya dizayn"
+      ]
+    },
+    {
+      "kalit": "murakkablik",
+      "nom": "Murakkablik",
+      "tur": "matn",
+      "standart": "O'rta",
+      "variantlar": [
+        "Oddiy",
+        "O'rta",
+        "Murakkab"
+      ]
+    },
+    {
+      "kalit": "muddat_kun",
+      "nom": "Bajarish muddati",
+      "tur": "butun",
+      "birlik": "kun",
+      "standart": 7,
+      "min": 1,
+      "max": 365
+    },
+    {
+      "kalit": "tuzatish_soni",
+      "nom": "Tuzatishlar soni",
+      "tur": "butun",
+      "standart": 2,
+      "min": 0,
+      "max": 20
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{muddat_kun} kun",
+    "tarkib": "{xizmat}, {murakkablik}",
+    "tur": "{xizmat}",
+    "tur_zaxira": "xizmat",
+    "hujjat_mahsulot": "{tarkib}, muddat {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, muddat {olcham}"
+  }
+}

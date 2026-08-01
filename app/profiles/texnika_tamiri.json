@@ -1,0 +1,53 @@
+{
+  "kalit": "texnika_tamiri",
+  "nom": "Maishiy texnika ta'miri",
+  "modul": "tamirlash",
+  "izoh": "Muzlatgich, kir yuvish, konditsioner.",
+  "maydonlar": [
+    {
+      "kalit": "texnika",
+      "nom": "Texnika turi",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Muzlatgich",
+        "Kir yuvish mashinasi",
+        "Konditsioner",
+        "Televizor",
+        "Pech",
+        "Changyutgich"
+      ]
+    },
+    {
+      "kalit": "brend",
+      "nom": "Brend",
+      "tur": "matn"
+    },
+    {
+      "kalit": "nosozlik",
+      "nom": "Nosozlik",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "kafolat_oy",
+      "nom": "Kafolat",
+      "tur": "butun",
+      "birlik": "oy",
+      "standart": 3,
+      "min": 0,
+      "max": 36
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{brend}",
+    "tarkib": "{texnika}, nosozlik: {nosozlik}",
+    "tur": "{texnika}",
+    "tur_zaxira": "ta'mir",
+    "hujjat_mahsulot": "{tarkib}. Kafolat {kafolat_oy} oy",
+    "nakladnoy_mahsulot": "{tarkib}"
+  }
+}

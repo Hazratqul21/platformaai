@@ -114,7 +114,7 @@ async def run_bot():
                 await cb.answer("Sizga tegishli emas", show_alert=True)
                 return
                 
-            if o.status in (m.ST_KUTISHDA, m.ST_MUZOKARA):
+            if domain.manosi(o.status) in ("boshlanish", "muzokara"):
                 from . import services as s
                 brak = Decimal("1") + s.dset(db, "brak_percent") / 100
                 xom, marka = domain.xomashyo_kerak(o)
@@ -132,7 +132,7 @@ async def run_bot():
                     await cb.answer("Xomashyo yetarli emas!", show_alert=True)
                     return
                 
-                o.status = m.ST_SEXDA
+                o.status = domain.status_nomi("ishlab_chiqarish")
                 db.add(m.AuditLog(who=o.client.company, action="Bot: tasdiqlandi",
                                   detail=f"Buyurtma #{o.id} ishlab chiqarishga berildi"))
                 db.commit()
@@ -154,8 +154,8 @@ async def run_bot():
                 await cb.answer("Sizga tegishli emas", show_alert=True)
                 return
                 
-            if o.status == m.ST_KUTISHDA:
-                o.status = m.ST_MUZOKARA
+            if domain.manosi(o.status) == "boshlanish":
+                o.status = domain.status_nomi("muzokara")
                 db.add(m.AuditLog(who=o.client.company, action="Bot: muzokara",
                                   detail=f"Buyurtma #{o.id} — mijoz narxga rozi emas, menejerga xabar"))
                 db.commit()

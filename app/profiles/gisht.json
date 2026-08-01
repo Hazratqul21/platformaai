@@ -1,0 +1,66 @@
+{
+  "kalit": "gisht",
+  "nom": "G'isht / qurilish materiallari",
+  "modul": "ishlab_chiqarish",
+  "izoh": "G'isht, tротуар plitka, bloklar.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Pishgan g'isht",
+        "Silikat g'isht",
+        "Trotuar plitka",
+        "Gazoblok",
+        "Shlakoblok"
+      ]
+    },
+    {
+      "kalit": "marka",
+      "nom": "Marka",
+      "tur": "matn",
+      "standart": "M100",
+      "variantlar": [
+        "M75",
+        "M100",
+        "M125",
+        "M150",
+        "M200"
+      ]
+    },
+    {
+      "kalit": "olcham_mm",
+      "nom": "O'lcham",
+      "tur": "matn",
+      "standart": "250x120x65"
+    },
+    {
+      "kalit": "rang",
+      "nom": "Rang",
+      "tur": "matn",
+      "standart": "Qizil"
+    },
+    {
+      "kalit": "sovuqbardosh",
+      "nom": "Sovuqbardoshlik",
+      "tur": "butun",
+      "birlik": "tsikl",
+      "standart": 35,
+      "min": 15,
+      "max": 200
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{olcham_mm}",
+    "tarkib": "{marka}, {rang}, F{sovuqbardosh}",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "g'isht",
+    "hujjat_mahsulot": "{tur} {olcham} мм, {tarkib}",
+    "nakladnoy_mahsulot": "{tur} {olcham} мм, {tarkib}"
+  }
+}

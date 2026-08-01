@@ -1,0 +1,73 @@
+{
+  "kalit": "kimyo",
+  "nom": "Maishiy kimyo",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Yuvish vositalari, tozalagichlar.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Kir yuvish kukuni",
+        "Suyuq sovun",
+        "Idish yuvish",
+        "Oyna tozalagich",
+        "Dezinfektsiya"
+      ]
+    },
+    {
+      "kalit": "hajm_ml",
+      "nom": "Hajm",
+      "tur": "butun",
+      "birlik": "ml",
+      "standart": 1000,
+      "min": 50,
+      "max": 50000,
+      "majburiy": true
+    },
+    {
+      "kalit": "hid",
+      "nom": "Hid",
+      "tur": "matn",
+      "standart": "Limon",
+      "variantlar": [
+        "Hidsiz",
+        "Limon",
+        "Lavanda",
+        "Okean",
+        "Gul"
+      ]
+    },
+    {
+      "kalit": "qadoq",
+      "nom": "Qadoq",
+      "tur": "matn",
+      "standart": "Butilka",
+      "variantlar": [
+        "Butilka",
+        "Kanistr",
+        "Paket",
+        "Sprey"
+      ]
+    },
+    {
+      "kalit": "konsentrat",
+      "nom": "Konsentrat",
+      "tur": "mantiq",
+      "standart": false
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{hajm_ml} ml",
+    "tarkib": "{mahsulot}, {hid}, {qadoq}",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "kimyo mahsuloti",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

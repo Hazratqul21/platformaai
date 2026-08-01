@@ -1,0 +1,69 @@
+{
+  "kalit": "xizmat",
+  "nom": "Xizmat ko'rsatish",
+  "izoh": "Ariza -> kelishildi -> bajarilmoqda -> topshirildi. Ombor ishtirok etmaydi.",
+  "statuslar": [
+    {
+      "nom": "Ariza qabul qilindi",
+      "mano": "boshlanish",
+      "keyingi": [
+        "Kelishildi",
+        "Muzokara",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Muzokara",
+      "mano": "muzokara",
+      "keyingi": [
+        "Ariza qabul qilindi",
+        "Kelishildi",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Kelishildi",
+      "mano": "ishlab_chiqarish",
+      "keyingi": [
+        "Bajarilmoqda",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Bajarilmoqda",
+      "mano": "tayyor",
+      "keyingi": [
+        "Topshirildi"
+      ],
+      "rollar": [
+        "Menejer",
+        "Sex boshlig'i"
+      ]
+    },
+    {
+      "nom": "Topshirildi",
+      "mano": "topshirildi",
+      "keyingi": [],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Bekor qilindi",
+      "mano": "bekor",
+      "keyingi": [],
+      "rollar": [
+        "Menejer"
+      ]
+    }
+  ]
+}

@@ -25,6 +25,85 @@ from decimal import Decimal
 log = logging.getLogger("gofra.domain")
 
 SHABLON_PAPKA = os.path.join(os.path.dirname(__file__), "profiles")
+MODUL_PAPKA = os.path.join(os.path.dirname(__file__), "modules")
+
+# ---------------------------------------------------------------------
+# MODUL — buyurtmaning HAYOT SIKLI (statuslar, o'tishlar, rollar)
+#
+# Nega profildan alohida: «non zavodi» va «mebel sexi» — ikki xil SOHA,
+# lekin bitta ISH TARTIBI (buyurtma -> sexga -> tayyor -> topshirildi).
+# Agar status har profilda takrorlansa, 20 profilda 20 marta bir xil
+# oqim yozilardi va bittasida xato bo'lsa topib bo'lmasdi.
+#
+# Odoo'da bu «app», 1C da «конфигурация», SAP da «industry solution».
+# Bizda: MODUL = ish tartibi, PROFIL = mahsulot ta'rifi.
+#
+# Yadro status NOMINI emas, MA'NOSINI biladi:
+#   boshlanish  muzokara  ishlab_chiqarish  tayyor  topshirildi  bekor
+# Shu tufayli «Sexda kesilmoqda» ham, «Yig'ilmoqda» ham, «Tuzatilmoqda»
+# ham bir xil ishlaydi — xomashyo o'sha yerda yechiladi.
+# ---------------------------------------------------------------------
+
+MANOLAR = ("boshlanish", "muzokara", "ishlab_chiqarish", "tayyor",
+           "topshirildi", "bekor")
+
+
+class Status:
+    def __init__(self, nom: str, mano: str, keyingi=None, rollar=None):
+        if mano not in MANOLAR:
+            raise ValueError(f"'{nom}': noma'lum ma'no '{mano}'. "
+                             f"Mumkin: {', '.join(MANOLAR)}")
+        self.nom = nom          # foydalanuvchi ko'radigan va bazaga yoziladigan
+        self.mano = mano        # yadro shu bo'yicha qaror qabul qiladi
+        self.keyingi = keyingi or []
+        self.rollar = rollar or []
+
+
+class Modul:
+    def __init__(self, tarif: dict):
+        self.kalit = tarif["kalit"]
+        self.nom = tarif.get("nom", self.kalit)
+        self.izoh = tarif.get("izoh", "")
+        self.statuslar = [Status(**s) for s in tarif["statuslar"]]
+        self._nom_indeks = {s.nom: s for s in self.statuslar}
+        self._mano_indeks = {}
+        for s in self.statuslar:
+            self._mano_indeks.setdefault(s.mano, s)
+        yetishmaydi = {"boshlanish", "bekor"} - set(self._mano_indeks)
+        if yetishmaydi:
+            raise ValueError(f"'{self.kalit}' modulida majburiy ma'no yo'q: "
+                             f"{', '.join(sorted(yetishmaydi))}")
+
+    def status(self, nom: str) -> Status | None:
+        return self._nom_indeks.get(nom)
+
+    def mano(self, nom: str) -> str | None:
+        s = self._nom_indeks.get(nom)
+        return s.mano if s else None
+
+    def mano_boyicha(self, mano: str) -> Status | None:
+        return self._mano_indeks.get(mano)
+
+    @property
+    def nomlar(self) -> list[str]:
+        return [s.nom for s in self.statuslar]
+
+
+def modullar() -> dict[str, dict]:
+    """app/modules/*.json — ish tartibi ta'riflari."""
+    natija = {}
+    if not os.path.isdir(MODUL_PAPKA):
+        return natija
+    for nom in sorted(os.listdir(MODUL_PAPKA)):
+        if nom.endswith(".json"):
+            with open(os.path.join(MODUL_PAPKA, nom), encoding="utf-8") as f:
+                tarif = json.load(f)
+            Modul(tarif)   # buzuq modul ishga tushishda bilinsin
+            natija[tarif["kalit"]] = tarif
+    return natija
+
+
+ZAXIRA_MODUL = "ishlab_chiqarish"
 
 # Maydon turlari va ularning JSON dagi ko'rinishi:
 #
@@ -123,6 +202,9 @@ class Profil:
         # Yadro shunda spisaniyani o'tkazib yuboradi, buyurtma esa
         # oddiy ishlayveradi.
         self.xomashyo = tarif.get("xomashyo", {})
+        # Qaysi ish tartibi bilan ishlaydi (app/modules/*.json)
+        self.modul_kaliti = tarif.get("modul", ZAXIRA_MODUL)
+        self.modul: Modul | None = None   # yuklanganda to'ldiriladi
         self._indeks = {md.kalit: md for md in self.maydonlar}
         if len(self._indeks) != len(self.maydonlar):
             raise ValueError(f"'{self.kalit}' profilida takroriy maydon kaliti bor")
@@ -177,8 +259,16 @@ def qayta_yukla(db=None) -> Profil:
         if tarif is None:
             raise RuntimeError(
                 f"Faol profil ham, '{ZAXIRA_KALIT}' shabloni ham topilmadi")
-    _KESH = Profil(tarif)
-    log.info("Soha profili: %s (%s)", _KESH.nom, _KESH.kalit)
+    p = Profil(tarif)
+    hamma_modul = modullar()
+    modul_tarif = hamma_modul.get(p.modul_kaliti) or hamma_modul.get(ZAXIRA_MODUL)
+    if modul_tarif is None:
+        raise RuntimeError(f"'{p.modul_kaliti}' moduli ham, zaxira "
+                           f"'{ZAXIRA_MODUL}' ham topilmadi")
+    p.modul = Modul(modul_tarif)
+    _KESH = p
+    log.info("Soha profili: %s (%s) · ish tartibi: %s",
+             p.nom, p.kalit, p.modul.nom)
     return _KESH
 
 
@@ -187,6 +277,43 @@ def profil() -> Profil:
     if _KESH is None:
         return qayta_yukla(None)
     return _KESH
+
+
+def modul() -> Modul:
+    """Hozirgi ish tartibi (statuslar)."""
+    return profil().modul
+
+
+def manosi(status_nomi: str) -> str | None:
+    """Bazadagi status nomining MA'NOsi. Yadro shu bo'yicha qaror qiladi.
+
+    `None` qaytishi mumkin: buyurtma boshqa modulda yozilgan status bilan
+    qolgan bo'lsa (profil almashtirilgan). Chaqiruvchi buni «noma'lum»
+    deb qabul qilishi kerak, yiqilmasligi.
+    """
+    return modul().mano(status_nomi)
+
+
+def status_nomi(mano: str) -> str | None:
+    """Ma'noga mos status nomi — «ishlab_chiqarish» -> «Sexda kesilmoqda»."""
+    s = modul().mano_boyicha(mano)
+    return s.nom if s else None
+
+
+def boshlangich_status() -> str:
+    """Yangi buyurtma qaysi maqomdan boshlanadi."""
+    return status_nomi("boshlanish")
+
+
+def statuslar(*manolar: str) -> list[str]:
+    """Berilgan ma'nolarga mos status NOMLARI — SQL filtrlari uchun.
+
+    Masalan `statuslar("ishlab_chiqarish", "tayyor", "topshirildi")`
+    kartonda `["Sexda kesilmoqda","Omborga tushdi","Yetkazib berildi"]`,
+    savdoda `["Yig'ilmoqda","Jo'natishga tayyor","Topshirildi"]` beradi.
+    """
+    kerak = set(manolar)
+    return [s.nom for s in modul().statuslar if s.mano in kerak]
 
 
 # ---------------------------------------------------------------------

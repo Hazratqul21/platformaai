@@ -217,8 +217,9 @@ def list_orders(status: str | None = None, firm: str | None = None,
 
     def tugallangan(o):
         # to'liq topshirilgan yoki bekor qilingan — arxivga
-        return o.status == m.ST_BEKOR or \
-            (o.status == m.ST_YETKAZILDI and (o.delivered_qty or 0) >= o.qty)
+        mano = domain.manosi(o.status)
+        return mano == "bekor" or \
+            (mano == "topshirildi" and (o.delivered_qty or 0) >= o.qty)
 
     if archive:
         rows = [o for o in rows if tugallangan(o)]
@@ -250,6 +251,9 @@ def create_order(data: OrderIn, db: Session = Depends(get_db),
 
     o = m.Order(
         client_id=c.id, qty=data.qty,
+        # Boshlang'ich maqom ustun standartidan EMAS, ish tartibidan:
+        # sexda «Kutishda», savdoda «Yangi buyurtma», servisda «Qabul qilindi».
+        status=domain.boshlangich_status(),
         unit_cost=narx["unit_cost"], unit_price=unit_price, total=total,
         prepaid_percent=data.prepaid_percent, note=data.note,
         product_name=data.product_name,
@@ -303,7 +307,7 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
     o = db.get(m.Order, oid)
     if not o:
         raise HTTPException(404, "Буюртма топилмади")
-    if o.status in (m.ST_YETKAZILDI, m.ST_BEKOR):
+    if domain.manosi(o.status) in ("topshirildi", "bekor"):
         raise HTTPException(400, "Етказилган ёки бекор қилинган буюртмани таҳрирлаб бўлмайди")
 
     # Mavjud soha qiymatlari ustiga so'rovdagilarni qo'yamiz — berilmagani
@@ -338,14 +342,15 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
     # zakaz o'z-o'zidan yopilib qolar va uni faqat baza orqali tuzatish kerak
     # bo'lardi. Shuning uchun faqat OGOHLANTIRAMIZ — yopishni foydalanuvchi
     # «🏁 Якунлаш» tugmasi orqali o'zi, tasdiqlab bajaradi.
-    tugagan = (o.delivered_qty or 0) >= o.qty and o.status in (m.ST_OMBORDA, m.ST_SEXDA)
+    tugagan = ((o.delivered_qty or 0) >= o.qty
+               and domain.manosi(o.status) in ("tayyor", "ishlab_chiqarish"))
 
     ogoh = None
     if tugagan:
         ogoh = (f"Тираж топширилган миқдорга ({o.delivered_qty:,} дона) тенглашди. "
                 f"Буюртмани ёпиш учун «Якунлаш» тугмасини босинг — шунда архивга ўтади."
                 ).replace(",", " ")
-    elif o.status == m.ST_SEXDA:
+    elif domain.manosi(o.status) == "ishlab_chiqarish":
         ogoh = "Диққат: бу буюртма цехга берилган, хомашё аллақачон ечилган. Миқдор ўзгарса омбор қолдиғи мос келмаслиги мумкин."
     db.add(m.AuditLog(who=user.name, action="Buyurtma tuzatildi",
                       detail=f"Буюртма #{o.id} · {o.client.company} · "
@@ -372,20 +377,10 @@ def reorder(oid: int, qty: int | None = None, db: Session = Depends(get_db),
     return create_order(data, db, user)
 
 
-VALID_FLOW = {
-    m.ST_KUTISHDA: [m.ST_SEXDA, m.ST_MUZOKARA, m.ST_BEKOR],
-    m.ST_MUZOKARA: [m.ST_KUTISHDA, m.ST_SEXDA, m.ST_BEKOR],
-    m.ST_SEXDA: [m.ST_OMBORDA, m.ST_BEKOR],
-    m.ST_OMBORDA: [m.ST_YETKAZILDI],
-    m.ST_YETKAZILDI: [],
-    m.ST_BEKOR: [],
-}
-
-ROLE_PERMISSIONS = {
-    "Menejer": [m.ST_BEKOR, m.ST_KUTISHDA, m.ST_MUZOKARA, m.ST_SEXDA],
-    "Sex boshlig'i": [m.ST_OMBORDA, m.ST_BEKOR],
-    "Sklad mudiri": [m.ST_YETKAZILDI]
-}
+# VALID_FLOW va ROLE_PERMISSIONS jadvallari OLIB TASHLANDI — endi ular
+# modul ta'rifida (app/modules/*.json), chunki ish tartibi biznes turiga
+# qarab o'zgaradi: sexda "Sexda kesilmoqda", savdoda "Yig'ilmoqda",
+# servisda "Tuzatilmoqda". Yadro NOMNI emas, MA'NOni biladi.
 
 
 @router.get("/{oid}/check-stock")
@@ -430,15 +425,23 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
     if not o:
         raise HTTPException(404, "Буюртма топилмади")
         
-    if user.role != "Rahbar":
-        allowed_statuses = ROLE_PERMISSIONS.get(user.role, [])
-        if status not in allowed_statuses:
-            raise HTTPException(403, f"{user.role} roliga '{status}' maqomini o'rnatish ruxsat etilmaydi")
+    md = domain.modul()
+    yangi = md.status(status)
+    if yangi is None:
+        raise HTTPException(400, f"'{status}' — bu ish tartibida yo'q maqom. "
+                                 f"Mumkin: {', '.join(md.nomlar)}")
 
-    if status not in VALID_FLOW.get(o.status, []):
+    if user.role != "Rahbar" and user.role not in yangi.rollar:
+        raise HTTPException(403, f"{user.role} roliga '{status}' maqomini o'rnatish ruxsat etilmaydi")
+
+    joriy = md.status(o.status)
+    if joriy is None or status not in joriy.keyingi:
         raise HTTPException(400, f"'{o.status}' dan '{status}' ga o'tib bo'lmaydi")
-        
-    if status == m.ST_BEKOR and o.status == m.ST_SEXDA:
+
+    eski_mano = joriy.mano
+    yangi_mano = yangi.mano
+
+    if yangi_mano == "bekor" and eski_mano == "ishlab_chiqarish":
         # sexda bekor qilinsa yechilgan xomashyo omborga qaytariladi
         moves = db.query(m.StockMove).filter(m.StockMove.order_id == o.id).all()
         returned = Decimal("0")
@@ -451,7 +454,7 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
                     db.add(m.StockMove(lot_id=lot.id, order_id=o.id, kg=-mv.kg, cost=-mv.cost))
         db.add(m.AuditLog(who=user.name, action="Xomashyo qaytarildi",
                           detail=f"Buyurtma #{o.id} bekor — {float(returned):.1f} kg omborga qaytdi"))
-    if status == m.ST_SEXDA:
+    if yangi_mano == "ishlab_chiqarish":
         # ishlab chiqarishga berilganda xomashyo FIFO bo'yicha yechiladi (brak bilan).
         # Profil xomashyo iste'molini e'lon qilmagan bo'lsa — spisaniya yo'q.
         xom, marka = domain.xomashyo_kerak(o)
@@ -463,7 +466,7 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
                                 note=f"Buyurtma #{o.id} spisaniya (5% brak bilan)")
             except ValueError as e:
                 raise HTTPException(409, str(e))
-    if status == m.ST_YETKAZILDI:
+    if yangi_mano == "topshirildi":
         o.delivered_at = date.today()
     o.status = status
     db.add(m.AuditLog(who=user.name, action="Status o'zgardi",
@@ -543,14 +546,14 @@ def finish_order(oid: int, db: Session = Depends(get_db),
     if berildi <= 0:
         raise HTTPException(400, "Ҳали мол берилмаган — якунлаб бўлмайди. "
                                  "Аввал мижозга топширинг.")
-    if o.status == m.ST_BEKOR:
+    if domain.manosi(o.status) == "bekor":
         raise HTTPException(400, "Бекор қилинган буюртмани якунлаб бўлмайди")
     if berildi >= o.qty:
         # Hammasi berilgan, lekin status yangilanmay qolgan (masalan tiraj keyin
         # tuzatilgan) — bunda faqat statusni yopamiz, miqdorga tegmaymiz.
-        if o.status == m.ST_YETKAZILDI:
+        if domain.manosi(o.status) == "topshirildi":
             raise HTTPException(400, "Буюртма аллақачон якунланган")
-        o.status = m.ST_YETKAZILDI
+        o.status = domain.status_nomi("topshirildi")
         o.delivered_at = o.delivered_at or date.today()
         db.add(m.AuditLog(
             who=user.name, action="Буюртма якунланди",
@@ -562,7 +565,7 @@ def finish_order(oid: int, db: Session = Depends(get_db),
     eski_qty = o.qty
     o.qty = berildi                                    # ҳақиқий чиққан тираж
     o.total = Decimal(str(o.unit_price)) * berildi     # жами шунга мослашади
-    o.status = m.ST_YETKAZILDI
+    o.status = domain.status_nomi("topshirildi")
     o.delivered_at = date.today()
     db.add(m.AuditLog(
         who=user.name, action="Буюртма якунланди",
@@ -681,7 +684,7 @@ def deliver_to_client(oid: int, data: DeliverIn, db: Session = Depends(get_db),
     o = db.get(m.Order, oid)
     if not o:
         raise HTTPException(404, "Буюртма топилмади")
-    if o.status not in (m.ST_OMBORDA, m.ST_SEXDA):
+    if domain.manosi(o.status) not in ("tayyor", "ishlab_chiqarish"):
         raise HTTPException(400, "Фақат тайёр (омбордаги) ёки цехдаги буюртмани топшириш мумкин "
                                  f"(ҳозир: {o.status})")
 
@@ -717,7 +720,7 @@ def deliver_to_client(oid: int, data: DeliverIn, db: Session = Depends(get_db),
     o.delivered_qty = (o.delivered_qty or 0) + beriladi
     hammasi_berildi = o.delivered_qty >= o.qty
     if hammasi_berildi:
-        o.status = m.ST_YETKAZILDI
+        o.status = domain.status_nomi("topshirildi")
         o.delivered_at = kun
     # qisman bo'lsa status o'zgarmaydi — yana kelib qolganini olib ketishi mumkin
 
@@ -772,14 +775,14 @@ def deliver_batch(data: TopshirIn, db: Session = Depends(get_db),
     if len(client_ids) > 1:
         raise HTTPException(400, "Барча буюртмалар битта мижозники бўлиши керак")
     for o in orders:
-        if o.status not in (m.ST_OMBORDA, m.ST_SEXDA):
+        if domain.manosi(o.status) not in ("tayyor", "ishlab_chiqarish"):
             raise HTTPException(400, f"№{o.id} буюртма тайёр эмас (ҳозир: {o.status})")
 
     client_id = orders[0].client_id
     jami = sum(int(o.qty - (o.delivered_qty or 0)) for o in orders)
     for o in orders:
         o.delivered_qty = o.qty
-        o.status = m.ST_YETKAZILDI
+        o.status = domain.status_nomi("topshirildi")
         o.delivered_at = date.today()
     if data.paid_amount > 0:
         tolov = m.Payment(client_id=client_id, order_id=orders[0].id,

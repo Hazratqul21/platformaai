@@ -1,0 +1,76 @@
+{
+  "kalit": "kolbasa",
+  "nom": "Go'sht mahsulotlari",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Kolbasa, sosiska, yarim tayyor mahsulot.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Kolbasa",
+        "Sosiska",
+        "Sarделька",
+        "Kazi",
+        "Yarim tayyor"
+      ]
+    },
+    {
+      "kalit": "gosht_turi",
+      "nom": "Go'sht turi",
+      "tur": "matn",
+      "standart": "Mol",
+      "majburiy": true,
+      "variantlar": [
+        "Mol",
+        "Qo'y",
+        "Tovuq",
+        "Ot",
+        "Aralash"
+      ]
+    },
+    {
+      "kalit": "ogirlik_g",
+      "nom": "Og'irlik",
+      "tur": "butun",
+      "birlik": "g",
+      "standart": 500,
+      "min": 50,
+      "max": 20000,
+      "majburiy": true
+    },
+    {
+      "kalit": "qobiq",
+      "nom": "Qobiq",
+      "tur": "matn",
+      "standart": "Tabiiy",
+      "variantlar": [
+        "Tabiiy",
+        "Sun'iy",
+        "Qobiqsiz"
+      ]
+    },
+    {
+      "kalit": "saqlash_kun",
+      "nom": "Saqlash muddati",
+      "tur": "butun",
+      "birlik": "kun",
+      "standart": 15,
+      "min": 1,
+      "max": 365
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{ogirlik_g} g",
+    "tarkib": "{mahsulot}, {gosht_turi} go'shti, {qobiq} qobiq",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "go'sht mahsuloti",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

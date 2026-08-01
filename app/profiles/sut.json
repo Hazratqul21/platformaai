@@ -1,0 +1,72 @@
+{
+  "kalit": "sut",
+  "nom": "Sut mahsulotlari",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Sut, qatiq, tvorog, smetana.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Sut",
+        "Qatiq",
+        "Tvorog",
+        "Smetana",
+        "Ryazhenka",
+        "Sariyog'"
+      ]
+    },
+    {
+      "kalit": "yoglilik",
+      "nom": "Yog'lilik",
+      "tur": "kasr",
+      "birlik": "%",
+      "standart": "2.5",
+      "majburiy": true
+    },
+    {
+      "kalit": "hajm_ml",
+      "nom": "Hajm",
+      "tur": "butun",
+      "birlik": "ml",
+      "standart": 1000,
+      "min": 50,
+      "max": 20000,
+      "majburiy": true
+    },
+    {
+      "kalit": "qadoq",
+      "nom": "Qadoq",
+      "tur": "matn",
+      "standart": "Plyonka",
+      "variantlar": [
+        "Plyonka",
+        "Butilka",
+        "Tetra-pak",
+        "Stakan"
+      ]
+    },
+    {
+      "kalit": "saqlash_kun",
+      "nom": "Saqlash muddati",
+      "tur": "butun",
+      "birlik": "kun",
+      "standart": 7,
+      "min": 1,
+      "max": 180
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{hajm_ml} ml",
+    "tarkib": "{mahsulot} {yoglilik}%, {qadoq}",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "sut mahsuloti",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

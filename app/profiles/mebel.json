@@ -1,0 +1,89 @@
+{
+  "kalit": "mebel",
+  "nom": "Mebel sexi",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Buyurtma asosida mebel: shkaf, oshxona, stol.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Shkaf",
+        "Oshxona garnituri",
+        "Stol",
+        "Stul",
+        "Karavot",
+        "Komod"
+      ]
+    },
+    {
+      "kalit": "material",
+      "nom": "Material",
+      "tur": "matn",
+      "standart": "LDSP",
+      "variantlar": [
+        "LDSP",
+        "MDF",
+        "Massiv yog'och",
+        "Shpon"
+      ]
+    },
+    {
+      "kalit": "en_mm",
+      "nom": "Eni",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 100,
+      "max": 6000,
+      "majburiy": true
+    },
+    {
+      "kalit": "boy_mm",
+      "nom": "Bo'yi",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 100,
+      "max": 3000,
+      "majburiy": true
+    },
+    {
+      "kalit": "chuqurlik_mm",
+      "nom": "Chuqurligi",
+      "tur": "butun",
+      "birlik": "mm",
+      "standart": 600,
+      "min": 100,
+      "max": 1500
+    },
+    {
+      "kalit": "rang",
+      "nom": "Rang",
+      "tur": "matn",
+      "standart": "Oq"
+    },
+    {
+      "kalit": "furnitura",
+      "nom": "Furnitura",
+      "tur": "matn",
+      "standart": "Standart",
+      "variantlar": [
+        "Standart",
+        "Blum",
+        "Hettich"
+      ]
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{en_mm}×{boy_mm}×{chuqurlik_mm}",
+    "tarkib": "{material}, {rang}, {furnitura} furnitura",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "mebel",
+    "hujjat_mahsulot": "{tur}: {olcham} мм, {tarkib}",
+    "nakladnoy_mahsulot": "{tur}: {olcham} мм, {tarkib}"
+  }
+}

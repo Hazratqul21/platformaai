@@ -7,12 +7,15 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..auth import get_user, require_roles
 from .. import models as m
+from .. import domain
 from .. import services as s
 from .. import kassa_sync as ks
 
 router = APIRouter(prefix="/api/finance", tags=["Moliya"])
 
-SOLD = [m.ST_SEXDA, m.ST_OMBORDA, m.ST_YETKAZILDI]
+def _sotilgan():
+    """Sotilgan hisoblanadigan maqomlar — ish tartibidan (modul) olinadi."""
+    return domain.statuslar("ishlab_chiqarish", "tayyor", "topshirildi")
 
 
 class PayIn(BaseModel):
@@ -119,7 +122,7 @@ def dashboard(firm: str | None = None, db: Session = Depends(get_db), user=Depen
 
     def sales_between(a, b):
         q = (db.query(func.coalesce(func.sum(m.Order.total), 0))
-             .filter(m.Order.status.in_(SOLD),
+             .filter(m.Order.status.in_(_sotilgan()),
                      m.Order.created_at >= a, m.Order.created_at < b))
         return Decimal(firma_order(q).scalar())
 
@@ -164,7 +167,7 @@ def dashboard(firm: str | None = None, db: Session = Depends(get_db), user=Depen
         b = date(y + (mo == 12), (mo % 12) + 1, 1)
         rows = firma_order(
             db.query(m.Order)
-            .filter(m.Order.status.in_(SOLD), m.Order.created_at >= a, m.Order.created_at < b)
+            .filter(m.Order.status.in_(_sotilgan()), m.Order.created_at >= a, m.Order.created_at < b)
         ).all()
         rev = sum(Decimal(o.total) for o in rows)
         cost = sum(Decimal(o.unit_cost) * o.qty for o in rows)
@@ -174,7 +177,7 @@ def dashboard(firm: str | None = None, db: Session = Depends(get_db), user=Depen
 
     counts = {st: firma_order(db.query(func.count(m.Order.id))
                               .filter(m.Order.status == st)).scalar()
-              for st in m.STATUSES}
+              for st in domain.modul().nomlar}
 
     return {
         "today_sales": float(today_sales), "month_sales": float(month_sales),

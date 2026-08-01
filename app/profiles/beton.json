@@ -1,0 +1,60 @@
+{
+  "kalit": "beton",
+  "nom": "Beton / temir-beton",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Tayyor beton aralashmasi va ЖБИ.",
+  "maydonlar": [
+    {
+      "kalit": "marka",
+      "nom": "Beton markasi",
+      "tur": "matn",
+      "standart": "M300",
+      "majburiy": true,
+      "variantlar": [
+        "M100",
+        "M150",
+        "M200",
+        "M250",
+        "M300",
+        "M350",
+        "M400"
+      ]
+    },
+    {
+      "kalit": "hajm_m3",
+      "nom": "Hajm",
+      "tur": "kasr",
+      "birlik": "m³",
+      "majburiy": true
+    },
+    {
+      "kalit": "qoshimcha",
+      "nom": "Qo'shimcha",
+      "tur": "matn",
+      "standart": "Yo'q",
+      "variantlar": [
+        "Yo'q",
+        "Antimoroz",
+        "Plastifikator",
+        "Fibra"
+      ]
+    },
+    {
+      "kalit": "yetkazish",
+      "nom": "Yetkazib berish",
+      "tur": "mantiq",
+      "standart": true
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{hajm_m3} m³",
+    "tarkib": "Beton {marka}, qo'shimcha: {qoshimcha}",
+    "tur": "{marka}",
+    "tur_zaxira": "beton",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

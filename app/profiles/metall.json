@@ -1,0 +1,84 @@
+{
+  "kalit": "metall",
+  "nom": "Metall konstruksiya",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Payvandlash sexi: darvoza, panjara, karkas.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Darvoza",
+        "Panjara",
+        "Karkas",
+        "Zinapoya",
+        "Naves"
+      ]
+    },
+    {
+      "kalit": "metall",
+      "nom": "Metall markasi",
+      "tur": "matn",
+      "standart": "Ст3",
+      "variantlar": [
+        "Ст3",
+        "09Г2С",
+        "Нержавейка",
+        "Алюминий"
+      ]
+    },
+    {
+      "kalit": "qalinlik_mm",
+      "nom": "Qalinlik",
+      "tur": "butun",
+      "birlik": "mm",
+      "standart": 3,
+      "min": 1,
+      "max": 100,
+      "majburiy": true
+    },
+    {
+      "kalit": "en_mm",
+      "nom": "Eni",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 100,
+      "max": 20000,
+      "majburiy": true
+    },
+    {
+      "kalit": "boy_mm",
+      "nom": "Bo'yi",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 100,
+      "max": 20000,
+      "majburiy": true
+    },
+    {
+      "kalit": "qoplama",
+      "nom": "Qoplama",
+      "tur": "matn",
+      "standart": "Bo'yoq",
+      "variantlar": [
+        "Yo'q",
+        "Bo'yoq",
+        "Rux",
+        "Kukun bo'yoq"
+      ]
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{en_mm}×{boy_mm}",
+    "tarkib": "{metall}, {qalinlik_mm} mm, {qoplama}",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "konstruksiya",
+    "hujjat_mahsulot": "{tur} {olcham} мм, {tarkib}",
+    "nakladnoy_mahsulot": "{tur} {olcham} мм, {tarkib}"
+  }
+}

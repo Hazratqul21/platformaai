@@ -1,0 +1,61 @@
+{
+  "kalit": "montaj",
+  "nom": "Qurilish-montaj ishlari",
+  "modul": "qurilish",
+  "izoh": "Ta'mirlash, montaj, pardozlash.",
+  "maydonlar": [
+    {
+      "kalit": "ish_turi",
+      "nom": "Ish turi",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Pardozlash",
+        "Elektr montaj",
+        "Santexnika",
+        "Issiqlik izolyatsiya",
+        "Tom yopish",
+        "Pol qoplash"
+      ]
+    },
+    {
+      "kalit": "obyekt",
+      "nom": "Obyekt",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "maydon_m2",
+      "nom": "Maydon",
+      "tur": "kasr",
+      "birlik": "m²",
+      "majburiy": true
+    },
+    {
+      "kalit": "material_bizdan",
+      "nom": "Material bizdan",
+      "tur": "mantiq",
+      "standart": true
+    },
+    {
+      "kalit": "muddat_kun",
+      "nom": "Muddat",
+      "tur": "butun",
+      "birlik": "kun",
+      "standart": 30,
+      "min": 1,
+      "max": 1000
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{maydon_m2} m²",
+    "tarkib": "{ish_turi}, obyekt: {obyekt}",
+    "tur": "{ish_turi}",
+    "tur_zaxira": "ish",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

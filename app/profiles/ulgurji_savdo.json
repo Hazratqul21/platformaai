@@ -1,0 +1,63 @@
+{
+  "kalit": "ulgurji_savdo",
+  "nom": "Ulgurji savdo (distribyutor)",
+  "modul": "savdo",
+  "izoh": "Tovarni omborga olib, ulgurji sotish.",
+  "maydonlar": [
+    {
+      "kalit": "nomi",
+      "nom": "Tovar nomi",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "artikul",
+      "nom": "Artikul",
+      "tur": "matn"
+    },
+    {
+      "kalit": "brend",
+      "nom": "Brend",
+      "tur": "matn"
+    },
+    {
+      "kalit": "birlik",
+      "nom": "O'lchov birligi",
+      "tur": "matn",
+      "standart": "dona",
+      "variantlar": [
+        "dona",
+        "kg",
+        "litr",
+        "metr",
+        "quti",
+        "pachka"
+      ],
+      "majburiy": true
+    },
+    {
+      "kalit": "qadoq_soni",
+      "nom": "Qadoqdagi soni",
+      "tur": "butun",
+      "standart": 1,
+      "min": 1,
+      "max": 10000
+    },
+    {
+      "kalit": "ishlab_chiqaruvchi",
+      "nom": "Ishlab chiqaruvchi",
+      "tur": "matn"
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{qadoq_soni} {birlik}",
+    "tarkib": "{nomi}, {brend}, art. {artikul}",
+    "tur": "{nomi}",
+    "tur_zaxira": "tovar",
+    "hujjat_mahsulot": "{tarkib}",
+    "nakladnoy_mahsulot": "{tarkib}"
+  }
+}

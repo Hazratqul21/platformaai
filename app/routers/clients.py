@@ -174,7 +174,7 @@ def client_detail_ledger(cid: int, db: Session = Depends(get_db), user=Depends(g
     # topshirishga tayyor buyurtmalar (cex yoki omborda, hali to'liq berilmagan)
     tayyor = []
     for o in c.orders:
-        if o.status in (m.ST_SEXDA, m.ST_OMBORDA):
+        if domain.manosi(o.status) in ("ishlab_chiqarish", "tayyor"):
             qolgan = o.qty - (o.delivered_qty or 0)
             if qolgan > 0:
                 tayyor.append({

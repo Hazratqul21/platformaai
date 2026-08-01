@@ -293,7 +293,12 @@ def seed(db: Session):
     sizes = [(400, 300, 250), (600, 400, 400), (300, 200, 150), (500, 350, 300),
              (350, 250, 200), (450, 300, 350), (250, 200, 100)]
     grade_pool = [("K1", 3), ("K0", 3), ("K2", 3), ("T-22", 5), ("T-23", 5)]
-    statuses_hist = [m.ST_YETKAZILDI] * 6 + [m.ST_OMBORDA, m.ST_SEXDA, m.ST_KUTISHDA, m.ST_MUZOKARA]
+    # Demo statuslari ish tartibidan olinadi — profil almashsa demo ham moslashadi
+    _topshirildi = domain.status_nomi("topshirildi")
+    statuses_hist = [_topshirildi] * 6 + [
+        domain.status_nomi("tayyor"), domain.status_nomi("ishlab_chiqarish"),
+        domain.status_nomi("boshlanish"), domain.status_nomi("muzokara")]
+    statuses_hist = [x for x in statuses_hist if x]
     orders = []
     for i in range(34):
         c = random.choice(clients)
@@ -302,7 +307,7 @@ def seed(db: Session):
         colors = random.choice([0, 0, 1, 2])
         qty = random.choice([500, 1000, 1500, 2000, 3000, 5000])
         days_ago = random.randint(0, 170) if i < 24 else random.randint(0, 25)
-        status = random.choice(statuses_hist) if days_ago < 30 else m.ST_YETKAZILDI
+        status = random.choice(statuses_hist) if days_ago < 30 else _topshirildi
         q = s.quote(db, L, W, H, layers, grade, colors, qty, c.category)
         created = datetime.utcnow() - timedelta(days=days_ago, hours=random.randint(0, 10))
         o = m.Order(
@@ -312,8 +317,8 @@ def seed(db: Session):
             status=status, created_at=created,
             due_date=created.date() + timedelta(days=15),
             delivered_at=created.date() + timedelta(days=random.randint(3, 8))
-            if status == m.ST_YETKAZILDI else None,
-            accepted_stamp=status == m.ST_YETKAZILDI and random.random() > 0.4,
+            if status == _topshirildi else None,
+            accepted_stamp=status == _topshirildi and random.random() > 0.4,
         )
         db.add(o)
         orders.append(o)
@@ -325,7 +330,7 @@ def seed(db: Session):
 
     # --- spisaniya (sotilganlar uchun FIFO retrospektiv emas — soddalashtirib bugungi lotlardan) ---
     for o in orders:
-        if o.status in (m.ST_SEXDA, m.ST_OMBORDA, m.ST_YETKAZILDI):
+        if domain.manosi(o.status) in ("ishlab_chiqarish", "tayyor", "topshirildi"):
             brak = Decimal("1.05")
             xom, marka = domain.xomashyo_kerak(o)
             if xom is None:
@@ -339,7 +344,7 @@ def seed(db: Session):
 
     # --- mijoz to'lovlari (qisman — debitor qarz qolsin) ---
     for o in orders:
-        if o.status in (m.ST_OMBORDA, m.ST_YETKAZILDI):
+        if domain.manosi(o.status) in ("tayyor", "topshirildi"):
             share = random.choice([Decimal("1"), Decimal("1"), Decimal("0.7"),
                                    Decimal("0.5"), Decimal("0.3"), Decimal("0")])
             if share > 0:

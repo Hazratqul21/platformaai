@@ -100,7 +100,7 @@ def warehouse_xlsx(db: Session = Depends(get_db), user=Depends(get_user)):
             c.number_format = "#,##0.00"
     ws2 = wb.create_sheet("Tayyor mahsulot")
     ws2.append(["Buyurtma", "Mijoz", "O'lcham", "Marka", "Soni", "Summa"])
-    for o in db.query(m.Order).filter(m.Order.status == m.ST_OMBORDA).all():
+    for o in db.query(m.Order).filter(m.Order.status.in_(domain.statuslar("tayyor"))).all():
         ws2.append([f"#{o.id}", o.client.company,
                     domain.olcham_matni(o, "x"), soha_oqi(o, "grade"), o.qty, float(o.total)])
     style_header(ws2)

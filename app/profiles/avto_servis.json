@@ -1,0 +1,61 @@
+{
+  "kalit": "avto_servis",
+  "nom": "Avto servis",
+  "modul": "tamirlash",
+  "izoh": "Avtomobil ta'miri va texnik xizmat.",
+  "maydonlar": [
+    {
+      "kalit": "avto",
+      "nom": "Avtomobil",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "davlat_raqam",
+      "nom": "Davlat raqami",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "ish_turi",
+      "nom": "Ish turi",
+      "tur": "matn",
+      "standart": "Diagnostika",
+      "majburiy": true,
+      "variantlar": [
+        "Diagnostika",
+        "Dvigatel",
+        "Xodovoy",
+        "Kuzov",
+        "Bo'yash",
+        "Elektrika",
+        "TO"
+      ]
+    },
+    {
+      "kalit": "probeg_km",
+      "nom": "Probeg",
+      "tur": "butun",
+      "birlik": "km",
+      "min": 0,
+      "max": 2000000
+    },
+    {
+      "kalit": "ehtiyot_qism",
+      "nom": "Ehtiyot qism bizdan",
+      "tur": "mantiq",
+      "standart": true
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{davlat_raqam}",
+    "tarkib": "{avto}, {ish_turi}",
+    "tur": "{ish_turi}",
+    "tur_zaxira": "ta'mir",
+    "hujjat_mahsulot": "{tarkib} ({olcham})",
+    "nakladnoy_mahsulot": "{tarkib} ({olcham})"
+  }
+}

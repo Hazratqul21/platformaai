@@ -1,0 +1,71 @@
+{
+  "kalit": "kabel",
+  "nom": "Kabel / elektrotexnika",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Kabel-sim mahsulotlari.",
+  "maydonlar": [
+    {
+      "kalit": "marka",
+      "nom": "Kabel markasi",
+      "tur": "matn",
+      "majburiy": true,
+      "standart": "ВВГ",
+      "variantlar": [
+        "ВВГ",
+        "АВВГ",
+        "ПВС",
+        "КГ",
+        "NYM"
+      ]
+    },
+    {
+      "kalit": "kesim_mm2",
+      "nom": "Kesim",
+      "tur": "kasr",
+      "birlik": "mm²",
+      "standart": "2.5",
+      "majburiy": true
+    },
+    {
+      "kalit": "tomir",
+      "nom": "Tomirlar soni",
+      "tur": "butun",
+      "standart": 3,
+      "min": 1,
+      "max": 50,
+      "majburiy": true
+    },
+    {
+      "kalit": "izolyatsiya",
+      "nom": "Izolyatsiya",
+      "tur": "matn",
+      "standart": "PVX",
+      "variantlar": [
+        "PVX",
+        "Rezina",
+        "Silikon",
+        "XLPE"
+      ]
+    },
+    {
+      "kalit": "uzunlik_m",
+      "nom": "Uzunlik",
+      "tur": "butun",
+      "birlik": "m",
+      "standart": 100,
+      "min": 1,
+      "max": 100000
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{tomir}×{kesim_mm2}",
+    "tarkib": "{marka} {olcham}, {izolyatsiya}",
+    "tur": "{marka}",
+    "tur_zaxira": "kabel",
+    "hujjat_mahsulot": "{tarkib}, {uzunlik_m} m",
+    "nakladnoy_mahsulot": "{tarkib}, {uzunlik_m} m"
+  }
+}

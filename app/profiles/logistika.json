@@ -1,0 +1,61 @@
+{
+  "kalit": "logistika",
+  "nom": "Transport / logistika",
+  "modul": "xizmat",
+  "izoh": "Yuk tashish xizmati.",
+  "maydonlar": [
+    {
+      "kalit": "yonalish",
+      "nom": "Yo'nalish",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "transport",
+      "nom": "Transport turi",
+      "tur": "matn",
+      "standart": "Fura",
+      "variantlar": [
+        "Fura",
+        "Refrijerator",
+        "Tent",
+        "Konteyner",
+        "Gazel"
+      ]
+    },
+    {
+      "kalit": "ogirlik_kg",
+      "nom": "Yuk og'irligi",
+      "tur": "butun",
+      "birlik": "kg",
+      "min": 1,
+      "max": 100000,
+      "majburiy": true
+    },
+    {
+      "kalit": "masofa_km",
+      "nom": "Masofa",
+      "tur": "butun",
+      "birlik": "km",
+      "min": 1,
+      "max": 20000
+    },
+    {
+      "kalit": "shoshilinch",
+      "nom": "Shoshilinch",
+      "tur": "mantiq",
+      "standart": false
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{ogirlik_kg} kg",
+    "tarkib": "{yonalish}, {transport}, {masofa_km} km",
+    "tur": "{transport}",
+    "tur_zaxira": "tashish",
+    "hujjat_mahsulot": "Yuk tashish: {tarkib}",
+    "nakladnoy_mahsulot": "Yuk tashish: {tarkib}"
+  }
+}

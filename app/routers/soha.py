@@ -47,6 +47,13 @@ def joriy(user=Depends(get_user)):
     return {
         "kalit": p.kalit, "nom": p.nom, "izoh": p.izoh,
         "narx_usuli": p.narx.get("usul", "qolda"),
+        "xomashyo_hisobi": bool(p.xomashyo),
+        "modul": {"kalit": p.modul.kalit, "nom": p.modul.nom, "izoh": p.modul.izoh},
+        # Statuslar ham shu yerda: frontend treker bosqichlarini qattiq
+        # yozmasdan, ish tartibidan chizishi kerak.
+        "statuslar": [{"nom": st.nom, "mano": st.mano,
+                       "keyingi": st.keyingi, "rollar": st.rollar}
+                      for st in p.modul.statuslar],
         "maydonlar": [{
             "kalit": md.kalit, "nom": md.nom, "tur": md.tur,
             "birlik": md.birlik, "standart": md.standart,

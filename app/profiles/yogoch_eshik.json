@@ -1,0 +1,82 @@
+{
+  "kalit": "yogoch_eshik",
+  "nom": "Yog'och eshik / deraza",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Massiv va shpon eshiklar.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Eshik",
+        "Deraza",
+        "Arka",
+        "Kupe"
+      ]
+    },
+    {
+      "kalit": "en_mm",
+      "nom": "Eni",
+      "tur": "butun",
+      "birlik": "mm",
+      "standart": 800,
+      "min": 300,
+      "max": 3000,
+      "majburiy": true
+    },
+    {
+      "kalit": "boy_mm",
+      "nom": "Bo'yi",
+      "tur": "butun",
+      "birlik": "mm",
+      "standart": 2000,
+      "min": 300,
+      "max": 4000,
+      "majburiy": true
+    },
+    {
+      "kalit": "yogoch",
+      "nom": "Yog'och navi",
+      "tur": "matn",
+      "standart": "Qarag'ay",
+      "variantlar": [
+        "Qarag'ay",
+        "Eman",
+        "Yong'oq",
+        "Terak",
+        "MDF"
+      ]
+    },
+    {
+      "kalit": "qoplama",
+      "nom": "Qoplama",
+      "tur": "matn",
+      "standart": "Lak",
+      "variantlar": [
+        "Lak",
+        "Bo'yoq",
+        "Shpon",
+        "Plyonka"
+      ]
+    },
+    {
+      "kalit": "qulf",
+      "nom": "Qulf o'rnatiladi",
+      "tur": "mantiq",
+      "standart": true
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{en_mm}×{boy_mm}",
+    "tarkib": "{yogoch}, {qoplama}",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "eshik",
+    "hujjat_mahsulot": "{tur} {olcham} мм, {tarkib}",
+    "nakladnoy_mahsulot": "{tur} {olcham} мм, {tarkib}"
+  }
+}

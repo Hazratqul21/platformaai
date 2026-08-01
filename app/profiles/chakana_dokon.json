@@ -1,0 +1,49 @@
+{
+  "kalit": "chakana_dokon",
+  "nom": "Chakana do'kon",
+  "modul": "savdo",
+  "izoh": "Do'kondan yakuniy iste'molchiga sotish.",
+  "maydonlar": [
+    {
+      "kalit": "nomi",
+      "nom": "Tovar nomi",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "kategoriya",
+      "nom": "Kategoriya",
+      "tur": "matn",
+      "standart": "Umumiy"
+    },
+    {
+      "kalit": "birlik",
+      "nom": "Birlik",
+      "tur": "matn",
+      "standart": "dona",
+      "variantlar": [
+        "dona",
+        "kg",
+        "litr",
+        "metr"
+      ],
+      "majburiy": true
+    },
+    {
+      "kalit": "shtrix_kod",
+      "nom": "Shtrix-kod",
+      "tur": "matn"
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{birlik}",
+    "tarkib": "{nomi}, {kategoriya}",
+    "tur": "{nomi}",
+    "tur_zaxira": "tovar",
+    "hujjat_mahsulot": "{tarkib}",
+    "nakladnoy_mahsulot": "{tarkib}"
+  }
+}

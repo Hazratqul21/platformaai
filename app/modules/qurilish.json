@@ -1,0 +1,69 @@
+{
+  "kalit": "qurilish",
+  "nom": "Qurilish / montaj",
+  "izoh": "Shartnoma -> o'lchov olindi -> ishlab chiqarildi -> montaj -> topshirildi.",
+  "statuslar": [
+    {
+      "nom": "Shartnoma",
+      "mano": "boshlanish",
+      "keyingi": [
+        "O'lchov olindi",
+        "Muzokara",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Muzokara",
+      "mano": "muzokara",
+      "keyingi": [
+        "Shartnoma",
+        "O'lchov olindi",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "O'lchov olindi",
+      "mano": "ishlab_chiqarish",
+      "keyingi": [
+        "Montaj qilinmoqda",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer",
+        "Sex boshlig'i"
+      ]
+    },
+    {
+      "nom": "Montaj qilinmoqda",
+      "mano": "tayyor",
+      "keyingi": [
+        "Obyekt topshirildi"
+      ],
+      "rollar": [
+        "Sex boshlig'i"
+      ]
+    },
+    {
+      "nom": "Obyekt topshirildi",
+      "mano": "topshirildi",
+      "keyingi": [],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Bekor qilindi",
+      "mano": "bekor",
+      "keyingi": [],
+      "rollar": [
+        "Menejer"
+      ]
+    }
+  ]
+}

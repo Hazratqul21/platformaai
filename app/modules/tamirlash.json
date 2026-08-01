@@ -1,0 +1,68 @@
+{
+  "kalit": "tamirlash",
+  "nom": "Ta'mirlash / servis",
+  "izoh": "Buyum qabul qilinadi -> tashxis -> tuzatilmoqda -> egasiga qaytariladi.",
+  "statuslar": [
+    {
+      "nom": "Qabul qilindi",
+      "mano": "boshlanish",
+      "keyingi": [
+        "Tashxis qo'yilmoqda",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Tashxis qo'yilmoqda",
+      "mano": "muzokara",
+      "keyingi": [
+        "Tuzatilmoqda",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Menejer",
+        "Sex boshlig'i"
+      ]
+    },
+    {
+      "nom": "Tuzatilmoqda",
+      "mano": "ishlab_chiqarish",
+      "keyingi": [
+        "Tayyor",
+        "Bekor qilindi"
+      ],
+      "rollar": [
+        "Sex boshlig'i"
+      ]
+    },
+    {
+      "nom": "Tayyor",
+      "mano": "tayyor",
+      "keyingi": [
+        "Egasiga topshirildi"
+      ],
+      "rollar": [
+        "Sex boshlig'i"
+      ]
+    },
+    {
+      "nom": "Egasiga topshirildi",
+      "mano": "topshirildi",
+      "keyingi": [],
+      "rollar": [
+        "Menejer"
+      ]
+    },
+    {
+      "nom": "Bekor qilindi",
+      "mano": "bekor",
+      "keyingi": [],
+      "rollar": [
+        "Menejer",
+        "Sex boshlig'i"
+      ]
+    }
+  ]
+}

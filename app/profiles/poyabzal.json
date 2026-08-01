@@ -1,0 +1,64 @@
+{
+  "kalit": "poyabzal",
+  "nom": "Poyabzal ishlab chiqarish",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Erkak/ayol/bolalar poyabzali.",
+  "maydonlar": [
+    {
+      "kalit": "model",
+      "nom": "Model",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "olcham",
+      "nom": "O'lcham",
+      "tur": "butun",
+      "standart": 41,
+      "min": 16,
+      "max": 50,
+      "majburiy": true
+    },
+    {
+      "kalit": "material",
+      "nom": "Material",
+      "tur": "matn",
+      "standart": "Tabiiy charm",
+      "variantlar": [
+        "Tabiiy charm",
+        "Sun'iy charm",
+        "Zamsha",
+        "Tekstil"
+      ]
+    },
+    {
+      "kalit": "tovon",
+      "nom": "Tovon",
+      "tur": "matn",
+      "standart": "Rezina",
+      "variantlar": [
+        "Rezina",
+        "Poliuretan",
+        "TPR",
+        "Charm"
+      ]
+    },
+    {
+      "kalit": "rang",
+      "nom": "Rang",
+      "tur": "matn",
+      "standart": "Qora"
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{olcham}-o'lcham",
+    "tarkib": "{model}, {material}, {tovon} tovon, {rang}",
+    "tur": "{model}",
+    "tur_zaxira": "poyabzal",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

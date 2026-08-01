@@ -81,7 +81,7 @@ def add_lot(data: LotIn, db: Session = Depends(get_db),
 @router.get("/finished")
 def finished_stock(db: Session = Depends(get_db), user=Depends(get_user)):
     """Tayyor mahsulot ombori = statusi 'Omborga tushdi' buyurtmalar."""
-    rows = db.query(m.Order).filter(m.Order.status == m.ST_OMBORDA).all()
+    rows = db.query(m.Order).filter(m.Order.status.in_(domain.statuslar("tayyor"))).all()
     return [{
         "order_id": o.id, "company": o.client.company,
         "size": domain.olcham_matni(o), "layers": soha_oqi(o, "layers"),

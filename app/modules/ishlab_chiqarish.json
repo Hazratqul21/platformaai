@@ -1,0 +1,31 @@
+{
+  "kalit": "ishlab_chiqarish",
+  "nom": "Ishlab chiqarish (sex)",
+  "izoh": "Buyurtma qabul qilinadi -> sexga beriladi (xomashyo yechiladi) -> tayyor mahsulot omboriga tushadi -> mijozga topshiriladi.",
+
+  "statuslar": [
+    {"nom": "Kutishda", "mano": "boshlanish",
+     "keyingi": ["Sexda kesilmoqda", "Muzokara", "Bekor qilindi"],
+     "rollar": ["Menejer"]},
+
+    {"nom": "Muzokara", "mano": "muzokara",
+     "keyingi": ["Kutishda", "Sexda kesilmoqda", "Bekor qilindi"],
+     "rollar": ["Menejer"]},
+
+    {"nom": "Sexda kesilmoqda", "mano": "ishlab_chiqarish",
+     "keyingi": ["Omborga tushdi", "Bekor qilindi"],
+     "rollar": ["Menejer"]},
+
+    {"nom": "Omborga tushdi", "mano": "tayyor",
+     "keyingi": ["Yetkazib berildi"],
+     "rollar": ["Sex boshlig'i"]},
+
+    {"nom": "Yetkazib berildi", "mano": "topshirildi",
+     "keyingi": [],
+     "rollar": ["Sklad mudiri"]},
+
+    {"nom": "Bekor qilindi", "mano": "bekor",
+     "keyingi": [],
+     "rollar": ["Menejer", "Sex boshlig'i"]}
+  ]
+}

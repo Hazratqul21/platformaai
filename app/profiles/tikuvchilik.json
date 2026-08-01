@@ -1,0 +1,66 @@
+{
+  "kalit": "tikuvchilik",
+  "nom": "Tikuvchilik sexi",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Shvey sexi: forma, ish kiyimi, trikotaj buyurtmalari.",
+  "maydonlar": [
+    {
+      "kalit": "model",
+      "nom": "Model",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "olcham",
+      "nom": "O'lcham",
+      "tur": "matn",
+      "standart": "M",
+      "variantlar": [
+        "XS",
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL",
+        "XXXL"
+      ],
+      "majburiy": true
+    },
+    {
+      "kalit": "mato",
+      "nom": "Mato",
+      "tur": "matn",
+      "standart": "Paxta",
+      "variantlar": [
+        "Paxta",
+        "Poliester",
+        "Jinsi",
+        "Trikotaj",
+        "Gabardin"
+      ]
+    },
+    {
+      "kalit": "rang",
+      "nom": "Rang",
+      "tur": "matn",
+      "standart": "Ko'k"
+    },
+    {
+      "kalit": "logo",
+      "nom": "Logo bosiladi",
+      "tur": "mantiq",
+      "standart": false
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{olcham}",
+    "tarkib": "{model}, {mato}, {rang}",
+    "tur": "{model}",
+    "tur_zaxira": "kiyim",
+    "hujjat_mahsulot": "{tarkib}, o'lcham {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, o'lcham {olcham}"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "kalit": "poligrafiya",
+  "nom": "Poligrafiya / bosmaxona",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Vizitka, bukelt, katalog, banner.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Vizitka",
+        "Buklet",
+        "Katalog",
+        "Flayer",
+        "Banner",
+        "Yorliq"
+      ]
+    },
+    {
+      "kalit": "format",
+      "nom": "Format",
+      "tur": "matn",
+      "standart": "A4",
+      "variantlar": [
+        "A6",
+        "A5",
+        "A4",
+        "A3",
+        "A2",
+        "A1",
+        "90x50"
+      ]
+    },
+    {
+      "kalit": "qogoz_zichligi",
+      "nom": "Qog'oz zichligi",
+      "tur": "butun",
+      "birlik": "g/m²",
+      "standart": 150,
+      "min": 60,
+      "max": 400
+    },
+    {
+      "kalit": "ranglilik",
+      "nom": "Ranglilik",
+      "tur": "matn",
+      "standart": "4+0",
+      "variantlar": [
+        "1+0",
+        "1+1",
+        "4+0",
+        "4+4"
+      ]
+    },
+    {
+      "kalit": "laminatsiya",
+      "nom": "Laminatsiya",
+      "tur": "matn",
+      "standart": "Yo'q",
+      "variantlar": [
+        "Yo'q",
+        "Mat",
+        "Yaltiroq"
+      ]
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{format}",
+    "tarkib": "{qogoz_zichligi} g/m², {ranglilik}, laminatsiya {laminatsiya}",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "bosma",
+    "hujjat_mahsulot": "{tur} {olcham}, {tarkib}",
+    "nakladnoy_mahsulot": "{tur} {olcham}, {tarkib}"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "kalit": "plastik_deraza",
+  "nom": "Plastik deraza / eshik",
+  "modul": "qurilish",
+  "izoh": "O'lchov olinadi, yasaladi, montaj qilinadi.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Deraza",
+        "Balkon eshigi",
+        "Vitraj",
+        "Kirish eshigi"
+      ]
+    },
+    {
+      "kalit": "profil",
+      "nom": "Profil",
+      "tur": "matn",
+      "standart": "60 mm",
+      "variantlar": [
+        "58 mm",
+        "60 mm",
+        "70 mm",
+        "76 mm"
+      ]
+    },
+    {
+      "kalit": "en_mm",
+      "nom": "Eni",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 300,
+      "max": 6000,
+      "majburiy": true
+    },
+    {
+      "kalit": "boy_mm",
+      "nom": "Bo'yi",
+      "tur": "butun",
+      "birlik": "mm",
+      "min": 300,
+      "max": 4000,
+      "majburiy": true
+    },
+    {
+      "kalit": "kamera",
+      "nom": "Kameralar soni",
+      "tur": "butun",
+      "standart": 3,
+      "min": 2,
+      "max": 6
+    },
+    {
+      "kalit": "shisha_paket",
+      "nom": "Shisha paket",
+      "tur": "matn",
+      "standart": "Ikki qavat",
+      "variantlar": [
+        "Bir qavat",
+        "Ikki qavat",
+        "Uch qavat",
+        "Energiya tejamkor"
+      ]
+    },
+    {
+      "kalit": "moskitka",
+      "nom": "Moskit to'r",
+      "tur": "mantiq",
+      "standart": true
+    }
+  ],
+  "narx": {
+    "usul": "qolda"
+  },
+  "matnlar": {
+    "olcham": "{en_mm}×{boy_mm}",
+    "tarkib": "{profil} profil, {kamera} kamera, {shisha_paket}",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "deraza",
+    "hujjat_mahsulot": "{tur} {olcham} мм, {tarkib}",
+    "nakladnoy_mahsulot": "{tur} {olcham} мм, {tarkib}"
+  }
+}

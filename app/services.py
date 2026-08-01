@@ -7,6 +7,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from . import models as m
+from . import domain
 
 try:
     from zoneinfo import ZoneInfo
@@ -484,7 +485,13 @@ def fifo_writeoff(db: Session, grade: str, need_m2: Decimal, order_id=None, note
         if not any_lot:
             supp = db.query(m.Supplier).first()
             if not supp:
-                supp = m.Supplier(name="Noma'lum", phone="-", type="xomashyo")
+                # DIQQAT: ilgari bu yerda `type="xomashyo"` yozilgan edi,
+                # lekin modelda bunday maydon yo'q (u `kind`) — natijada
+                # TypeError va 500. Bu yo'l faqat OMBOR BUTUNLAY BO'SH
+                # bo'lganda ishlaydi, ya'ni aynan YANGI MIJOZDA. Eski
+                # tizimda ombor hech qachon bo'sh bo'lmagani uchun xato
+                # bilinmagan. `kind` standart qiymatida qoldiriladi.
+                supp = m.Supplier(name="Noma'lum", phone="-")
                 db.add(supp)
                 db.flush()
             from datetime import date
@@ -591,7 +598,7 @@ def debt_aging(db: Session, firm: str | None = None) -> list[dict]:
     
     all_orders = (
         db.query(m.Order)
-        .filter(m.Order.status.in_([m.ST_SEXDA, m.ST_OMBORDA, m.ST_YETKAZILDI]))
+        .filter(m.Order.status.in_(domain.statuslar("ishlab_chiqarish", "tayyor", "topshirildi")))
         .order_by(m.Order.created_at)
         .all()
     )
@@ -681,7 +688,7 @@ def cash_flow_forecast(db: Session, days: int = 7, firm: str | None = None) -> d
     inflow = Decimal("0")
     oq = db.query(m.Order.id, m.Order.total).filter(
         m.Order.due_date.isnot(None), m.Order.due_date <= horizon,
-        m.Order.status.in_([m.ST_SEXDA, m.ST_OMBORDA, m.ST_YETKAZILDI]),
+        m.Order.status.in_(domain.statuslar("ishlab_chiqarish", "tayyor", "topshirildi")),
     )
     if firm:
         oq = oq.filter(m.Order.client.has(m.Client.firm.in_([firm, ""])))
