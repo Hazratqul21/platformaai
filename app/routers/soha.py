@@ -48,6 +48,9 @@ def joriy(user=Depends(get_user)):
         "kalit": p.kalit, "nom": p.nom, "izoh": p.izoh,
         "narx_usuli": p.narx.get("usul", "qolda"),
         "xomashyo_hisobi": bool(p.xomashyo),
+        # Retsept (BOM): 1 buyurtmaga qaysi material qancha ketadi.
+        # Frontend shundan «ishlab chiqarishga yetadimi» ni ko'rsatishi mumkin.
+        "retsept": p.retsept,
         "modul": {"kalit": p.modul.kalit, "nom": p.modul.nom, "izoh": p.modul.izoh},
         # Statuslar ham shu yerda: frontend treker bosqichlarini qattiq
         # yozmasdan, ish tartibidan chizishi kerak.

@@ -68,6 +68,27 @@
   "narx": {
     "usul": "qolda"
   },
+  "retsept": [
+    {
+      "material": "Un",
+      "birlik": "kg",
+      "miqdor": "ogirlik_g * qty / 1000 * 0.65",
+      "brak_foiz": 2,
+      "izoh": "1 kg nonga ~650 g un"
+    },
+    {
+      "material": "Tuz",
+      "birlik": "kg",
+      "miqdor": "ogirlik_g * qty / 1000 * 0.012",
+      "brak_foiz": 0
+    },
+    {
+      "material": "Xamirturush",
+      "birlik": "kg",
+      "miqdor": "ogirlik_g * qty / 1000 * 0.01",
+      "brak_foiz": 0
+    }
+  ],
   "matnlar": {
     "olcham": "{ogirlik_g} g",
     "tarkib": "{non_turi}, {un_navi} un",

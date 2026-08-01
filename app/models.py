@@ -277,6 +277,44 @@ class Setting(Base):
     value: Mapped[str] = mapped_column(String(200))
 
 
+class MaterialLot(Base):
+    """UMUMIY xomashyo partiyasi — har qanday material uchun, FIFO.
+
+    `RawLot` dan farqi: u faqat QOG'OZ uchun (grade + grammage + kg).
+    Bu esa istalgan materialga yaraydi — un, LDSP, mato, metall, bo'yoq.
+    Material o'z birligida saqlanadi (`Material.unit`), retsept boshqa
+    birlikda so'rasa `Material.konversiya` orqali o'giriladi.
+
+    Nega alohida jadval: FIFO uchun har partiyaning O'Z NARXI kerak.
+    `Material.stock_qty` faqat umumiy qoldiqni biladi, qaysi partiya
+    qancha turganini emas — tannarx shundan noto'g'ri chiqardi.
+    """
+    __tablename__ = "material_lots"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    material_id: Mapped[int] = mapped_column(ForeignKey("materials.id"))
+    lot_no: Mapped[str] = mapped_column(String(30), default="")
+    supplier_id: Mapped[int | None] = mapped_column(
+        ForeignKey("suppliers.id"), nullable=True)
+    qty: Mapped[Decimal] = mapped_column(Q3)            # kirim (material birligida)
+    remaining: Mapped[Decimal] = mapped_column(Q3)      # qoldiq
+    price_per_unit: Mapped[Decimal] = mapped_column(D)  # so'm / birlik
+    received_at: Mapped[date] = mapped_column(Date, default=date.today)
+
+    material: Mapped["Material"] = relationship()
+
+
+class MaterialWriteoff(Base):
+    """Retsept bo'yicha yechilgan xomashyo — qaysi buyurtmaga, qancha, qancha pulga."""
+    __tablename__ = "material_writeoffs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    lot_id: Mapped[int] = mapped_column(ForeignKey("material_lots.id"))
+    order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"), nullable=True)
+    qty: Mapped[Decimal] = mapped_column(Q3)     # material birligida (brak bilan)
+    cost: Mapped[Decimal] = mapped_column(D)
+    moved_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    note: Mapped[str] = mapped_column(String(200), default="")
+
+
 class SohaProfil(Base):
     """SOHA SHABLONI — biznes turining ta'rifi, KOD EMAS, MA'LUMOT.
 
@@ -371,6 +409,12 @@ class Material(Base):
     stock_qty: Mapped[Decimal] = mapped_column(Q3, default=Decimal("0"))
     min_stock: Mapped[Decimal] = mapped_column(Q3, default=Decimal("0"))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # BOSHQA BIRLIKKA O'GIRISH: {"m²": "0.12"} — 1 m² = 0.12 kg.
+    # Qog'oz kg da saqlanadi, lekin karton retsepti m² so'raydi; mato metr
+    # da saqlanib, retsept m² so'rashi mumkin. Konversiyasiz har soha
+    # o'z birligiga majbur bo'lardi.
+    konversiya: Mapped[dict] = mapped_column(
+        MutableDict.as_mutable(JSON), default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

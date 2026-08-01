@@ -77,6 +77,7 @@ def namuna_qiymat(md):
 
 
 def profilni_sina(kalit, nom, token):
+    kalit_profil = kalit
     s, _ = call("POST", "/api/soha/faollashtirish", {"kalit": kalit}, token)
     if not tekshir(kalit, "faollashtirish", s == 200, f"status={s}"):
         return
@@ -84,6 +85,20 @@ def profilni_sina(kalit, nom, token):
     s, joriy = call("GET", "/api/soha/joriy", token=token)
     maydonlar = [md for md in joriy["maydonlar"] if not md["hisoblanadi"]]
     attrs = {md["kalit"]: namuna_qiymat(md) for md in maydonlar}
+
+    # Profil retsept e'lon qilgan bo'lsa — omborni oldindan to'ldiramiz.
+    # Aks holda «ishlab chiqarish» bosqichida xomashyo yetmay 409 chiqadi.
+    # Bu testning o'z vazifasi: profil TALAB qilgan narsani ta'minlash.
+    for qator in joriy.get("retsept") or []:
+        nom = qator["material"]
+        if "{" in nom:
+            # material nomi soha maydonidan olinadi (karton: "{grade}")
+            for kalit, qiymat in attrs.items():
+                nom = nom.replace("{" + kalit + "}", str(qiymat))
+        s, d = call("POST", "/api/warehouse/material-lot",
+                    {"material": nom, "qty": 1_000_000, "price_per_unit": 1000,
+                     "unit": qator.get("birlik") or "dona"}, token)
+        tekshir(kalit_profil, f"ombor to'ldirish «{nom}»", s == 200, str(d)[:120])
 
     s, c = call("POST", "/api/clients",
                 {"company": f"Sinov mijoz ({kalit})", "phone": "901234567"}, token)

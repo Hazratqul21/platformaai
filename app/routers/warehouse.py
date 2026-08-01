@@ -245,3 +245,87 @@ def pay_supplier(data: SupPayIn, db: Session = Depends(get_db),
     bal = s.supplier_balance(db, sup.id)
     return {"ok": True, "debt": float(bal["debt"]), "avans": float(bal["avans"]),
             "got": float(bal["got"]), "paid": float(bal["paid"])}
+
+
+# =====================================================================
+# UMUMIY OMBOR — istalgan material kirimi (retsept shundan yechadi)
+#
+# `POST /raw` faqat QOG'OZ uchun (grade + grammaj + kg). Bu esa un,
+# LDSP, mato, metall, bo'yoq — hammasi uchun.
+# =====================================================================
+
+class MaterialLotIn(BaseModel):
+    material: str                       # nomi (yo'q bo'lsa yaratiladi)
+    qty: float                          # kirim miqdori
+    price_per_unit: float               # so'm / birlik
+    unit: str = "kg"                    # material birligi
+    category: str = "Xomashyo"
+    lot_no: str = ""
+    supplier_id: int | None = None
+    konversiya: dict | None = None      # {"m²": 0.12} — 1 m² = 0.12 kg
+
+
+@router.post("/material-lot")
+def add_material_lot(data: MaterialLotIn, db: Session = Depends(get_db),
+                     user=Depends(require_roles("Sklad mudiri", "Buxgalter"))):
+    """Materialni omborga kiritadi (partiya sifatida, FIFO uchun).
+
+    Material nomi bo'yicha topiladi — kirill/lotin va katta-kichik harf
+    farqiga qaramay. Topilmasa yangisi yaratiladi: ombor kartochkasini
+    oldindan ochishga majburlash amalda ishlamaydi, sklad mudiri qog'ozni
+    olib kelganda darrov kiritadi.
+    """
+    if data.qty <= 0:
+        raise HTTPException(400, "Miqdor 0 dan katta bo'lsin")
+    if data.price_per_unit < 0:
+        raise HTTPException(400, "Narx manfiy bo'lmasin")
+
+    mat = s.material_top(db, data.material)
+    if mat is None:
+        mat = m.Material(name=data.material.strip(), category=data.category,
+                         unit=data.unit, stock_qty=Decimal("0"),
+                         konversiya=data.konversiya or {})
+        db.add(mat)
+        db.flush()
+    elif data.konversiya:
+        # kelgan o'girish koeffitsientlari qo'shiladi (mavjudi o'chmaydi)
+        yangi = dict(mat.konversiya or {})
+        yangi.update({k: str(v) for k, v in data.konversiya.items()})
+        mat.konversiya = yangi
+
+    miqdor = Decimal(str(data.qty))
+    lot = m.MaterialLot(
+        material_id=mat.id, lot_no=data.lot_no or f"L{date.today():%y%m%d}",
+        supplier_id=data.supplier_id, qty=miqdor, remaining=miqdor,
+        price_per_unit=Decimal(str(data.price_per_unit)), received_at=date.today())
+    db.add(lot)
+    mat.stock_qty = Decimal(str(mat.stock_qty or 0)) + miqdor
+    mat.last_price = Decimal(str(data.price_per_unit))
+    db.add(m.AuditLog(who=user.name, action="Material kirimi",
+                      detail=f"{mat.name}: {miqdor} {mat.unit} × "
+                             f"{data.price_per_unit:,.0f} so'm"))
+    db.commit()
+    return {"ok": True, "material_id": mat.id, "lot_id": lot.id,
+            "material": mat.name, "unit": mat.unit,
+            "stock_qty": float(mat.stock_qty)}
+
+
+@router.get("/materials")
+def material_stock(db: Session = Depends(get_db), user=Depends(get_user)):
+    """Umumiy ombor qoldig'i — partiyalari bilan."""
+    natija = []
+    for mat in db.query(m.Material).filter(m.Material.active.is_(True)).all():
+        lots = (db.query(m.MaterialLot)
+                .filter(m.MaterialLot.material_id == mat.id,
+                        m.MaterialLot.remaining > 0)
+                .order_by(m.MaterialLot.received_at, m.MaterialLot.id).all())
+        natija.append({
+            "id": mat.id, "name": mat.name, "unit": mat.unit,
+            "category": mat.category, "stock_qty": float(mat.stock_qty or 0),
+            "min_stock": float(mat.min_stock or 0),
+            "konversiya": mat.konversiya or {},
+            "lots": [{"lot_no": l.lot_no, "remaining": float(l.remaining),
+                      "price_per_unit": float(l.price_per_unit),
+                      "received_at": l.received_at.isoformat()} for l in lots],
+        })
+    return natija

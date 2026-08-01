@@ -260,6 +260,13 @@ _TRANSLIT = {
 }
 
 
+def _norm(text: str) -> str:
+    """Nomni solishtirish uchun bir ko'rinishga keltiradi: kichik harf,
+    kirill -> lotin, ortiqcha bo'shliqsiz. «Хитой» va «Xitoy» teng bo'ladi."""
+    s = (text or "").strip().lower()
+    return "".join(_TRANSLIT.get(ch, ch) for ch in s).replace(" ", "")
+
+
 def _qogoz_kaliti(text: str) -> tuple[str, Decimal | None]:
     """Qog'oz nomini solishtirish kalitiga aylantiradi.
 
@@ -768,3 +775,87 @@ def payroll(db: Session, year: int, month: int, firm: str | None = None) -> list
             "net": float(Decimal(earned) - Decimal(advances)),
         })
     return out
+
+
+# =====================================================================
+# UMUMIY OMBOR — retsept bo'yicha istalgan materialni FIFO bilan yechish
+#
+# `fifo_writeoff` dan farqi: u faqat QOG'OZ uchun (grade + m²->kg
+# grammaj orqali). Bu esa istalgan material bilan ishlaydi va birlikni
+# `Material.konversiya` orqali o'giradi.
+# =====================================================================
+
+def material_top(db: Session, nom: str):
+    """Materialni nomi bo'yicha topadi — katta/kichik harf va kirill/lotin
+    farqiga qaramay. Ombor kartochkalari qo'lda kiritilgani uchun nom
+    aynan mos kelishiga tayanib bo'lmaydi."""
+    nom_t = (nom or "").strip()
+    if not nom_t:
+        return None
+    hammasi = db.query(m.Material).filter(m.Material.active.is_(True)).all()
+    kalit = _norm(nom_t)
+    for mat in hammasi:
+        if _norm(mat.name) == kalit:
+            return mat
+    return None
+
+
+def _konversiya(mat, birlik: str) -> Decimal:
+    """1 `birlik` necha `mat.unit` ga teng. Birlik bir xil bo'lsa — 1."""
+    if not birlik or _norm(birlik) == _norm(mat.unit):
+        return Decimal("1")
+    xarita = mat.konversiya or {}
+    for k, v in xarita.items():
+        if _norm(k) == _norm(birlik):
+            return Decimal(str(v))
+    raise ValueError(
+        f"«{mat.name}» {mat.unit} da saqlanadi, retsept {birlik} so'rayapti — "
+        f"o'girish koeffitsienti kiritilmagan")
+
+
+def retsept_yechish(db: Session, order, qatorlar: list[dict],
+                    note: str = "") -> Decimal:
+    """Retsept qatorlarini ombordan FIFO bilan yechadi. Jami tannarx qaytadi.
+
+    Yetmasa `ValueError` — buyurtma statusi o'zgarmaydi (chaqiruvchi 409
+    qaytaradi). Ataylab QISMAN yechilmaydi: yarim yechilgan xomashyo
+    ombor qoldig'ini jimgina buzardi.
+    """
+    # 1) Avval HAMMASI yetarlimi — tekshirib chiqamiz (hech narsa yechmasdan)
+    reja = []
+    for q in qatorlar:
+        if q.get("xato"):
+            raise ValueError(f"«{q['material']}»: {q['xato']}")
+        mat = material_top(db, q["material"])
+        if not mat:
+            raise ValueError(f"«{q['material']}» materiali omborda topilmadi")
+        koef = _konversiya(mat, q["birlik"])
+        kerak = (Decimal(str(q["miqdor"])) * koef).quantize(Decimal("0.0001"))
+        lots = (db.query(m.MaterialLot)
+                .filter(m.MaterialLot.material_id == mat.id,
+                        m.MaterialLot.remaining > 0)
+                .order_by(m.MaterialLot.received_at, m.MaterialLot.id).all())
+        bor = sum(Decimal(str(l.remaining)) for l in lots)
+        if bor < kerak:
+            raise ValueError(
+                f"«{mat.name}» yetarli emas: kerak {kerak} {mat.unit}, "
+                f"omborda {bor} {mat.unit}")
+        reja.append((mat, kerak, lots))
+
+    # 2) Hammasi yetarli — endi yechamiz
+    jami = Decimal("0")
+    for mat, kerak, lots in reja:
+        qolgan = kerak
+        for lot in lots:
+            if qolgan <= 0:
+                break
+            olinadi = min(Decimal(str(lot.remaining)), qolgan)
+            narx = (olinadi * Decimal(str(lot.price_per_unit))).quantize(Decimal("0.01"))
+            lot.remaining = Decimal(str(lot.remaining)) - olinadi
+            qolgan -= olinadi
+            jami += narx
+            db.add(m.MaterialWriteoff(
+                lot_id=lot.id, order_id=getattr(order, "id", None),
+                qty=olinadi, cost=narx, note=note))
+        mat.stock_qty = Decimal(str(mat.stock_qty or 0)) - kerak
+    return jami

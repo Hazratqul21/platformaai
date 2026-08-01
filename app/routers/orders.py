@@ -461,10 +461,20 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
         db.add(m.AuditLog(who=user.name, action="Xomashyo qaytarildi",
                           detail=f"Buyurtma #{o.id} bekor — {float(returned):.1f} kg omborga qaytdi"))
     if yangi_mano == "ishlab_chiqarish":
-        # ishlab chiqarishga berilganda xomashyo FIFO bo'yicha yechiladi (brak bilan).
-        # Profil xomashyo iste'molini e'lon qilmagan bo'lsa — spisaniya yo'q.
+        # Ishlab chiqarishga berilganda xomashyo yechiladi. Ikki yo'l:
+        #   RETSEPT (umumiy)  — istalgan material, har soha uchun
+        #   m2_marka (karton) — eski, qog'ozga xos yo'l
+        # Retsept bo'lsa u ustun: umumiy dvigatel puxtaroq (qisman
+        # yechmaydi, yetmasa umuman tegmaydi).
+        qatorlar = domain.retsept_qatorlari(o)
+        if qatorlar:
+            try:
+                s.retsept_yechish(db, o, qatorlar,
+                                  note=f"Buyurtma #{o.id} retsept bo'yicha")
+            except ValueError as e:
+                raise HTTPException(409, str(e))
         xom, marka = domain.xomashyo_kerak(o)
-        if xom is not None:
+        if not qatorlar and xom is not None:
             brak = Decimal("1") + s.dset(db, "brak_percent") / 100
             need = (xom * brak).quantize(Decimal("0.0001"))
             try:

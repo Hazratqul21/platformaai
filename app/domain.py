@@ -202,6 +202,10 @@ class Profil:
         # Yadro shunda spisaniyani o'tkazib yuboradi, buyurtma esa
         # oddiy ishlayveradi.
         self.xomashyo = tarif.get("xomashyo", {})
+        # RETSEPT (BOM) — 1 dona mahsulotga qancha material ketadi.
+        # Har qator: {"material","birlik","miqdor" (ifoda),"brak_foiz"}
+        # `miqdor` ifodasida soha maydonlari va `qty` ishlatiladi.
+        self.retsept = tarif.get("retsept", [])
         # Buyurtma MIQDORI qanday o'lchanadi. Karton «dona», beton «m³»,
         # kabel «metr», go'sht «kg». `kasrli` — 2.5 m³ mumkinmi.
         olchov = tarif.get("olchov", {})
@@ -451,6 +455,58 @@ def soha_oqi(order, kalit: str, standart=None):
 def soha_hammasi(order) -> dict:
     """Hamma soha maydonlari, Python turlarida."""
     return {md.kalit: soha_oqi(order, md.kalit) for md in profil().maydonlar}
+
+
+def retsept_qatorlari(order) -> list[dict]:
+    """Buyurtma uchun kerakli materiallar — RETSEPT bo'yicha hisoblangan.
+
+    Har qator: `{"material", "birlik", "miqdor"}` — miqdor brak bilan.
+
+    Retsept profil ta'rifida shunday yoziladi:
+        {"material": "Un",  "birlik": "kg",
+         "miqdor": "ogirlik_g * qty / 1000 * 0.7", "brak_foiz": 2}
+
+    `material` maydonida `{maydon}` ishlatilsa — soha qiymatidan olinadi
+    (karton: `"{grade}"` -> "K1"). Shu tufayli material nomi ham
+    buyurtmaga qarab o'zgaradi.
+
+    Formula xavfsiz AST hisoblagichi bilan hisoblanadi (`eval_formula`) —
+    `import` va funksiya chaqiruvi rad etiladi.
+    """
+    from .services import eval_formula   # aylanma importni oldini olish
+
+    p = profil()
+    if not p.retsept:
+        return []
+
+    qiymatlar = soha_hammasi(order)
+    # Formulaga beriladigan o'zgaruvchilar: soha maydonlari + miqdor
+    ozgaruvchilar = {"qty": float(order.qty or 0)}
+    for kalit, qiymat in qiymatlar.items():
+        if isinstance(qiymat, bool):
+            ozgaruvchilar[kalit] = 1.0 if qiymat else 0.0
+        elif isinstance(qiymat, (int, float, Decimal)):
+            ozgaruvchilar[kalit] = float(qiymat)
+
+    natija = []
+    for qator in p.retsept:
+        nom = _tuldir(qator.get("material", ""), qiymatlar)
+        if not nom:
+            continue
+        try:
+            miqdor = Decimal(str(eval_formula(qator["miqdor"], **ozgaruvchilar)))
+        except (ValueError, KeyError, TypeError):
+            # Buzuq formula butun buyurtmani to'xtatmasin, lekin jimgina
+            # o'tib ham ketmasin — qator xato belgisi bilan qaytadi.
+            natija.append({"material": nom, "birlik": qator.get("birlik", ""),
+                           "miqdor": Decimal("0"),
+                           "xato": f"formula noto'g'ri: {qator['miqdor']}"})
+            continue
+        brak = Decimal(str(qator.get("brak_foiz", 0)))
+        miqdor = (miqdor * (Decimal("1") + brak / 100)).quantize(Decimal("0.0001"))
+        natija.append({"material": nom, "birlik": qator.get("birlik", ""),
+                       "miqdor": miqdor})
+    return natija
 
 
 def xomashyo_kerak(order):
