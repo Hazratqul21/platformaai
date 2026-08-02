@@ -113,6 +113,13 @@ function enterApp(){
   document.getElementById('uname').textContent=ME.name;
   document.getElementById('urole').textContent='· '+kir(ME.role);
   document.getElementById('uav').textContent=ME.name[0];
+
+  // AI agent paneli — faqat Rahbarga. U butun tizim konfiguratsiyasini
+  // o'zgartira oladi, shuning uchun menejer/sklad ochmasligi kerak.
+  if(ME.role==='Rahbar' && typeof agentPanelYasa==='function'){
+    agentPanelYasa();
+    agentYangiSuhbat();
+  }
   
   // Hash routing
   let p = window.location.hash.replace('#/', '');

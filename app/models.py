@@ -361,6 +361,24 @@ class SohaProfil(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class AgentSuhbat(Base):
+    """AI agent bilan suhbat — bazada saqlanadi.
+
+    Nega bazada: Claude API HOLATSIZ, har so'rovda butun tarix qayta
+    yuboriladi. Tarix brauzerda saqlansa sahifa yangilanganda yo'qoladi
+    va agent nima gaplashganini unutadi. Bundan tashqari sozlash
+    suhbati — audit hujjati: mijoz nima aytgani asosida tizim shunday
+    yig'ilgani keyin ko'rinib turishi kerak.
+    """
+    __tablename__ = "agent_suhbatlar"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sarlavha: Mapped[str] = mapped_column(String(200), default="Yangi suhbat")
+    # Anthropic formatidagi xabarlar ro'yxati (rol + content bloklari)
+    xabarlar_json: Mapped[str] = mapped_column(Text, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class CustomSection(Base):
     """Konstruktor: boshqaruvchi o'zi ochadigan qo'shimcha bo'lim.
     fields — JSON: [{"key":"f1","label":"Nomi","type":"matn|raqam|pul|sana"}]"""

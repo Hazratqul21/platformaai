@@ -22,7 +22,8 @@ from . import domain  # noqa: E402
 from .seed import seed  # noqa: E402
 from .bot import start_bot_bg  # noqa: E402
 from .routers import (clients, orders, warehouse, hr, finance, reports,  # noqa: E402
-                      users, constructor, catalog, purchase, kassa, soha)
+                      users, constructor, catalog, purchase, kassa, soha,
+                      agent)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -108,7 +109,7 @@ def change_password(data: ChangePasswordIn, user=Depends(auth_mod.get_user),
 
 
 for r in (clients, orders, warehouse, hr, finance, reports, users,
-          constructor, catalog, purchase, kassa, soha):
+          constructor, catalog, purchase, kassa, soha, agent):
     app.include_router(r.router)
 
 
