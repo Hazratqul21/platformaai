@@ -909,3 +909,77 @@ def qqs_hisobla(db: Session, summa: Decimal,
 
     return {"rejim": rejim, "stavka": stavka,
             "qqssiz": qqssiz, "qqs": qqs, "jami": jami}
+
+
+def retsept_tannarx(db: Session, qatorlar: list[dict]) -> dict:
+    """Retsept qatorlarining OMBORDAGI narxi — FIFO bo'yicha, YECHMASDAN.
+
+    Smeta buyurtma yaratilishidan OLDIN kerak, ya'ni hali hech narsa
+    yechilmagan paytda. Shuning uchun bu funksiya faqat HISOBLAYDI:
+    lotlarni eng eskisidan boshlab «xayolan» oladi va narxini yig'adi.
+
+    Ombordagi qoldiq yetmasa — qolgani `Material.last_price` (oxirgi
+    xarid narxi) bilan hisoblanadi va ogohlantiriladi. Aks holda yangi
+    korxonada (ombor bo'sh) tannarx nol chiqib, narx ham nol bo'lardi.
+    """
+    jami = Decimal("0")
+    tafsilot = []
+    ogohlantirish = []
+
+    for q in qatorlar:
+        if q.get("xato"):
+            ogohlantirish.append(f"«{q['material']}»: {q['xato']}")
+            continue
+        mat = material_top(db, q["material"])
+        kerak_asl = Decimal(str(q["miqdor"]))
+        if mat is None:
+            ogohlantirish.append(
+                f"«{q['material']}» ombor kartochkasi yo'q — narxi hisobga kirmadi")
+            tafsilot.append({"material": q["material"], "birlik": q["birlik"],
+                             "miqdor": kerak_asl, "summa": Decimal("0")})
+            continue
+        try:
+            koef = _konversiya(mat, q["birlik"])
+        except ValueError as e:
+            ogohlantirish.append(str(e))
+            continue
+
+        kerak = kerak_asl * koef
+        qolgan = kerak
+        summa = Decimal("0")
+        lots = (db.query(m.MaterialLot)
+                .filter(m.MaterialLot.material_id == mat.id,
+                        m.MaterialLot.remaining > 0)
+                .order_by(m.MaterialLot.received_at, m.MaterialLot.id).all())
+        for lot in lots:
+            if qolgan <= 0:
+                break
+            olinadi = min(Decimal(str(lot.remaining)), qolgan)
+            summa += olinadi * Decimal(str(lot.price_per_unit))
+            qolgan -= olinadi
+        if qolgan > 0:
+            # Omborda yetmadi — qolganini oxirgi xarid narxida baholaymiz
+            oxirgi = Decimal(str(mat.last_price or 0))
+            summa += qolgan * oxirgi
+            if oxirgi <= 0:
+                ogohlantirish.append(
+                    f"«{mat.name}» narxi noma'lum — tannarx to'liq emas")
+            else:
+                ogohlantirish.append(
+                    f"«{mat.name}» omborda yetmaydi, {qolgan:.3f} {mat.unit} "
+                    f"oxirgi narxda ({float(oxirgi):,.0f}) hisoblandi")
+
+        summa = summa.quantize(TWO, ROUND_HALF_UP)
+        jami += summa
+        tafsilot.append({"material": mat.name, "birlik": q["birlik"],
+                         "miqdor": kerak_asl, "summa": summa})
+
+    return {"jami": jami.quantize(TWO, ROUND_HALF_UP),
+            "qatorlar": tafsilot, "ogohlantirish": ogohlantirish}
+
+
+def ustama_foizi(db: Session, category: str) -> Decimal:
+    """Mijoz toifasiga qarab narx ustamasi. Sozlamadan olinadi."""
+    kalit = {"VIP": "margin_vip", "Standart": "margin_standart"}.get(
+        category, "margin_yangi")
+    return dset(db, kalit)

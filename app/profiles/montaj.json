@@ -54,7 +54,10 @@
     "max": "1000000"
   },
   "narx": {
-    "usul": "qolda"
+    "usul": "retsept",
+    "ish_haqi": "45000",
+    "qoshimcha_xarajat_foiz": 15,
+    "izoh": "Tannarx = material (retseptdan) + ish haqi + qo'shimcha xarajat; narx = tannarx × (1 + ustama%)"
   },
   "retsept": [
     {

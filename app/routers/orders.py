@@ -96,26 +96,103 @@ def eski_ustunlarga_yoz(o, qiymatlar: dict) -> None:
             setattr(o, kalit, qiymat)
 
 
-def narxla(db, qiymatlar: dict, qty: int, category: str,
-           qolda_narx: float | None) -> dict:
+def narxla(db, qiymatlar: dict, qty, category: str,
+           qolda_narx: float | None, order=None) -> dict:
     """Tannarx va narxni profil belgilagan usul bilan hisoblaydi.
 
-    "karton_formula" — hozirgi m²/FIFO/ustama hisobi (o'zgarmagan).
-    "qolda"          — menejer narxni o'zi kiritadi; tizim formulani
-                       bilmaydi. Har qanday yangi soha shu bilan darrov
-                       ishlay boshlaydi, keyin o'z formulasi qo'shiladi.
+    "karton_formula" — eski m²/FIFO/ustama hisobi (bayt-ma-bayt o'zgarmagan)
+    "retsept"        — RETSEPTDAN: material + ish haqi + qo'shimcha xarajat,
+                       ustiga mijoz toifasi bo'yicha ustama. Har soha shu
+                       bilan o'z kalkulyatoriga ega bo'ladi.
+    "qolda"          — menejer narxni o'zi kiritadi (formulasi yo'q soha)
     """
-    usul = domain.profil().narx.get("usul", "qolda")
+    p = domain.profil()
+    usul = p.narx.get("usul", "qolda")
+
     if usul == "karton_formula":
         res = s.quote(db, qiymatlar["length_mm"], qiymatlar["width_mm"],
                       qiymatlar["height_mm"], qiymatlar["layers"],
                       qiymatlar["grade"], qiymatlar["colors"], qty, category)
         return {"unit_cost": res["unit_cost"], "unit_price": res["unit_price"],
                 "hisoblangan": {"m2_per_box": res["m2_per_box"]}, "xom": res}
+
+    if usul == "retsept":
+        hisob = retsept_narxi(db, qiymatlar, qty, category)
+        # Menejer narxni qo'lda bergan bo'lsa u ustun — hisob faqat
+        # tannarx va marja ko'rsatish uchun qoladi.
+        narx = (Decimal(str(qolda_narx)) if qolda_narx
+                else hisob["unit_price"])
+        return {"unit_cost": hisob["unit_cost"], "unit_price": narx,
+                "hisoblangan": {}, "xom": hisob}
+
     if qolda_narx is None:
         raise HTTPException(400, "Нарх киритилсин (профилда формула йўқ)")
     return {"unit_cost": Decimal("0"), "unit_price": Decimal(str(qolda_narx)),
             "hisoblangan": {}, "xom": None}
+
+
+class _Vaqtinchalik:
+    """Retsept hisobiga kerak bo'ladigan «buyurtmaga o'xshash» obyekt.
+
+    Retsept `order.attributes` va `order.qty` ni o'qiydi. Smeta paytida
+    hali buyurtma YO'Q, shuning uchun shu yengil o'rinbosar ishlatiladi —
+    bazaga hech narsa yozilmaydi.
+    """
+
+    def __init__(self, attributes, qty):
+        self.attributes = attributes
+        self.qty = qty
+        self.id = None
+
+
+def retsept_narxi(db, qiymatlar: dict, qty, category: str) -> dict:
+    """Retseptdan to'liq smeta: material + ish haqi + xarajat + ustama.
+
+    Formulasi:
+        1 dona tannarx = (material summasi / miqdor)
+                       + ish haqi (1 dona)
+                       + qo'shimcha xarajat (% material+ish haqidan)
+        taklif narxi   = tannarx × (1 + ustama%)
+
+    Ustama mijoz toifasidan (VIP/Standart/Yangi) — mavjud sozlamalar
+    qayta ishlatildi, chunki ular allaqachon ishlab turgan mantiq.
+    """
+    p = domain.profil()
+    qty_d = Decimal(str(qty or 1)) or Decimal("1")
+
+    qatorlar = domain.retsept_qatorlari(_Vaqtinchalik(qiymatlar, qty_d))
+    material = s.retsept_tannarx(db, qatorlar)
+
+    # Ish haqi: son yoki soha maydonlari ustidan formula
+    ish_haqi_ifoda = str(p.narx.get("ish_haqi", "0"))
+    ozgaruvchilar = {"qty": float(qty_d)}
+    for k, v in qiymatlar.items():
+        if isinstance(v, bool):
+            ozgaruvchilar[k] = 1.0 if v else 0.0
+        elif isinstance(v, (int, float, Decimal)):
+            ozgaruvchilar[k] = float(v)
+    try:
+        ish_haqi = Decimal(str(s.eval_formula(ish_haqi_ifoda, **ozgaruvchilar)))
+    except (ValueError, KeyError, TypeError):
+        ish_haqi = Decimal("0")
+        material["ogohlantirish"].append(
+            f"Ish haqi formulasi noto'g'ri: {ish_haqi_ifoda}")
+
+    material_1 = (material["jami"] / qty_d).quantize(Decimal("0.01"))
+    xarajat_foiz = Decimal(str(p.narx.get("qoshimcha_xarajat_foiz", 0)))
+    xarajat = ((material_1 + ish_haqi) * xarajat_foiz / 100).quantize(Decimal("0.01"))
+
+    tannarx = material_1 + ish_haqi + xarajat
+    ustama = s.ustama_foizi(db, category)
+    narx = (tannarx * (Decimal("1") + ustama / 100)).quantize(Decimal("0.01"))
+
+    return {
+        "unit_cost": tannarx, "unit_price": narx,
+        "material_1dona": material_1, "material_jami": material["jami"],
+        "ish_haqi_1dona": ish_haqi, "qoshimcha_xarajat_1dona": xarajat,
+        "ustama_foiz": ustama, "qatorlar": material["qatorlar"],
+        "ogohlantirish": material["ogohlantirish"],
+    }
 
 
 @router.post("/quote")
@@ -437,6 +514,67 @@ def check_stock(oid: int, db: Session = Depends(get_db), user=Depends(get_user))
         missing_kg = remaining_m2 * (Decimal("120") / Decimal("1000"))
         
     return {"ok": missing_kg <= 0, "missing_kg": float(missing_kg)}
+
+class SmetaIn(BaseModel):
+    """Universal smeta so'rovi — har soha uchun."""
+    attributes: dict = {}
+    qty: float = 1
+    client_id: int | None = None
+
+
+@router.post("/smeta")
+def smeta(data: SmetaIn, db: Session = Depends(get_db), user=Depends(get_user)):
+    """HAR SOHA uchun smeta — buyurtma yaratmasdan.
+
+    Eski `/quote` faqat kartonga yaraydi (m² formulasi). Bu esa profil
+    qaysi usulni e'lon qilgan bo'lsa o'shani ishlatadi, ya'ni non zavodi
+    ham, mebel sexi ham o'z kalkulyatoriga ega bo'ladi.
+    """
+    tayyor, miqdor = tekshir_yoki_400(dict(data.attributes), data.qty)
+
+    category = "Standart"
+    if data.client_id:
+        c = db.get(m.Client, data.client_id)
+        if c:
+            category = c.category
+
+    p = domain.profil()
+    usul = p.narx.get("usul", "qolda")
+    if usul == "qolda":
+        return {"usul": "qolda", "birlik": p.birlik, "qty": float(miqdor),
+                "izoh": "Bu profilda formula yo'q — narx qo'lda kiritiladi"}
+
+    if usul == "karton_formula":
+        res = s.quote(db, tayyor["length_mm"], tayyor["width_mm"],
+                      tayyor["height_mm"], tayyor["layers"], tayyor["grade"],
+                      tayyor["colors"], miqdor, category)
+        chiqish = {k: (float(v) if isinstance(v, Decimal) else v)
+                   for k, v in res.items()}
+        chiqish.update({"usul": usul, "birlik": p.birlik, "category": category})
+        return chiqish
+
+    h = retsept_narxi(db, tayyor, miqdor, category)
+    jami = (h["unit_price"] * miqdor).quantize(Decimal("0.01"))
+    qqs = s.qqs_hisobla(db, jami)
+    return {
+        "usul": usul, "birlik": p.birlik, "qty": float(miqdor),
+        "category": category,
+        "material_jami": float(h["material_jami"]),
+        "material_1dona": float(h["material_1dona"]),
+        "ish_haqi_1dona": float(h["ish_haqi_1dona"]),
+        "qoshimcha_xarajat_1dona": float(h["qoshimcha_xarajat_1dona"]),
+        "unit_cost": float(h["unit_cost"]),
+        "ustama_foiz": float(h["ustama_foiz"]),
+        "unit_price": float(h["unit_price"]),
+        "jami": float(jami),
+        "qqs_stavka": float(qqs["stavka"]), "qqs": float(qqs["qqs"]),
+        "jami_qqs_bilan": float(qqs["jami"]),
+        "materiallar": [{"material": q["material"], "birlik": q["birlik"],
+                         "miqdor": float(q["miqdor"]), "summa": float(q["summa"])}
+                        for q in h["qatorlar"]],
+        "ogohlantirish": h["ogohlantirish"],
+    }
+
 
 @router.get("/{oid}/retsept")
 def order_retsept(oid: int, db: Session = Depends(get_db), user=Depends(get_user)):
