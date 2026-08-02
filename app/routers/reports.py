@@ -34,6 +34,27 @@ def kir_pay(v: str | None) -> str:
     """To'lov turini kirillga o'giradi; noma'lum qiymat o'z holicha qoladi."""
     return _KIR.get((v or "").strip(), (v or "—"))
 
+def qqs_qatorlari(o) -> list[tuple[str, str]]:
+    """Hujjatga qo'shiladigan QQS qatorlari.
+
+    Korxona QQS to'lovchisi bo'lmasa (`qqs_stavka = 0`) — BO'SH ro'yxat,
+    ya'ni hujjatda QQS haqida bir og'iz ham yozilmaydi. Aks holda soliq
+    to'lamaydigan korxona hujjatida «QQS 0» chiqib, chalkashlik bo'lardi.
+    """
+    stavka = Decimal(str(o.qqs_stavka or 0))
+    if stavka <= 0:
+        return []
+    qqs = Decimal(str(o.qqs_summa or 0))
+    qqssiz = Decimal(str(o.total)) - qqs
+    pul = lambda x: f"{float(x):,.0f} сўм".replace(",", " ")
+    return [
+        ("Сумма (ҚҚСсиз):", pul(qqssiz)),
+        # normalize(): Decimal("12.00") -> "12", aks holda hujjatda
+        # «ҚҚС (12.00%)» deb chiqadi. 12.5% kabi kasr stavka saqlanadi.
+        (f"ҚҚС ({stavka.normalize():f}%):", pul(qqs)),
+    ]
+
+
 router = APIRouter(prefix="/api/reports", tags=["Hisobotlar"])
 
 HDR = Font(bold=True, color="FFFFFF")
@@ -251,6 +272,7 @@ def act_pdf(order_id: int, db: Session = Depends(get_db), user=Depends(get_user)
         ("Маҳсулот:", domain.mahsulot_matni(o, "hujjat_mahsulot")),
         ("Миқдори:", f"{o.qty:,} дона".replace(",", " ")),
         ("Нархи (1 дона):", f"{float(o.unit_price):,.0f} сўм".replace(",", " ")),
+        *qqs_qatorlari(o),
         ("Жами сумма:", f"{float(o.total):,.0f} сўм".replace(",", " ")),
     ]
     for k, v in lines:
@@ -373,6 +395,10 @@ def nakladnoy_pdf(order_id: int, db: Session = Depends(get_db), user=Depends(get
     p.line(18 * mm, y, 192 * mm, y)
     y -= 8 * mm
     p.setFont(PDF_FONT, 11)
+    for nom, qiymat in qqs_qatorlari(o):
+        p.drawString(118 * mm, y, nom)
+        p.drawString(152 * mm, y, qiymat)
+        y -= 6 * mm
     p.drawString(118 * mm, y, "ЖАМИ:")
     p.drawString(152 * mm, y, f"{float(o.total):,.0f} сўм".replace(",", " "))
     y -= 16 * mm
@@ -414,6 +440,8 @@ def nakladnoy_xlsx(order_id: int, db: Session = Depends(get_db), user=Depends(ge
     ws.append(["№", "Mahsulot nomi", "O'lchov", "Soni", "Narxi", "Summa"])
     ws.append([1, product, "dona", o.qty, float(o.unit_price), float(o.total)])
     ws.append([])
+    for nom, qiymat in qqs_qatorlari(o):
+        ws.append(["", "", "", "", nom.rstrip(":"), qiymat])
     ws.append(["", "", "", "", "JAMI:", float(o.total)])
     style_header(ws, 8)
     for col in "EF":
@@ -462,6 +490,8 @@ def nakladnoy_docx(order_id: int, db: Session = Depends(get_db), user=Depends(ge
         table.rows[1].cells[i].text = v
     tot = doc.add_paragraph()
     tot.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    for nom, qiymat in qqs_qatorlari(o):
+        doc.add_paragraph(f"{nom} {qiymat}")
     tr = tot.add_run(f"JAMI: {float(o.total):,.0f} so'm".replace(",", " "))
     tr.bold = True
     doc.add_paragraph()

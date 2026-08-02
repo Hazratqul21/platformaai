@@ -35,6 +35,9 @@ MIGRATSIYALAR: list[tuple[str, str, str]] = [
     ("orders", "attributes", "JSON NOT NULL DEFAULT '{}'"),
     # Profil shablondan yangilanishi mumkinmi (foydalanuvchi tegmagan bo'lsa)
     ("soha_profillar", "ozgartirilgan", "BOOLEAN NOT NULL DEFAULT FALSE"),
+    # QQS — stavka buyurtma paytida qotiriladi
+    ("orders", "qqs_stavka", "NUMERIC(5,2) NOT NULL DEFAULT 0"),
+    ("orders", "qqs_summa", "NUMERIC(18,2) NOT NULL DEFAULT 0"),
 ]
 
 

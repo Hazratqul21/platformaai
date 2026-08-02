@@ -152,6 +152,15 @@ DEFAULT_SETTINGS = {
     "formula_sebestoimost": "m*p*b+l+c*k",
     "paper_grades": "K1,K2,T-22,T-23",      # Qog'oz markalari (vergul bilan)
 
+    # --- QQS (НДС) ---
+    # rejim:  yoq     — korxona QQS to'lovchisi emas (ko'p kichik biznes)
+    #         ustiga  — kiritilgan narx QQSSIZ, QQS ustiga qo'shiladi
+    #         ichida  — kiritilgan narx QQS BILAN, ichidan ajratiladi
+    # Standart "yoq": QQS to'lovchi bo'lmagan korxonada hujjatda QQS
+    # qatori umuman chiqmasligi kerak.
+    "qqs_rejimi": "yoq",
+    "qqs_stavka": "12",   # O'zbekiston, 2023 yildan 12%
+
     # --- Hujjat rekvizitlari (akt, nakladnoy, sverka shapkasi uchun) ---
     # Ikki firma alohida: mijozning firmasi bo'yicha avtomat tanlanadi.
     # Bo'sh qoldirilsa — hujjatda o'sha qator umuman chiqmaydi (buzilmaydi).
@@ -859,3 +868,44 @@ def retsept_yechish(db: Session, order, qatorlar: list[dict],
                 qty=olinadi, cost=narx, note=note))
         mat.stock_qty = Decimal(str(mat.stock_qty or 0)) - kerak
     return jami
+
+
+# =====================================================================
+#  QQS (НДС)
+#
+#  `Order.total` — MIJOZ TO'LAYDIGAN summa, ya'ni QQS BILAN. Butun
+#  moliya (qarz, to'lov, kassa, sverka) shunga tayangan, shuning uchun
+#  uning ma'nosi o'zgartirilmadi — QQS qo'shilganda ham eski hisoblar
+#  to'g'ri qolaveradi.
+# =====================================================================
+
+def qqs_hisobla(db: Session, summa: Decimal,
+                stavka: Decimal | None = None) -> dict:
+    """Kiritilgan summadan QQSsiz / QQS / jami ni ajratadi.
+
+    `summa` — foydalanuvchi kiritgan narx × miqdor.
+    `stavka` berilsa sozlamadagi o'rniga o'sha ishlatiladi (eksport 0%,
+    yoki eski buyurtmani qayta hisoblashda o'sha paytdagi stavka).
+    """
+    summa = Decimal(str(summa))
+    rejim = (get_setting(db, "qqs_rejimi") or "yoq").strip().lower()
+    if stavka is None:
+        stavka = dset(db, "qqs_stavka")
+    stavka = Decimal(str(stavka))
+
+    if rejim == "yoq" or stavka <= 0:
+        return {"rejim": "yoq", "stavka": Decimal("0"),
+                "qqssiz": summa, "qqs": Decimal("0"), "jami": summa}
+
+    if rejim == "ichida":
+        # Narx QQS bilan aytilgan: 112 000 dan 12% ni AJRATAMIZ
+        qqssiz = (summa / (Decimal("1") + stavka / 100)).quantize(TWO, ROUND_HALF_UP)
+        qqs = summa - qqssiz          # ayirma bilan — tiyin yo'qolmasin
+        jami = summa
+    else:   # "ustiga"
+        qqssiz = summa
+        qqs = (summa * stavka / 100).quantize(TWO, ROUND_HALF_UP)
+        jami = qqssiz + qqs
+
+    return {"rejim": rejim, "stavka": stavka,
+            "qqssiz": qqssiz, "qqs": qqs, "jami": jami}

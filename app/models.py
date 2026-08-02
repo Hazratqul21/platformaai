@@ -167,7 +167,20 @@ class Order(Base):
     # o'lchangani soha ishi, lekin "1 dona qancha turadi" hamma biznesda bor.
     unit_cost: Mapped[Decimal] = mapped_column(D)             # 1 dona tannarx
     unit_price: Mapped[Decimal] = mapped_column(D)            # 1 dona sotuv narxi
-    total: Mapped[Decimal] = mapped_column(D)
+    total: Mapped[Decimal] = mapped_column(D)   # MIJOZ TO'LAYDIGAN summa (QQS bilan)
+
+    # ---- QQS (НДС) --------------------------------------------------
+    # Stavka buyurtma paytida QOTIRILADI: davlat stavkani o'zgartirsa
+    # (O'zbekistonda 20% -> 15% -> 12%) eski hujjatlar o'z stavkasida
+    # qolishi kerak, aks holda o'tgan yil hisoboti qayta hisoblanib
+    # ketardi va soliq bilan mos kelmasdi.
+    #
+    # `total` — QQS BILAN, ya'ni mijoz to'laydigan summa. Butun moliya
+    # (qarz, to'lov, kassa) shunga tayangan, shuning uchun uning ma'nosi
+    # o'zgartirilmadi. QQSsiz summa = total - qqs_summa.
+    qqs_stavka: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"))
+    qqs_summa: Mapped[Decimal] = mapped_column(D, default=Decimal("0"))
+
     prepaid_percent: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(30), default=ST_KUTISHDA)
     note: Mapped[str] = mapped_column(String(300), default="")

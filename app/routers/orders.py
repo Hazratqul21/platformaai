@@ -40,6 +40,7 @@ class OrderIn(BaseModel):
     product_name: str = ""
     attributes: dict | None = None
     unit_price: float | None = None   # menejer qo'lda o'zgartirsa
+    qqs_stavka: float | None = None   # eksport 0% kabi istisnolar uchun
     prepaid_percent: int = 0
     due_days: int = 15          # tayyorlash muddati
     payment_due_days: int = 15  # to'lov muddati
@@ -194,6 +195,10 @@ def order_out(o: m.Order) -> dict:
         "tolanmadi": delivered > 0 and paid_for_order + 1 < delivered_value,
         "m2_per_box": float(soha.get("m2_per_box") or 0), "unit_cost": float(o.unit_cost),
         "unit_price": float(o.unit_price), "total": float(o.total),
+        # QQS: `total` — mijoz to'laydigan (QQS bilan), `qqssiz` — soliqsiz asos
+        "qqs_stavka": float(o.qqs_stavka or 0),
+        "qqs_summa": float(o.qqs_summa or 0),
+        "qqssiz_summa": float(Decimal(str(o.total)) - Decimal(str(o.qqs_summa or 0))),
         "margin": round((float(o.unit_price) / float(o.unit_cost) - 1) * 100, 1) if float(o.unit_cost) else 0,
         "prepaid_percent": o.prepaid_percent, "status": o.status, "note": o.note,
         # bazada UTC — foydalanuvchiga Toshkent vaqti (aks holda kechqurun
@@ -249,7 +254,10 @@ def create_order(data: OrderIn, db: Session = Depends(get_db),
 
     unit_price = (Decimal(str(data.unit_price)) if data.unit_price
                   else narx["unit_price"])
-    total = (unit_price * miqdor).quantize(Decimal("0.01"))
+    # QQS: `total` mijoz TO'LAYDIGAN summa (QQS bilan). Kredit limiti va
+    # qarz ham shu summadan hisoblanadi — mijoz aynan shuni to'laydi.
+    qqs = s.qqs_hisobla(db, unit_price * miqdor, data.qqs_stavka)
+    total = qqs["jami"]
     check = s.credit_check(db, c, total)
     if check["blocked"]:
         reason = "qora ro'yxatda" if check["blacklisted"] else "kredit limitidan oshadi"
@@ -257,6 +265,7 @@ def create_order(data: OrderIn, db: Session = Depends(get_db),
 
     o = m.Order(
         client_id=c.id, qty=miqdor,
+        qqs_stavka=qqs["stavka"], qqs_summa=qqs["qqs"],
         # Boshlang'ich maqom ustun standartidan EMAS, ish tartibidan:
         # sexda «Kutishda», savdoda «Yangi buyurtma», servisda «Qabul qilindi».
         status=domain.boshlangich_status(),
@@ -332,7 +341,11 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
     o.qty = qty
     o.unit_cost = narx["unit_cost"]
     o.unit_price = Decimal(str(data.unit_price)) if data.unit_price else narx["unit_price"]
-    o.total = (o.unit_price * qty).quantize(Decimal("0.01"))
+    # Tahrirda QQS stavkasi BUYURTMANIKI bo'lib qoladi — davlat stavkani
+    # o'zgartirgan bo'lsa ham eski hujjat o'z stavkasida qayta hisoblanadi.
+    qqs = s.qqs_hisobla(db, o.unit_price * qty, o.qqs_stavka or None)
+    o.qqs_stavka, o.qqs_summa = qqs["stavka"], qqs["qqs"]
+    o.total = qqs["jami"]
     soha_yoz(o, tayyor)
     eski_ustunlarga_yoz(o, tayyor)
     if data.note is not None:
