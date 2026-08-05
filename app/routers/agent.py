@@ -12,9 +12,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..auth import require_roles
+from ..auth import get_user, require_roles
 from .. import models as m
 from .. import agent as ai
+from .. import llm
 
 router = APIRouter(prefix="/api/agent", tags=["AI agent"])
 
@@ -28,29 +29,19 @@ def _bloklarni_soddalashtir(xabarlar: list) -> list[dict]:
     """
     chiqish = []
     for x in xabarlar:
-        content = x.get("content")
-        if isinstance(content, str):
-            chiqish.append({"rol": x["role"], "matn": content})
-            continue
-        matn = "".join(b.get("text", "") for b in content
-                       if isinstance(b, dict) and b.get("type") == "text")
-        asboblar = [b.get("name") for b in content
-                    if isinstance(b, dict) and b.get("type") == "tool_use"]
-        if matn or asboblar:
-            chiqish.append({"rol": x["role"], "matn": matn,
+        asboblar = [c["nom"] for c in (x.get("asbob_chaqiruvlari") or [])]
+        if x.get("matn") or asboblar:
+            chiqish.append({"rol": x["rol"], "matn": x.get("matn", ""),
                             "asboblar": asboblar})
     return chiqish
 
 
 @router.get("/holat")
-def holat(user=Depends(require_roles("Rahbar"))):
-    """Agent ishlashga tayyormi — kalit qo'yilganmi."""
-    return {
-        "tayyor": ai.kalit_bormi(),
-        "model": ai.MODEL,
-        "izoh": ("Tayyor" if ai.kalit_bormi() else
-                 "ANTHROPIC_API_KEY qo'yilmagan — .env ga yozing"),
-    }
+def holat(user=Depends(get_user)):
+    """Agent tayyormi, qaysi provayder, va shu rolga qaysi agentlar ochiq."""
+    h = llm.holat()
+    h["agentlar"] = ai.agent_royxati(user.role)
+    return h
 
 
 @router.get("/suhbatlar")
@@ -74,20 +65,27 @@ def suhbat_oqi(sid: int, db: Session = Depends(get_db),
 class XabarIn(BaseModel):
     matn: str
     suhbat_id: int | None = None   # bo'sh bo'lsa yangi suhbat boshlanadi
+    agent: str = "sozlash"         # qaysi bo'lim agenti
 
 
 @router.post("/xabar")
 def xabar(data: XabarIn, db: Session = Depends(get_db),
-          user=Depends(require_roles("Rahbar"))):
+          user=Depends(get_user)):
     """Agentga xabar yuboradi va javobini qaytaradi.
 
-    Rol cheklovi ATAYLAB «Rahbar»: agent butun tizim konfiguratsiyasini
-    o'zgartira oladi (profil almashtirish hamma ekranga ta'sir qiladi),
-    shuning uchun uni menejer yoki sklad mudiri ochmasligi kerak.
+    Rol tekshiruvi AGENT DARAJASIDA: sozlash agenti faqat Rahbarga
+    (u profil almashtira oladi — hamma ekranga ta'sir qiladi), ombor
+    agenti sklad mudiriga ham ochiq. Har agentning o'z ro'yxati bor.
     """
-    if not ai.kalit_bormi():
-        raise HTTPException(400, "ANTHROPIC_API_KEY qo'yilmagan — "
-                                 ".env fayliga yozing va tizimni qayta yuklang")
+    a = ai.AGENTLAR.get(data.agent)
+    if not a:
+        raise HTTPException(404, f"'{data.agent}' — bunday yordamchi yo'q")
+    if user.role not in a["rollar"]:
+        raise HTTPException(403, f"«{a['nom']}» sizning rolingizga ochiq emas")
+
+    tayyor, izoh = llm.tayyormi()
+    if not tayyor:
+        raise HTTPException(400, izoh)
     matn = (data.matn or "").strip()
     if not matn:
         raise HTTPException(400, "Xabar bo'sh")
@@ -103,10 +101,10 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
         db.flush()
         tarix = []
 
-    tarix.append({"role": "user", "content": matn})
+    tarix.append({"rol": "user", "matn": matn})
 
     try:
-        natija = ai.suhbat(db, tarix)
+        natija = ai.suhbat(db, tarix, data.agent)
     except Exception as e:                                # noqa: BLE001
         # Suhbatni yo'qotmaymiz: foydalanuvchi xabari saqlanadi, shunda
         # u qaytadan yozmaydi va nima yuborilgani ko'rinib turadi.
@@ -120,4 +118,5 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
     s.updated_at = datetime.utcnow()
     db.commit()
     return {"suhbat_id": s.id, "javob": natija["javob"],
-            "izlar": natija["izlar"]}
+            "izlar": natija["izlar"],
+            "provayder": natija.get("provayder"), "model": natija.get("model")}

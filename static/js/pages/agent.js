@@ -8,6 +8,8 @@
 
 let AGENT_SUHBAT = null;      // joriy suhbat id (null = yangi)
 let AGENT_BAND = false;       // javob kutilyaptimi
+let AGENT_KALIT = null;       // qaysi bo'lim agenti
+let AGENT_ROYXAT = [];        // rolga ochiq agentlar
 
 function agentPanelYasa() {
   if (document.getElementById('agentPanel')) return;
@@ -17,8 +19,8 @@ function agentPanelYasa() {
   panel.className = 'agent-panel';
   panel.innerHTML = `
     <div class="agent-head">
-      <div>
-        <div class="agent-title">Sozlash yordamchisi</div>
+      <div style="flex:1;min-width:0">
+        <select class="agent-tanla" id="agentTanla"></select>
         <div class="agent-sub" id="agentHolat">tekshirilmoqda…</div>
       </div>
       <div class="agent-head-btns">
@@ -44,6 +46,10 @@ function agentPanelYasa() {
   tugma.onclick = () => agentOchYop(true);
   document.getElementById('agentYop').onclick = () => agentOchYop(false);
   document.getElementById('agentYangi').onclick = agentYangiSuhbat;
+  document.getElementById('agentTanla').onchange = e => {
+    AGENT_KALIT = e.target.value;
+    agentYangiSuhbat();   // boshqa yordamchi — boshqa suhbat
+  };
   document.getElementById('agentYubor').onclick = agentYubor;
   document.getElementById('agentMatn').addEventListener('keydown', e => {
     // Enter — yuborish, Shift+Enter — yangi qator. Chat oynalarida
@@ -65,18 +71,40 @@ async function agentHolatniOl() {
   const el = document.getElementById('agentHolat');
   try {
     const h = await api('/api/agent/holat');
-    el.textContent = h.tayyor ? h.model : h.izoh;
+    el.textContent = h.tayyor ? (h.provayder + ' · ' + h.model) : h.izoh;
     el.className = 'agent-sub' + (h.tayyor ? '' : ' agent-ogoh');
     document.getElementById('agentYubor').disabled = !h.tayyor;
+
+    AGENT_ROYXAT = h.agentlar || [];
+    const sel = document.getElementById('agentTanla');
+    if (sel.options.length !== AGENT_ROYXAT.length) {
+      sel.innerHTML = AGENT_ROYXAT
+        .map(a => `<option value="${a.kalit}">${a.nom}</option>`).join('');
+      // Rolga ochiq birinchisi — Rahbarda «sozlash», sklad mudirida «ombor»
+      if (!AGENT_KALIT && AGENT_ROYXAT.length) {
+        AGENT_KALIT = AGENT_ROYXAT[0].kalit;
+        agentYangiSuhbat();
+      }
+      sel.value = AGENT_KALIT || '';
+    }
   } catch (e) { el.textContent = 'holatni olib bo\'lmadi'; }
 }
+
+// Har yordamchining o'z salomi — foydalanuvchi nima so'rashi mumkinligini
+// darrov bilsin, bo'sh oynaga qarab turmasin.
+const AGENT_SALOM = {
+  sozlash: 'Tizimni biznesingizga moslab beraman.\n\nNima ishlab chiqarasiz yoki sotasiz?',
+  ombor:   'Ombor bo\'yicha savol bering.\n\nMasalan: «Nima tugayapti?» yoki «25-zakazga nima yetmaydi?»',
+  moliya:  'Moliya bo\'yicha savol bering.\n\nMasalan: «Kim qarzdor?» yoki «Pul holati qanday?»',
+  buyurtma:'Buyurtmalar bo\'yicha savol bering.\n\nMasalan: «Qaysi zakazlar kechikyapti?»',
+};
 
 function agentYangiSuhbat() {
   AGENT_SUHBAT = null;
   document.getElementById('agentOqim').innerHTML = '';
-  agentXabarQosh('agent',
-    'Assalomu alaykum! Tizimni biznesingizga moslab beraman.\n\n' +
-    'Nima ishlab chiqarasiz yoki sotasiz?');
+  const a = AGENT_ROYXAT.find(x => x.kalit === AGENT_KALIT);
+  agentXabarQosh('agent', (a ? a.nom + '.\n\n' : '') +
+    (AGENT_SALOM[AGENT_KALIT] || 'Savolingizni yozing.'));
 }
 
 function agentXabarQosh(kim, matn, asboblar) {
@@ -115,7 +143,7 @@ async function agentYubor() {
 
   try {
     const j = await api('/api/agent/xabar', 'POST',
-      { matn, suhbat_id: AGENT_SUHBAT });
+      { matn, suhbat_id: AGENT_SUHBAT, agent: AGENT_KALIT });
     AGENT_SUHBAT = j.suhbat_id;
     kutish.remove();
     agentXabarQosh('agent', j.javob,

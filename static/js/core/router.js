@@ -114,12 +114,11 @@ function enterApp(){
   document.getElementById('urole').textContent='· '+kir(ME.role);
   document.getElementById('uav').textContent=ME.name[0];
 
-  // AI agent paneli — faqat Rahbarga. U butun tizim konfiguratsiyasini
-  // o'zgartira oladi, shuning uchun menejer/sklad ochmasligi kerak.
-  if(ME.role==='Rahbar' && typeof agentPanelYasa==='function'){
-    agentPanelYasa();
-    agentYangiSuhbat();
-  }
+  // AI panel hamma rolga yasaladi — ichida qaysi yordamchi ko'rinishini
+  // server hal qiladi (rolga ochiq agentlar ro'yxati /api/agent/holat da).
+  // Sklad mudiri faqat ombor yordamchisini, buxgalter faqat moliyani
+  // ko'radi; sozlash yordamchisi esa faqat Rahbarda.
+  if(typeof agentPanelYasa==='function'){ agentPanelYasa(); }
   
   // Hash routing
   let p = window.location.hash.replace('#/', '');

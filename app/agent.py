@@ -19,11 +19,10 @@ hujjatidagi «manual agentic loop» naqshi.
 """
 import json
 import logging
-import os
+
+from . import llm
 
 log = logging.getLogger("gofra.agent")
-
-MODEL = "claude-opus-5"
 
 # Suhbat qancha marta asbob chaqira olishi. Cheksiz halqadan himoya —
 # model qandaydir sababga ko'ra to'xtamasa, so'rov abadiy osilib qolmasin.
@@ -31,7 +30,7 @@ MAX_QADAM = 12
 
 
 def kalit_bormi() -> bool:
-    return bool(os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN"))
+    return llm.tayyormi()[0]
 
 
 # =====================================================================
@@ -41,33 +40,33 @@ def kalit_bormi() -> bool:
 #  bazaga to'g'ridan-to'g'ri yozish yoki kod ishga tushirish berilmagan.
 # =====================================================================
 
-ASBOBLAR = [
+HAMMA_ASBOBLAR = [
     {
-        "name": "modullarni_kor",
-        "description": (
+        "nom": "modullarni_kor",
+        "izoh": (
             "Mavjud ish tartiblari (modullar) ro'yxatini qaytaradi. "
             "Har modul — buyurtmaning hayot sikli (statuslar). Yangi profil "
             "yasashdan OLDIN chaqiring: mijoz biznesiga qaysi ish tartibi "
             "mos kelishini shundan tanlaysiz."
         ),
-        "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
+        "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
     {
-        "name": "profillarni_kor",
-        "description": (
+        "nom": "profillarni_kor",
+        "izoh": (
             "Bazadagi mavjud soha profillari ro'yxati. Mijoz biznesiga "
             "yaqin profil bormi — shuni tekshiring. Bor bo'lsa uni asos "
             "qilib oling, noldan yasamang."
         ),
-        "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
+        "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
     {
-        "name": "profilni_oqi",
-        "description": (
+        "nom": "profilni_oqi",
+        "izoh": (
             "Bitta profilning TO'LIQ ta'rifini (JSON) qaytaradi. Mavjud "
             "profilni namuna qilib olish yoki tahrirlash uchun."
         ),
-        "input_schema": {
+        "sxema": {
             "type": "object",
             "properties": {"kalit": {"type": "string", "description": "Profil kaliti, masalan 'karton'"}},
             "required": ["kalit"],
@@ -75,13 +74,13 @@ ASBOBLAR = [
         },
     },
     {
-        "name": "profil_saqla",
-        "description": (
+        "nom": "profil_saqla",
+        "izoh": (
             "Soha profilini yaratadi yoki yangilaydi. Ta'rif tuzilishi "
             "tizim ko'rsatmasida berilgan. Ta'rif TEKSHIRILADI — buzuq "
             "bo'lsa xato qaytadi va bazaga tushmaydi. Saqlash faollashtirmaydi."
         ),
-        "input_schema": {
+        "sxema": {
             "type": "object",
             "properties": {
                 "tarif": {
@@ -94,13 +93,13 @@ ASBOBLAR = [
         },
     },
     {
-        "name": "profilni_faollashtir",
-        "description": (
+        "nom": "profilni_faollashtir",
+        "izoh": (
             "Profilni FAOL qiladi — shundan keyin butun tizim (buyurtma "
             "formasi, hujjatlar, ombor) shu sohaga moslashadi. Mijoz "
             "tasdiqlagandan keyin chaqiring."
         ),
-        "input_schema": {
+        "sxema": {
             "type": "object",
             "properties": {"kalit": {"type": "string"}},
             "required": ["kalit"],
@@ -108,14 +107,14 @@ ASBOBLAR = [
         },
     },
     {
-        "name": "sinov_buyurtma",
-        "description": (
+        "nom": "sinov_buyurtma",
+        "izoh": (
             "Faol profil bilan SINOV buyurtmasi yasab ko'radi va natijani "
             "qaytaradi (o'lcham matni, tarkib, retsept, narx). Bazaga hech "
             "narsa yozilmaydi. Profilni mijozga ko'rsatishdan oldin shu "
             "bilan o'zingiz tekshiring — maydonlar to'g'ri hisoblanyaptimi."
         ),
-        "input_schema": {
+        "sxema": {
             "type": "object",
             "properties": {
                 "qiymatlar": {
@@ -226,8 +225,9 @@ nima qilganingni bir-ikki gapda ayt, uzun hisobot yozma."""
 
 def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
     """Asbobni bajaradi va natijani (JSON ga aylanadigan) dict qaytaradi."""
+    from decimal import Decimal
+
     from . import domain, models as m
-    from .services import qqs_hisobla  # noqa: F401  (kelajakda smeta uchun)
 
     if nom == "modullarni_kor":
         return {"modullar": [
@@ -320,6 +320,155 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
             }
         return natija
 
+    # ---- BO'LIM AGENTLARI ASBOBLARI (faqat O'QIYDI) -----------------
+    # Bularning birortasi ham bazaga yozmaydi: agent ko'rsatadi va
+    # hisoblaydi, qaror odamniki. Shuning uchun ular xavfsiz va ko'p
+    # rolga ochiq.
+
+    if nom == "ombor_qoldigi":
+        chiqish = []
+        for mat in db.query(m.Material).filter(m.Material.active.is_(True)).all():
+            lots = (db.query(m.MaterialLot)
+                    .filter(m.MaterialLot.material_id == mat.id,
+                            m.MaterialLot.remaining > 0).all())
+            chiqish.append({
+                "material": mat.name, "birlik": mat.unit,
+                "qoldiq": float(mat.stock_qty or 0),
+                "eng_past": float(mat.min_stock or 0),
+                "oxirgi_narx": float(mat.last_price or 0),
+                "partiyalar": len(lots)})
+        return {"ombor": chiqish}
+
+    if nom == "buyurtmalar":
+        from datetime import date
+        q = db.query(m.Order)
+        if kirish.get("holat"):
+            q = q.filter(m.Order.status == kirish["holat"])
+        chiqish = []
+        for o in q.order_by(m.Order.created_at.desc()).limit(100):
+            kechikkan = bool(o.due_date and o.due_date < date.today()
+                             and domain.manosi(o.status) not in
+                             ("topshirildi", "bekor"))
+            chiqish.append({
+                "id": o.id, "mijoz": o.client.company,
+                "mahsulot": domain.tarkib_matni(o) or o.product_name,
+                "olcham": domain.olcham_matni(o),
+                "miqdor": float(o.qty), "birlik": domain.profil().birlik,
+                "summa": float(o.total), "maqom": o.status,
+                "muddat": o.due_date.isoformat() if o.due_date else None,
+                "kechikkan": kechikkan})
+        return {"buyurtmalar": chiqish, "soni": len(chiqish)}
+
+    if nom == "buyurtma_retsepti":
+        from .services import material_top, _konversiya
+        o = db.get(m.Order, kirish["buyurtma_id"])
+        if not o:
+            return {"xato": "Buyurtma topilmadi"}
+        qatorlar = domain.retsept_qatorlari(o)
+        if not qatorlar:
+            # Karton hali eski `xomashyo.m2_marka` yo'lida — retsepti yo'q.
+            # Agent bunda ham ko'r qolmasligi kerak, shuning uchun o'sha
+            # yo'ldan hisoblab beramiz. (Ikkala yo'l birlashtirilgach
+            # bu shox olib tashlanadi.)
+            xom, marka = domain.xomashyo_kerak(o)
+            if xom is None:
+                return {"buyurtma_id": o.id, "retsept_bor": False,
+                        "izoh": "Bu sohada avtomatik xomashyo hisobi yo'q"}
+            qatorlar = [{"material": marka, "birlik": "m²", "miqdor": xom}]
+        natija, yetadi = [], True
+        for q in qatorlar:
+            mat = material_top(db, q["material"])
+            qator = {"material": q["material"], "birlik": q["birlik"],
+                     "kerak": float(q["miqdor"])}
+            if mat is None:
+                qator.update({"omborda": 0, "yetadi": False,
+                              "izoh": "ombor kartochkasi yo'q"})
+                yetadi = False
+            else:
+                try:
+                    koef = _konversiya(mat, q["birlik"])
+                except ValueError as e:
+                    qator.update({"yetadi": False, "izoh": str(e)})
+                    yetadi = False
+                    natija.append(qator); continue
+                kerak = Decimal(str(q["miqdor"])) * koef
+                bor = Decimal(str(mat.stock_qty or 0))
+                qator.update({"omborda": float(bor),
+                              "material_birligi": mat.unit,
+                              "yetadi": bor >= kerak,
+                              "yetishmayapti": float(max(kerak - bor, 0))})
+                if bor < kerak:
+                    yetadi = False
+            natija.append(qator)
+        return {"buyurtma_id": o.id, "retsept_bor": True,
+                "qatorlar": natija, "yetadi": yetadi}
+
+    if nom == "qarzdorlar":
+        from datetime import date
+        chiqish = []
+        for c in db.query(m.Client).all():
+            # Qarz = buyurtmalar jami - to'lovlar + tizimdan oldingi qoldiq.
+            # `total` QQS bilan, ya'ni mijoz TO'LAYDIGAN summa — qarz ham shu.
+            jami = sum(Decimal(str(o.total)) for o in c.orders)
+            tolangan = sum(Decimal(str(p.amount)) for p in c.payments)
+            qarz = float(jami - tolangan + Decimal(str(c.opening_balance or 0)))
+            if qarz <= 0:
+                continue
+            muddatlar = [o.payment_due_date for o in c.orders
+                         if o.payment_due_date]
+            eng_eski = min(muddatlar) if muddatlar else None
+            chiqish.append({
+                "mijoz_id": c.id, "mijoz": c.company, "telefon": c.phone,
+                "qarz": round(qarz, 2),
+                "eng_eski_muddat": eng_eski.isoformat() if eng_eski else None,
+                "kechikkan_kun": (date.today() - eng_eski).days
+                                 if eng_eski and eng_eski < date.today() else 0})
+        chiqish.sort(key=lambda x: -x["qarz"])
+        return {"qarzdorlar": chiqish,
+                "jami_qarz": round(sum(x["qarz"] for x in chiqish), 2)}
+
+    if nom == "pul_holati":
+        from .routers.finance import _sotilgan
+        sotilgan = db.query(m.Order).filter(
+            m.Order.status.in_(_sotilgan())).all()
+        jami_sotuv = sum(Decimal(str(o.total)) for o in sotilgan)
+        tolovlar = sum(Decimal(str(p.amount)) for p in db.query(m.Payment).all())
+        kassa = db.query(m.KassaEntry).all()
+        kirim = sum(Decimal(str(k.amount)) for k in kassa if k.direction == "Kirim")
+        chiqim = sum(Decimal(str(k.amount)) for k in kassa if k.direction == "Chiqim")
+        xaridlar = db.query(m.Purchase).all()
+        xarid_qarz = sum(Decimal(str(p.total)) - Decimal(str(p.paid_amount or 0))
+                         for p in xaridlar)
+        return {
+            "jami_sotuv": float(jami_sotuv),
+            "tolovlar": float(tolovlar),
+            "mijozlar_qarzi": float(jami_sotuv - tolovlar),
+            "kassa_qoldigi": float(kirim - chiqim),
+            "yetkazib_beruvchiga_qarz": float(xarid_qarz),
+            "buyurtmalar_soni": len(sotilgan)}
+
+    if nom == "mijoz_hisobi":
+        c = db.get(m.Client, kirish["mijoz_id"])
+        if not c:
+            return {"xato": "Mijoz topilmadi"}
+        jami = sum(Decimal(str(o.total)) for o in c.orders)
+        tolangan = sum(Decimal(str(p.amount)) for p in c.payments)
+        return {
+            "mijoz": c.company, "telefon": c.phone, "toifa": c.category,
+            "kredit_limiti": float(c.credit_limit or 0),
+            "qora_royxatda": c.blacklisted,
+            "buyurtmalar": [
+                {"id": o.id, "mahsulot": domain.tarkib_matni(o),
+                 "miqdor": float(o.qty), "summa": float(o.total),
+                 "maqom": o.status,
+                 "sana": o.created_at.date().isoformat()} for o in c.orders[-20:]],
+            "tolovlar": [
+                {"summa": float(p.amount), "usul": p.method,
+                 "sana": p.paid_at.isoformat()} for p in c.payments[-20:]],
+            "jami_buyurtma": float(jami), "jami_tolov": float(tolangan),
+            "qoldiq_qarz": float(jami - tolangan +
+                                 Decimal(str(c.opening_balance or 0)))}
+
     return {"xato": f"'{nom}' — noma'lum asbob"}
 
 
@@ -327,68 +476,212 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
 #  Suhbat halqasi
 # =====================================================================
 
-def suhbat(db, xabarlar: list[dict]) -> dict:
+def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
     """Bitta navbatni oxirigacha yuritadi (asboblar bilan birga).
 
-    `xabarlar` — Anthropic formatidagi to'liq tarix. API holatsiz,
-    shuning uchun har safar butun tarix yuboriladi.
+    `xabarlar` — ICHKI ko'rinishdagi tarix (app/llm.py ga qarang). U
+    provayderdan mustaqil: kalit almashtirilsa eski suhbat o'qilaveradi.
 
-    Qaytaradi: {"xabarlar": yangilangan tarix, "javob": matn, "izlar": [...]}
+    Qaytaradi: {"xabarlar", "javob", "izlar", "provayder", "model"}
     """
-    import anthropic
-
-    client = anthropic.Anthropic()
+    a = AGENTLAR[agent_kalit]
+    asboblar = [x for x in HAMMA_ASBOBLAR if x["nom"] in a["asboblar"]]
     tarix = list(xabarlar)
-    izlar = []   # foydalanuvchiga ko'rsatiladigan «nima qildim» izi
+    izlar = []
+    provayder = model = ""
 
     for _ in range(MAX_QADAM):
-        javob = client.messages.create(
-            model=MODEL,
-            max_tokens=16000,
-            system=[{"type": "text", "text": TIZIM_KORSATMASI,
-                     # Ko'rsatma har so'rovda bir xil — keshlansa
-                     # har navbatda qayta hisoblanmaydi.
-                     "cache_control": {"type": "ephemeral"}}],
-            thinking={"type": "adaptive"},
-            output_config={"effort": "high"},
-            tools=ASBOBLAR,
-            messages=tarix,
-        )
+        javob = llm.javob_ol(tarix, asboblar, a["korsatma"])
+        provayder, model = javob["provayder"], javob["model"]
 
-        # Xavfsizlik klassifikatori rad etsa — `content` bo'sh bo'lishi
-        # mumkin, shuning uchun `stop_reason` avval tekshiriladi.
-        if javob.stop_reason == "refusal":
+        if javob["rad_etildi"]:
             return {"xabarlar": tarix, "izlar": izlar,
+                    "provayder": provayder, "model": model,
                     "javob": "Kechirasiz, bu so'rovga javob bera olmadim. "
                              "Iltimos, boshqacha ifodalab ko'ring."}
 
-        tarix.append({"role": "assistant", "content": javob.content})
+        tarix.append({"rol": "assistant", "matn": javob["matn"],
+                      "asbob_chaqiruvlari": javob["chaqiruvlar"]})
 
-        asbob_chaqiruvlari = [b for b in javob.content if b.type == "tool_use"]
-        if not asbob_chaqiruvlari:
-            matn = "".join(b.text for b in javob.content if b.type == "text")
-            return {"xabarlar": tarix, "javob": matn, "izlar": izlar}
+        if not javob["chaqiruvlar"]:
+            return {"xabarlar": tarix, "javob": javob["matn"], "izlar": izlar,
+                    "provayder": provayder, "model": model}
 
         natijalar = []
-        for chaqiruv in asbob_chaqiruvlari:
+        for chaqiruv in javob["chaqiruvlar"]:
             try:
-                natija = _asbobni_bajar(db, chaqiruv.name, chaqiruv.input or {})
-                xato = False
+                natija = _asbobni_bajar(db, chaqiruv["nom"], chaqiruv["kirish"] or {})
+                xato = bool(natija.get("xato"))
             except Exception as e:                      # noqa: BLE001
                 # Asbob yiqilsa butun suhbat to'xtamasin — xato modelga
                 # qaytadi va u boshqacha urinib ko'radi.
-                log.exception("Agent asbobi yiqildi: %s", chaqiruv.name)
+                log.exception("Agent asbobi yiqildi: %s", chaqiruv["nom"])
                 db.rollback()
                 natija, xato = {"xato": str(e)}, True
-            izlar.append({"asbob": chaqiruv.name, "kirish": chaqiruv.input,
+            izlar.append({"asbob": chaqiruv["nom"], "kirish": chaqiruv["kirish"],
                           "natija": natija})
             natijalar.append({
-                "type": "tool_result", "tool_use_id": chaqiruv.id,
-                "content": json.dumps(natija, ensure_ascii=False, default=str),
-                "is_error": xato,
-            })
-        tarix.append({"role": "user", "content": natijalar})
+                "id": chaqiruv["id"], "nom": chaqiruv["nom"],
+                "natija": json.dumps(natija, ensure_ascii=False, default=str),
+                "xato": xato})
+        tarix.append({"rol": "user", "matn": "", "asbob_natijalari": natijalar})
 
     return {"xabarlar": tarix, "izlar": izlar,
+            "provayder": provayder, "model": model,
             "javob": "Juda ko'p qadam bo'ldi — to'xtatdim. "
                      "Nima qilishimni aniqroq ayting."}
+
+
+# =====================================================================
+#  BO'LIM AGENTLARI
+#
+#  Bitta halqa, ko'p «shaxs». Har agent = tizim ko'rsatmasi + asboblar
+#  QISMI. Nega bitta katta agent emas: 30 ta asbob berilsa model qaysi
+#  birini chaqirishni chalkashtiradi va aniqligi tushadi. Har bo'limga
+#  o'z ishiga kerakli asbob berilsa — javob aniq va tez.
+#
+#  Har agentga BERILMAGAN asbob unga umuman ko'rinmaydi: ombor agenti
+#  profil almashtira olmaydi, sozlash agenti pul yozolmaydi.
+# =====================================================================
+
+_UMUMIY_USLUB = """
+
+## Uslub
+O'zbek tilida yoz. Qisqa gaplar. Raqamlarni aniq ayt, taxmin qilma —
+bilmasang asbob chaqirib bil. Ma'lumot yo'q bo'lsa «ma'lumot yo'q» deb
+ayt, o'ylab topma. Uzun hisobot yozma."""
+
+AGENTLAR = {
+    "sozlash": {
+        "nom": "Sozlash yordamchisi",
+        "izoh": "Biznesingizni so'rab, tizimni shunga moslaydi",
+        "rollar": ["Rahbar"],
+        "asboblar": ["modullarni_kor", "profillarni_kor", "profilni_oqi",
+                     "profil_saqla", "profilni_faollashtir", "sinov_buyurtma"],
+        "korsatma": TIZIM_KORSATMASI,
+    },
+    "ombor": {
+        "nom": "Ombor yordamchisi",
+        "izoh": "Nima tugayapti, qancha kerak, nima sotib olish kerak",
+        "rollar": ["Rahbar", "Sklad mudiri", "Sex boshlig'i"],
+        "asboblar": ["ombor_qoldigi", "buyurtma_retsepti", "sinov_buyurtma"],
+        "korsatma": """Sen — ombor yordamchisisan.
+
+Sklad mudiri savol beradi: nima qoldi, qaysi buyurtmaga nima yetmaydi,
+nima sotib olish kerak. Javobni RAQAM bilan ber.
+
+Ish tartibing:
+1. `ombor_qoldigi` bilan hozirgi holatni ol.
+2. Savol biror buyurtma haqida bo'lsa `buyurtma_retsepti` bilan
+   nima ketishini va yetadimi-yo'qmi ko'r.
+3. «Nima olish kerak» degan savolga — yetishmayotgan miqdorni ayt,
+   ustiga zaxira qo'shishni MASLAHAT ber, lekin o'zing qaror qilma.
+
+Ombordan hech narsa yechmaysan va kirim qilmaysan — bu sklad mudirining
+ishi. Sen faqat ko'rsatasan va hisoblaysan.""" + _UMUMIY_USLUB,
+    },
+    "moliya": {
+        "nom": "Moliya yordamchisi",
+        "izoh": "Kim qarzdor, pul holati, muddati o'tganlar",
+        "rollar": ["Rahbar", "Buxgalter"],
+        "asboblar": ["qarzdorlar", "pul_holati", "mijoz_hisobi"],
+        "korsatma": """Sen — moliya yordamchisisan.
+
+Rahbar yoki buxgalter savol beradi: kim qancha qarzdor, muddati
+o'tganmi, bu oy qancha tushdi. Javobni RAQAM va SANA bilan ber.
+
+Ish tartibing:
+1. `pul_holati` — umumiy manzara (tushum, qarz, kassa).
+2. `qarzdorlar` — kim qancha, muddati o'tganini alohida ajrat.
+3. Aniq mijoz haqida so'ralsa `mijoz_hisobi` bilan uning
+   buyurtmalari va to'lovlarini ko'r.
+
+Pul yozmaysan va to'lov o'chirmaysan — bu buxgalterning ishi.
+Qarz undirish bo'yicha maslahat berishing mumkin, lekin mijozga
+o'zing xabar yubormaysan.""" + _UMUMIY_USLUB,
+    },
+    "buyurtma": {
+        "nom": "Buyurtma yordamchisi",
+        "izoh": "Zakazlar holati, smeta hisobi, qaysi biri kechikyapti",
+        "rollar": ["Rahbar", "Menejer", "Sex boshlig'i"],
+        "asboblar": ["buyurtmalar", "buyurtma_retsepti", "sinov_buyurtma",
+                     "ombor_qoldigi"],
+        "korsatma": """Sen — buyurtma yordamchisisan.
+
+Menejer savol beradi: qaysi zakazlar qayerda turibdi, qaysi biri
+kechikyapti, bu zakazga qancha material ketadi, narxi qancha bo'ladi.
+
+Ish tartibing:
+1. `buyurtmalar` — holat bo'yicha ro'yxat.
+2. Aniq zakaz haqida so'ralsa `buyurtma_retsepti` bilan material va
+   yetishmovchilikni ko'r.
+3. «Bunday zakaz qancha turadi» degan savolga `sinov_buyurtma` bilan
+   hisoblab ber — bazaga hech narsa yozilmaydi.
+
+Buyurtma yaratmaysan va statusini o'zgartirmaysan — bu menejerning
+ishi. Sen hisoblaysan va ko'rsatasan.""" + _UMUMIY_USLUB,
+    },
+}
+
+
+def agent_royxati(rol: str) -> list[dict]:
+    """Foydalanuvchi roliga ochiq agentlar."""
+    return [{"kalit": k, "nom": a["nom"], "izoh": a["izoh"]}
+            for k, a in AGENTLAR.items() if rol in a["rollar"]]
+
+
+# --- Bo'lim agentlari uchun qo'shimcha asboblar ------------------------
+
+HAMMA_ASBOBLAR += [
+    {
+        "nom": "ombor_qoldigi",
+        "izoh": ("Ombordagi materiallar: nomi, birligi, qoldig'i, eng past "
+                 "chegarasi va partiyalari (FIFO narxlari bilan)."),
+        "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    {
+        "nom": "buyurtmalar",
+        "izoh": ("Buyurtmalar ro'yxati. `holat` berilsa faqat o'sha maqomdagi, "
+                 "berilmasa hammasi. Har biri: mijoz, mahsulot, miqdor, summa, "
+                 "maqom, muddat va kechikkanmi."),
+        "sxema": {
+            "type": "object",
+            "properties": {"holat": {"type": "string",
+                                     "description": "Maqom nomi, masalan 'Kutishda'"}},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "nom": "buyurtma_retsepti",
+        "izoh": ("Bitta buyurtmaga qancha material ketishi va omborda "
+                 "yetadimi. Ishlab chiqarishga berishdan oldin tekshirish uchun."),
+        "sxema": {
+            "type": "object",
+            "properties": {"buyurtma_id": {"type": "integer"}},
+            "required": ["buyurtma_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "nom": "qarzdorlar",
+        "izoh": ("Qarzdor mijozlar: kim qancha qarzdor, muddati o'tganmi, "
+                 "necha kun kechikkan."),
+        "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    {
+        "nom": "pul_holati",
+        "izoh": ("Umumiy moliya manzarasi: tushum, qarz, kassa qoldig'i, "
+                 "yetkazib beruvchiga qarz."),
+        "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    {
+        "nom": "mijoz_hisobi",
+        "izoh": ("Bitta mijozning hisobi: buyurtmalari, to'lovlari, qoldiq qarzi."),
+        "sxema": {
+            "type": "object",
+            "properties": {"mijoz_id": {"type": "integer"}},
+            "required": ["mijoz_id"],
+            "additionalProperties": False,
+        },
+    },
+]

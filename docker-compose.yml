@@ -31,7 +31,13 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-innasoft}:${POSTGRES_PASSWORD:-innasoft}@db:5432/${POSTGRES_DB:-innasoft}
       # Bot tokenini .env ga yozing — boshqa hech narsa kerak emas
       BOT_TOKEN: ${BOT_TOKEN:-}
+      # AI yordamchilar — bittasi yetarli
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LLM_PROVAYDER: ${LLM_PROVAYDER:-}
+      LLM_MODEL: ${LLM_MODEL:-}
       SEED_DEMO: ${SEED_DEMO:-}
       SEED_EMPTY: ${SEED_EMPTY:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
