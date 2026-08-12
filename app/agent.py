@@ -20,7 +20,7 @@ hujjatidagi «manual agentic loop» naqshi.
 import json
 import logging
 
-from . import llm
+from . import genui, llm
 
 log = logging.getLogger("gofra.agent")
 
@@ -130,6 +130,48 @@ HAMMA_ASBOBLAR = [
 ]
 
 
+# `korsat` — GenUI ning kirish nuqtasi. Model komponentlarni SHU ASBOB
+# orqali yuboradi. Nega asbob: javob matnining ichiga JSON yozdirish
+# ishonchsiz (model kod bloki, izoh yoki noto'g'ri qavs qo'shib yuboradi),
+# asbob chaqiruvi esa provayder darajasida tuzilgan JSON kafolatlaydi.
+KORSAT_ASBOBI = {
+    "nom": "korsat",
+    "izoh": (
+        "Foydalanuvchiga KO'RINISH chizadi: jadval, ko'rsatkichlar, tafsilot, "
+        "taqsimot, profil oynasi, tasdiq tugmasi, hujjat yoki ogohlantirish. "
+        "Raqam va ro'yxatni matnda sanab chiqma — shu asbob bilan chiz."
+    ),
+    # NEGA OBYEKT MASSIVI EMAS, SATR:
+    # Komponentlar har xil shaklda (jadvalda `ustunlar`, taqsimotda
+    # `elementlar`...) — bu JSON Schema'da birlashma (union) bo'ladi.
+    # Gemini'ning funksiya e'lonlari birlashmani va «turi ko'rsatilmagan
+    # obyekt»ni ifodalay olmaydi: jonli sinovda u har safar
+    # `MALFORMED_FUNCTION_CALL` bilan qaytardi va agent umuman javob
+    # bermay qoldi.
+    #
+    # SATR esa uchala provayderda ham bir xil ishonchli o'tadi. Buzuq
+    # JSON kelsa — xato MODELGA qaytariladi va u o'zi tuzatadi (halqa
+    # shuning uchun bor).
+    "sxema": {
+        "type": "object",
+        "properties": {
+            "komponentlar_json": {
+                "type": "string",
+                "description": (
+                    "Komponentlar ro'yxatining JSON matni. Masalan: "
+                    '[{"tur":"jadval","sarlavha":"Qarzdorlar",'
+                    '"ustunlar":["Mijoz","Qarz"],'
+                    '"qatorlar":[{"hujayralar":["A MChJ","12 000 000 so\'m"],'
+                    '"holat":"xavf"}]}]'
+                ),
+            }
+        },
+        "required": ["komponentlar_json"],
+        "additionalProperties": False,
+    },
+}
+
+
 TIZIM_KORSATMASI = """Sen — INNASOFT PLATFORMA ning sozlash yordamchisisan.
 
 Vazifang: mijoz bilan gaplashib uning biznesini tushunish va o'sha
@@ -227,7 +269,7 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
     """Asbobni bajaradi va natijani (JSON ga aylanadigan) dict qaytaradi."""
     from decimal import Decimal
 
-    from . import domain, models as m
+    from . import domain, models as m, services as s
 
     if nom == "modullarni_kor":
         return {"modullar": [
@@ -404,26 +446,33 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
                 "qatorlar": natija, "yetadi": yetadi}
 
     if nom == "qarzdorlar":
+        # QARZ MOLIYA BO'LIMI BILAN BIR XIL MANBADAN.
+        #
+        # Ilgari bu yerda qarz alohida hisoblanardi: buyurtma `total` i
+        # bo'yicha, topshirilgan ulush emas. Natijada AI «jami qarz
+        # 1 457 mln» deb aytardi, moliya ekranida esa 853 mln turardi.
+        # Foydalanuvchi uchun bu eng yomon holat — qaysi biriga
+        # ishonishni bilmaydi. Endi ikkalasi ham `debt_aging` dan.
         from datetime import date
         chiqish = []
-        for c in db.query(m.Client).all():
-            # Qarz = buyurtmalar jami - to'lovlar + tizimdan oldingi qoldiq.
-            # `total` QQS bilan, ya'ni mijoz TO'LAYDIGAN summa — qarz ham shu.
-            jami = sum(Decimal(str(o.total)) for o in c.orders)
-            tolangan = sum(Decimal(str(p.amount)) for p in c.payments)
-            qarz = float(jami - tolangan + Decimal(str(c.opening_balance or 0)))
-            if qarz <= 0:
-                continue
-            muddatlar = [o.payment_due_date for o in c.orders
+        telefonlar = {c.id: c.phone for c in db.query(m.Client).all()}
+        for q in s.debt_aging(db):
+            c_id = q["client_id"]
+            muddatlar = [o.payment_due_date for o in
+                         db.query(m.Order).filter(m.Order.client_id == c_id,
+                                                  m.Order.delivered_qty > 0)
                          if o.payment_due_date]
             eng_eski = min(muddatlar) if muddatlar else None
             chiqish.append({
-                "mijoz_id": c.id, "mijoz": c.company, "telefon": c.phone,
-                "qarz": round(qarz, 2),
+                "mijoz_id": c_id, "mijoz": q["company"],
+                "telefon": telefonlar.get(c_id, ""),
+                "qarz": round(q["debt"], 2),
+                "kredit_limiti": q["credit_limit"],
+                "qora_royxatda": q["blacklisted"],
+                "muddat_boyicha": q["aging"],
                 "eng_eski_muddat": eng_eski.isoformat() if eng_eski else None,
                 "kechikkan_kun": (date.today() - eng_eski).days
                                  if eng_eski and eng_eski < date.today() else 0})
-        chiqish.sort(key=lambda x: -x["qarz"])
         return {"qarzdorlar": chiqish,
                 "jami_qarz": round(sum(x["qarz"] for x in chiqish), 2)}
 
@@ -433,6 +482,8 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
             m.Order.status.in_(_sotilgan())).all()
         jami_sotuv = sum(Decimal(str(o.total)) for o in sotilgan)
         tolovlar = sum(Decimal(str(p.amount)) for p in db.query(m.Payment).all())
+        # Mijozlar qarzi ham moliya bo'limi bilan bir xil manbadan
+        mijoz_qarzi = sum(Decimal(str(x["debt"])) for x in s.debt_aging(db))
         kassa = db.query(m.KassaEntry).all()
         kirim = sum(Decimal(str(k.amount)) for k in kassa if k.direction == "Kirim")
         chiqim = sum(Decimal(str(k.amount)) for k in kassa if k.direction == "Chiqim")
@@ -442,7 +493,7 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
         return {
             "jami_sotuv": float(jami_sotuv),
             "tolovlar": float(tolovlar),
-            "mijozlar_qarzi": float(jami_sotuv - tolovlar),
+            "mijozlar_qarzi": float(mijoz_qarzi),
             "kassa_qoldigi": float(kirim - chiqim),
             "yetkazib_beruvchiga_qarz": float(xarid_qarz),
             "buyurtmalar_soni": len(sotilgan)}
@@ -451,8 +502,9 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
         c = db.get(m.Client, kirish["mijoz_id"])
         if not c:
             return {"xato": "Mijoz topilmadi"}
-        jami = sum(Decimal(str(o.total)) for o in c.orders)
-        tolangan = sum(Decimal(str(p.amount)) for p in c.payments)
+        # Bitta manba (`client_balance`) — moliya ekrani ham shundan
+        bal = s.client_balance(db, c.id)
+        jami, tolangan = bal["taken"], bal["paid"]
         return {
             "mijoz": c.company, "telefon": c.phone, "toifa": c.category,
             "kredit_limiti": float(c.credit_limit or 0),
@@ -465,9 +517,37 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
             "tolovlar": [
                 {"summa": float(p.amount), "usul": p.method,
                  "sana": p.paid_at.isoformat()} for p in c.payments[-20:]],
-            "jami_buyurtma": float(jami), "jami_tolov": float(tolangan),
-            "qoldiq_qarz": float(jami - tolangan +
-                                 Decimal(str(c.opening_balance or 0)))}
+            "olingan_mol_qiymati": float(jami), "jami_tolov": float(tolangan),
+            "qoldiq_qarz": float(bal["debt"])}
+
+    if nom == "korsat":
+        xom = kirish.get("komponentlar_json")
+        # Ba'zi model to'g'ridan-to'g'ri ro'yxat yuborishi mumkin —
+        # qabul qilamiz, qaytarib yubormaymiz.
+        if isinstance(xom, list):
+            royxat = xom
+        else:
+            matn = str(xom or "").strip()
+            # Model JSON ni ```json ``` bloki ichida yuborishi odatiy hol
+            if matn.startswith("```"):
+                matn = matn.strip("`")
+                matn = matn.split("\n", 1)[-1] if "\n" in matn else matn
+                matn = matn.removeprefix("json").strip()
+            try:
+                royxat = json.loads(matn or "[]")
+            except ValueError as e:
+                # Xato MODELGA qaytadi — u tuzatib qayta yuboradi
+                return {"xato": f"komponentlar_json buzuq JSON: {e}"}
+        if isinstance(royxat, dict):
+            royxat = [royxat]
+        # Komponentlar TEKSHIRILADI (app/genui.py). Modelga esa nechtasi
+        # qabul qilingani qaytariladi — buzuq komponent yuborsa, buni
+        # bilib, keyingi qadamda tuzatadi.
+        toza = genui.tekshir_royxat(royxat)
+        if not toza:
+            return {"xato": "birorta komponent tekshiruvdan o'tmadi — "
+                            "«tur» maydonini va ruxsat etilgan turlarni tekshiring"}
+        return {"ok": True, "chizildi": len(toza), "_komponentlar": toza}
 
     return {"xato": f"'{nom}' — noma'lum asbob"}
 
@@ -485,17 +565,25 @@ def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
     Qaytaradi: {"xabarlar", "javob", "izlar", "provayder", "model"}
     """
     a = AGENTLAR[agent_kalit]
+    # `korsat` HAR agentga beriladi: ko'rinish chizish bo'limga bog'liq
+    # emas, hammasiga kerak.
     asboblar = [x for x in HAMMA_ASBOBLAR if x["nom"] in a["asboblar"]]
+    asboblar.append(KORSAT_ASBOBI)
+    korsatma = a["korsatma"] + genui.korsatma_matni()
     tarix = list(xabarlar)
     izlar = []
+    komponentlar = []
     provayder = model = ""
 
     for _ in range(MAX_QADAM):
-        javob = llm.javob_ol(tarix, asboblar, a["korsatma"])
+        # Birinchi javobdan keyin model QOTIRILADI — suhbat o'rtasida
+        # boshqa modelga o'tish asbob chaqiruvi muhrini buzadi
+        # (app/llm.py dagi izohga qarang).
+        javob = llm.javob_ol(tarix, asboblar, korsatma, model or None)
         provayder, model = javob["provayder"], javob["model"]
 
         if javob["rad_etildi"]:
-            return {"xabarlar": tarix, "izlar": izlar,
+            return {"xabarlar": tarix, "izlar": izlar, "komponentlar": komponentlar,
                     "provayder": provayder, "model": model,
                     "javob": "Kechirasiz, bu so'rovga javob bera olmadim. "
                              "Iltimos, boshqacha ifodalab ko'ring."}
@@ -505,6 +593,7 @@ def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
 
         if not javob["chaqiruvlar"]:
             return {"xabarlar": tarix, "javob": javob["matn"], "izlar": izlar,
+                    "komponentlar": komponentlar,
                     "provayder": provayder, "model": model}
 
         natijalar = []
@@ -518,6 +607,13 @@ def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
                 log.exception("Agent asbobi yiqildi: %s", chaqiruv["nom"])
                 db.rollback()
                 natija, xato = {"xato": str(e)}, True
+            # Komponentlar javobga alohida chiqadi, model tarixiga esa
+            # ularning NUSXASI kerak emas — faqat «chizildi» tasdig'i.
+            # Aks holda har navbatda butun jadval tarixga qo'shilib,
+            # tokenlar tez tugab qolardi.
+            chizilgan = natija.pop("_komponentlar", None)
+            if chizilgan:
+                komponentlar.extend(chizilgan)
             izlar.append({"asbob": chaqiruv["nom"], "kirish": chaqiruv["kirish"],
                           "natija": natija})
             natijalar.append({
@@ -526,7 +622,7 @@ def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
                 "xato": xato})
         tarix.append({"rol": "user", "matn": "", "asbob_natijalari": natijalar})
 
-    return {"xabarlar": tarix, "izlar": izlar,
+    return {"xabarlar": tarix, "izlar": izlar, "komponentlar": komponentlar,
             "provayder": provayder, "model": model,
             "javob": "Juda ko'p qadam bo'ldi — to'xtatdim. "
                      "Nima qilishimni aniqroq ayting."}

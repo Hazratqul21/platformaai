@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
-# TIZIM — ishga tushirish skripti
+# INNASOFT PLATFORMA — Dockersiz ishga tushirish.
+#
+# Asosiy yo'l — `docker compose up -d --build` (README ga qarang).
+# Bu skript ikki holat uchun kerak:
+#   1. Docker o'rnatilmagan mashinada tez sinab ko'rish
+#   2. `tools/` va `tests/` uchun `.venv` yaratish (u shu yerda quriladi)
+#
+# DIQQAT: `DATABASE_URL` berilmasa SQLite ishlatiladi — sinov uchun
+# yaraydi, lekin prod PostgreSQL da ishlaydi.
 set -e
 cd "$(dirname "$0")"
 
@@ -18,7 +26,7 @@ if [ "$SEED_DEMO" = "1" ]; then
 elif [ "$SEED_EMPTY" = "1" ]; then
   echo "→ BO'SH rejim: noldan boshlanadi"
 else
-  echo "→ Birinchi ishga tushirishda Excel ma'lumotlaringiz yuklanadi (xarid + kassa)"
+  echo "→ Standart rejim (SEED_EMPTY=1 yoki SEED_DEMO=1 bilan tanlang)"
 fi
 echo "→ Server: http://localhost:${PORT:-8000}  (Ctrl+C — to'xtatish)"
 python -m app.main

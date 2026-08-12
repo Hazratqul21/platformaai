@@ -15,7 +15,9 @@ from ..db import get_db
 from ..auth import get_user, require_roles
 from .. import models as m
 from .. import agent as ai
+from .. import genui
 from .. import llm
+from .. import services as svc
 
 router = APIRouter(prefix="/api/agent", tags=["AI agent"])
 
@@ -105,6 +107,13 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
 
     try:
         natija = ai.suhbat(db, tarix, data.agent)
+    except llm.LLMBand as e:
+        # Vaqtinchalik band — 503 va tushunarli xabar. 502 «server buzuq»
+        # degani, bu esa «keyinroq urinib ko'ring» degani.
+        s.xabarlar_json = json.dumps(tarix, ensure_ascii=False, default=str)
+        s.updated_at = datetime.utcnow()
+        db.commit()
+        raise HTTPException(503, str(e))
     except Exception as e:                                # noqa: BLE001
         # Suhbatni yo'qotmaymiz: foydalanuvchi xabari saqlanadi, shunda
         # u qaytadan yozmaydi va nima yuborilgani ko'rinib turadi.
@@ -119,4 +128,71 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
     db.commit()
     return {"suhbat_id": s.id, "javob": natija["javob"],
             "izlar": natija["izlar"],
+            # GenUI: frontend shularni haqiqiy UI qilib chizadi
+            "komponentlar": natija.get("komponentlar") or [],
             "provayder": natija.get("provayder"), "model": natija.get("model")}
+
+
+class AmalIn(BaseModel):
+    amal: str
+    kirish: dict = {}
+
+
+@router.post("/amal")
+def amal(data: AmalIn, db: Session = Depends(get_db), user=Depends(get_user)):
+    """Foydalanuvchi TASDIQLAGAN amalni bajaradi.
+
+    Agentning o'zi hech qachon bazaga yozmaydi — u faqat `tasdiq`
+    komponentini ko'rsatadi. Tugma bosilganda so'rov shu yerga keladi,
+    ya'ni harakatni FOYDALANUVCHI boshlaydi va audit jurnaliga ham
+    uning nomi yoziladi.
+
+    Amal nomi `genui.AMALLAR` ro'yxatidan bo'lishi shart va rol yana
+    shu yerda tekshiriladi — tasdiq komponenti ko'rsatilgan bo'lsa ham
+    huquqi yo'q odam bajara olmaydi.
+    """
+    natija = genui.amalni_bajar(db, user, data.amal, data.kirish)
+    if natija.get("xato"):
+        raise HTTPException(400, natija["xato"])
+    return natija
+
+
+@router.get("/faoliyat")
+def faoliyat(db: Session = Depends(get_db), user=Depends(get_user)):
+    """AI NIMA QILDI — foydalanuvchi shuni ko'rib turishi kerak.
+
+    «Hozir AI boshqaryaptimi?» degan savolga javob beradigan yagona
+    joy. Ikki manba birlashtiriladi:
+
+      1. Suhbatlar — qachon, qaysi yordamchi bilan gaplashilgan
+      2. Audit jurnali — AI TAKLIF QILGAN va odam TASDIQLAGAN amallar
+
+    Ikkinchisi muhimroq: agent o'zi hech narsa yozmaydi, lekin uning
+    taklifi bilan bajarilgan har bir o'zgarish shu yerda ko'rinadi.
+    """
+    suhbatlar = (db.query(m.AgentSuhbat)
+                 .order_by(m.AgentSuhbat.updated_at.desc()).limit(10).all())
+    # AI ishtirokidagi yozuvlar audit jurnalida shu belgi bilan qoladi
+    amallar = (db.query(m.AuditLog)
+               .filter(m.AuditLog.detail.like("%AI taklifi%"))
+               .order_by(m.AuditLog.id.desc()).limit(20).all())
+    return {
+        "holat": llm.holat(),
+        "suhbatlar": [
+            {"id": x.id, "sarlavha": x.sarlavha,
+             "vaqt": svc.mahalliy_vaqt(x.updated_at).isoformat()}
+            for x in suhbatlar],
+        "amallar": [
+            {"kim": a.who, "amal": a.action, "tafsilot": a.detail,
+             "vaqt": svc.mahalliy_vaqt(a.at).isoformat()}
+            for a in amallar],
+    }
+
+
+@router.get("/amallar")
+def amallar(user=Depends(get_user)):
+    """Shu rolga ochiq tasdiqlanadigan amallar — sozlamalar ekrani uchun."""
+    return [{"kalit": k, "izoh": t["izoh"], "tugma": t["tugma"],
+             "xavfli": bool(t.get("xavfli"))}
+            for k, t in genui.AMALLAR.items()
+            if user.role in t["rollar"] or user.role == "Rahbar"]

@@ -38,6 +38,8 @@ MIGRATSIYALAR: list[tuple[str, str, str]] = [
     # QQS — stavka buyurtma paytida qotiriladi
     ("orders", "qqs_stavka", "NUMERIC(5,2) NOT NULL DEFAULT 0"),
     ("orders", "qqs_summa", "NUMERIC(18,2) NOT NULL DEFAULT 0"),
+    # Standart parol majburan almashtiriladi (prodga tayyorlash)
+    ("users", "parol_almashtirilsin", "BOOLEAN NOT NULL DEFAULT FALSE"),
 ]
 
 

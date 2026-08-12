@@ -27,7 +27,7 @@ PAGES.wh=async()=>{
     <div class="glass card"><h2 class="sec mb">Тайёр маҳсулот омбори</h2>
       <table><thead><tr><th>Буюртма</th><th>Ўлчам</th><th>Сони</th><th>Сумма</th></tr></thead><tbody>
       ${fin.map(x=>`<tr><td><b>#${x.order_id}</b><div class="muted" style="font-size:10px">${esc(x.company)}</div></td>
-        <td>${x.size}<div class="muted" style="font-size:10px">${x.layers}q · ${x.grade}</div></td><td>${x.qty}</td><td>${mshort(x.total)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Бўш — ҳаммаси етказилган</td></tr>'}
+        <td>${esc(x.size||'')}<div class="muted" style="font-size:10px">${esc(x.tavsif||'')}</div></td><td>${x.qty} ${esc(x.birlik||'')}</td><td>${mshort(x.total)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Бўш — ҳаммаси етказилган</td></tr>'}
       </tbody></table></div>
     <div class="glass card"><h2 class="sec mb">Охирги инвентаризациялар</h2>
       ${inv.slice(0,6).map(r=>`<div class="between" style="font-size:12px;padding:6px 0;border-top:1px solid var(--hair)">

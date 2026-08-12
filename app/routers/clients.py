@@ -160,7 +160,11 @@ def client_detail_ledger(cid: int, db: Session = Depends(get_db), user=Depends(g
             "olchov": f"{domain.tur_matni(o)} {fmt}",
             "dona": berilgan,
             "narxi": float(o.unit_price),
-            "jami": float(Decimal(o.unit_price) * berilgan),
+            # Qator summasi ham `total` ulushidan — aks holda hisobvaraq
+            # qatorlari QQSsiz, pastdagi qarz esa QQS bilan chiqib,
+            # ikkalasi bir-biriga to'g'ri kelmasdi.
+            "jami": float(Decimal(str(o.total)) * Decimal(str(berilgan))
+                          / Decimal(str(o.qty))) if o.qty else 0.0,
             "status": o.status,
         })
 

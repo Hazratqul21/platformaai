@@ -46,15 +46,6 @@ class OrderIn(BaseModel):
     payment_due_days: int = 15  # to'lov muddati
     note: str = ""
 
-    # --- eski karton maydonlari (frontend moslashuvi uchun) ---
-    length_mm: int | None = None
-    width_mm: int | None = None
-    height_mm: int | None = None
-    tur: str | None = None
-    layers: int | None = None
-    grade: str | None = None
-    colors: int | None = None
-    is_offset: bool | None = None
 
 
 def soha_qiymatlari(data) -> dict:
@@ -76,24 +67,6 @@ def tekshir_yoki_400(qiymatlar: dict, qty) -> tuple[dict, Decimal]:
     if xato:
         raise HTTPException(400, xato)
     return tayyor, miqdor
-
-
-# 4-QADAMGACHA YASHAYDIGAN KO'PRIK.
-# Bu ustunlarni endi HECH KIM O'QIMAYDI (3-qadam), lekin bazada hamon
-# NOT NULL turibdi, shuning uchun to'ldirilmasa INSERT yiqiladi.
-# Karton bo'lmagan profilda bu kalitlar umuman bo'lmaydi — nolga
-# to'ldiriladi. 4-qadamda ustunlar bilan birga bu funksiya ham o'chadi.
-ESKI_USTUNLAR = ("length_mm", "width_mm", "height_mm", "tur", "layers",
-                 "grade", "colors", "is_offset", "m2_per_box")
-ESKI_ZAXIRA = {"length_mm": 0, "width_mm": 0, "height_mm": 0,
-               "m2_per_box": Decimal("0")}
-
-
-def eski_ustunlarga_yoz(o, qiymatlar: dict) -> None:
-    for kalit in ESKI_USTUNLAR:
-        qiymat = qiymatlar.get(kalit, ESKI_ZAXIRA.get(kalit))
-        if qiymat is not None:
-            setattr(o, kalit, qiymat)
 
 
 def narxla(db, qiymatlar: dict, qty, category: str,
@@ -242,12 +215,6 @@ def order_out(o: m.Order) -> dict:
         "id": o.id, "client_id": o.client_id, "company": o.client.company,
         "product_name": o.product_name,
         "size": domain.olcham_matni(o),
-        # DIQQAT: quyidagi tekis kalitlar KARTONGA XOS. Ular faqat hozirgi
-        # (karton uchun yozilgan) frontend uchun turibdi va profilda bunday
-        # maydon bo'lmasa `None` bo'ladi — shuning uchun `.get()`.
-        # Sohaga bog'liq bo'lmagan yagona to'g'ri manba — `attributes`.
-        "length_mm": soha.get("length_mm"), "width_mm": soha.get("width_mm"),
-        "height_mm": soha.get("height_mm"),
         "tur": domain.tur_matni(o),
         "tarkib": domain.tarkib_matni(o),
         # Asosiy rasm: eski o.photo maydonidagi fayl endi mavjud bo'lmasligi mumkin
@@ -257,12 +224,9 @@ def order_out(o: m.Order) -> dict:
         "photo_url": f"/uploads/{asosiy_rasm}" if asosiy_rasm else None,
         "photos": [{"filename": p.filename, "url": f"/uploads/{p.filename}"} for p in o.photos]
                   or ([{"filename": asosiy_rasm, "url": f"/uploads/{asosiy_rasm}"}] if asosiy_rasm else []),
-        "layers": soha.get("layers"), "grade": soha.get("grade"),
-        "colors": soha.get("colors"), "is_offset": soha.get("is_offset"),
         "qty": float(o.qty),
-        # Soha maydonlari xom holda ham beriladi: kelajakda frontend har
-        # sohaga moslashishi uchun yuqoridagi qattiq kalitlar o'rniga shuni
-        # o'qiydi (3-bosqich, UI). Hozircha ikkalasi ham chiqadi.
+        # Soha maydonlarining YAGONA manbasi. Frontend formani va
+        # tavsifni shundan chizadi (static/js/core/soha.js).
         "attributes": o.attributes or {},
         "delivered_qty": float(delivered),
         "qolgan_qty": float(Decimal(str(o.qty)) - delivered),
@@ -270,7 +234,7 @@ def order_out(o: m.Order) -> dict:
         # topshirilgan mol qiymati vs shu buyurtmaga bog'langan to'lov
         "delivered_value": delivered_value, "paid_for_order": paid_for_order,
         "tolanmadi": delivered > 0 and paid_for_order + 1 < delivered_value,
-        "m2_per_box": float(soha.get("m2_per_box") or 0), "unit_cost": float(o.unit_cost),
+        "unit_cost": float(o.unit_cost),
         "unit_price": float(o.unit_price), "total": float(o.total),
         # QQS: `total` — mijoz to'laydigan (QQS bilan), `qqssiz` — soliqsiz asos
         "qqs_stavka": float(o.qqs_stavka or 0),
@@ -353,7 +317,6 @@ def create_order(data: OrderIn, db: Session = Depends(get_db),
         payment_due_date=date.today() + timedelta(days=data.payment_due_days),
     )
     soha_yoz(o, tayyor)          # soha maydonlari -> attributes
-    eski_ustunlarga_yoz(o, tayyor)   # 4-qadamgacha ustunlar ham to'ldiriladi
     db.add(o)
     db.flush()
     db.add(m.AuditLog(who=user.name, action="Buyurtma yaratildi",
@@ -380,14 +343,6 @@ class OrderEditIn(BaseModel):
     due_days: int | None = None
     payment_due_days: int | None = None
 
-    # --- eski karton maydonlari (frontend moslashuvi uchun) ---
-    length_mm: int | None = None
-    width_mm: int | None = None
-    height_mm: int | None = None
-    tur: str | None = None
-    layers: int | None = None
-    grade: str | None = None
-    colors: int | None = None
 
 
 @router.put("/{oid}")
@@ -424,7 +379,6 @@ def edit_order(oid: int, data: OrderEditIn, db: Session = Depends(get_db),
     o.qqs_stavka, o.qqs_summa = qqs["stavka"], qqs["qqs"]
     o.total = qqs["jami"]
     soha_yoz(o, tayyor)
-    eski_ustunlarga_yoz(o, tayyor)
     if data.note is not None:
         o.note = data.note
     if data.due_days is not None:
@@ -464,11 +418,14 @@ def reorder(oid: int, qty: int | None = None, db: Session = Depends(get_db),
     old = db.get(m.Order, oid)
     if not old:
         raise HTTPException(404, "Буюртма топилмади")
+    # Soha maydonlari `attributes` dan KO'CHIRILADI — qaysi maydon
+    # borligini bu yer bilmasligi kerak. Ilgari bu yerda karton ustunlari
+    # sanab chiqilgan edi, ya'ni non zavodida takroriy buyurtma
+    # og'irligini ham, un navini ham yo'qotardi.
     data = OrderIn(
-        client_id=old.client_id, length_mm=old.length_mm, width_mm=old.width_mm,
-        height_mm=old.height_mm, tur=old.tur or f"{old.layers} слой", layers=old.layers,
-        grade=old.grade, product_name=old.product_name,
-        colors=old.colors, qty=qty or old.qty, note=f"Takroriy (#{old.id} asosida)",
+        client_id=old.client_id, product_name=old.product_name,
+        attributes=dict(old.attributes or {}),
+        qty=qty or float(old.qty), note=f"Takroriy (#{old.id} asosida)",
     )
     return create_order(data, db, user)
 
@@ -624,8 +581,27 @@ def order_retsept(oid: int, db: Session = Depends(get_db), user=Depends(get_user
                 yetadi = False
         natija.append(qator)
 
-    return {"order_id": oid, "retsept_bor": True, "qatorlar": natija,
-            "yetadi": yetadi}
+    # Har qatorning PULI ham kerak, faqat miqdori emas. Qo'lda narx
+    # qo'yiladigan sohalarda (avto servis, texnika ta'miri, montaj) usta
+    # narxni boshidan yozadi, ehtiyot qism esa ombordan ketadi — ikkalasi
+    # solishtirilmasa zarariga sotilgani hech qayerda ko'rinmaydi.
+    tannarx = s.retsept_tannarx(db, qatorlar)
+    pul = {t["material"]: t for t in tannarx["qatorlar"]}
+    for qator in natija:
+        t = pul.get(qator["material"])
+        if t is not None:
+            qator["summa"] = float(t["summa"])
+
+    xomashyo = Decimal(str(tannarx["jami"]))
+    qqssiz = Decimal(str(o.total or 0)) - Decimal(str(o.qqs_summa or 0))
+    javob = {"order_id": oid, "retsept_bor": True, "qatorlar": natija,
+             "yetadi": yetadi, "xomashyo_summasi": float(xomashyo),
+             "qqssiz_summa": float(qqssiz)}
+    if xomashyo > qqssiz:
+        javob["zarar_ogoh"] = (
+            f"Зарарига сотилмоқда: хомашё {xomashyo:,.0f} сўм, "
+            f"буюртма (ҚҚСсиз) {qqssiz:,.0f} сўм. Нархни қайта кўринг.")
+    return javob
 
 
 @router.post("/{oid}/status")

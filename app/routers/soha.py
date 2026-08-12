@@ -48,6 +48,12 @@ def joriy(user=Depends(get_user)):
         "kalit": p.kalit, "nom": p.nom, "izoh": p.izoh,
         "narx_usuli": p.narx.get("usul", "qolda"),
         "xomashyo_hisobi": bool(p.xomashyo),
+        # Miqdor o'lchovi: karton «dona», beton «m³», montaj «m²».
+        # Formadagi «Тираж, дона» yozuvi shundan chiqadi.
+        "birlik": p.birlik,
+        "kasrli": p.kasrli,
+        "min_miqdor": float(p.min_miqdor),
+        "max_miqdor": float(p.max_miqdor),
         # Retsept (BOM): 1 buyurtmaga qaysi material qancha ketadi.
         # Frontend shundan «ishlab chiqarishga yetadimi» ni ko'rsatishi mumkin.
         "retsept": p.retsept,

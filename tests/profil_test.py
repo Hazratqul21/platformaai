@@ -178,12 +178,28 @@ def profilni_sina(kalit, nom, token):
           f"{o['size']!r} · {o['tarkib']!r}")
 
 
-def main():
+SINOV_PAROL = "Sinov2026Parol"
+
+
+def kirish():
+    """Yangi bazada admin standart parol bilan QULFLANGAN — sinov avval
+    parolni almashtiradi, aks holda hamma so'rov 403 bo'ladi."""
     s, d = call("POST", "/api/auth/login", {"login": "admin", "password": "1234"})
+    if s == 200:
+        if d.get("parol_almashtirilsin"):
+            call("POST", "/api/auth/change-password",
+                 {"old_password": "1234", "new_password": SINOV_PAROL}, d["token"])
+        return d["token"]
+    s, d = call("POST", "/api/auth/login",
+                {"login": "admin", "password": SINOV_PAROL})
     if s != 200:
         print(f"❌ Login ishlamadi ({s}). Server {BASE} da ishlayaptimi?")
         raise SystemExit(1)
-    token = d["token"]
+    return d["token"]
+
+
+def main():
+    token = kirish()
 
     s, profillar = call("GET", "/api/soha/profillar", token=token)
     print(f"Topilgan profil: {len(profillar)}\n")

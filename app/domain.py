@@ -449,17 +449,16 @@ def tekshir(qiymatlar: dict) -> str | None:
 def soha_yoz(order, qiymatlar: dict | None = None) -> None:
     """Soha maydonlarini `attributes` ga yozadi.
 
-    `qiymatlar` berilsa — o'shandan; berilmasa eski ustunlardan (2-qadam
-    «ikki joyga yozish» rejimi, ustunlar o'chirilgunicha).
+    `qiymatlar` berilmasa — buyurtmaning o'z `attributes` idan qayta
+    hisoblanadi (hosila maydonlarni to'ldirish uchun). Ilgari bu yerda
+    eski ustunlardan o'qish yo'li ham bor edi — 4-qadamda ustunlar
+    o'chirilgach olib tashlandi.
     """
     if order.attributes is None:
         order.attributes = {}
+    manba = qiymatlar if qiymatlar is not None else dict(order.attributes)
     for md in profil().maydonlar:
-        if qiymatlar is not None:
-            xom = qiymatlar.get(md.kalit)
-        else:
-            xom = getattr(order, md.kalit, None)
-        order.attributes[md.kalit] = md.json_ga(xom)
+        order.attributes[md.kalit] = md.json_ga(manba.get(md.kalit))
 
 
 def soha_oqi(order, kalit: str, standart=None):

@@ -11,6 +11,8 @@
 <script defer src="/static/js/core/auth.js"></script>
 <script defer src="/static/js/core/router.js"></script>
 <script defer src="/static/js/core/ui.js"></script>
+<script defer src="/static/js/core/soha.js"></script>
+<script defer src="/static/js/core/genui.js"></script>
 
 <script defer src="/static/js/pages/init.js"></script>
 <script defer src="/static/js/pages/dash.js"></script>
@@ -26,43 +28,64 @@
 <script defer src="/static/js/pages/exp.js"></script>
 <script defer src="/static/js/pages/settings.js"></script>
 <script defer src="/static/js/pages/help.js"></script>
+<script defer src="/static/js/pages/ai.js"></script>
 <script defer src="/static/js/pages/agent.js"></script>
 
 <script defer src="/static/js/app.js"></script>
 </head>
 <body>
 
-<!-- Kraft-karton SVG fon -->
-<svg class="paper-bg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1440 900" aria-hidden="true">
+<!-- ==================== FON ====================
+     Ilgari bu yerda kraft-karton to'qimasi va gofra qutilar chizilgan
+     edi — TIZIM faqat karton sexi uchun bo'lganda to'g'ri edi. Endi
+     platforma 22 sohaga xizmat qiladi: nonvoy ham, beton zavodi ham
+     shu ekranni ko'radi, va qutilar ularga begona.
+
+     Yangi fon SOHAGA BOG'LIQ EMAS: sovuq oq-siyohrang asos, yengil
+     to'qima (tekis rang «arzon» ko'rinadi) va mavzuga mos yumshoq
+     yorug'lik dog'lari. Shisha kartochkalar och fonda yaxshi o'qiladi,
+     shuning uchun asos ataylab yorug'. -->
+<svg class="paper-bg" xmlns="http://www.w3.org/2000/svg"
+     preserveAspectRatio="xMidYMid slice" viewBox="0 0 1440 900" aria-hidden="true">
   <defs>
-    <filter id="kraftTex" x="0" y="0" width="100%" height="100%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" seed="9" stitchTiles="stitch" result="n"/>
-      <feDiffuseLighting in="n" lighting-color="#efe4cb" surfaceScale="1.6" diffuseConstant="1.04" result="l">
-        <feDistantLight azimuth="235" elevation="58"/>
-      </feDiffuseLighting>
-      <feColorMatrix in="l" type="saturate" values="0.8"/>
+    <!-- Yengil to'qima: qog'oz hissini beradi, lekin rangsiz -->
+    <filter id="toqima" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4"
+                    seed="17" stitchTiles="stitch" result="n"/>
+      <feColorMatrix in="n" type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.055"/>
+      </feComponentTransfer>
     </filter>
-    <radialGradient id="warmth" cx="40%" cy="18%" r="95%">
-      <stop offset="0%" stop-color="#F8F0DD"/><stop offset="55%" stop-color="#ECDFC4"/><stop offset="100%" stop-color="#D4C49E"/>
+
+    <linearGradient id="asos" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#F4F6FC"/>
+      <stop offset="52%"  stop-color="#EAEDF8"/>
+      <stop offset="100%" stop-color="#DFE3F3"/>
+    </linearGradient>
+
+    <radialGradient id="nur1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#A0A3FF" stop-opacity=".34"/>
+      <stop offset="100%" stop-color="#A0A3FF" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="lavTR" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#C2C6FF" stop-opacity="0.5"/><stop offset="100%" stop-color="#C2C6FF" stop-opacity="0"/>
+    <radialGradient id="nur2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#7FD1C9" stop-opacity=".22"/>
+      <stop offset="100%" stop-color="#7FD1C9" stop-opacity="0"/>
     </radialGradient>
+
+    <!-- Juda sust to'r: «tizim/reja» hissi, e'tiborni tortmaydi -->
+    <pattern id="tor" width="46" height="46" patternUnits="userSpaceOnUse">
+      <path d="M46 0H0V46" fill="none" stroke="#5E63E0" stroke-opacity=".05"
+            stroke-width="1"/>
+    </pattern>
   </defs>
-  <rect width="1440" height="900" fill="#ecdfc6" filter="url(#kraftTex)"/>
-  <rect width="1440" height="900" fill="url(#warmth)" style="mix-blend-mode:multiply" opacity="0.5"/>
-  <rect x="980" y="-260" width="700" height="700" fill="url(#lavTR)"/>
-  <rect x="-300" y="520" width="720" height="720" fill="url(#lavTR)" opacity=".6"/>
-  <!-- gofra qutilar illyustratsiyasi -->
-  <g transform="translate(1150 700)" opacity="0.38" stroke="#8a6a40" stroke-width="3" fill="#E3CFA3" stroke-linejoin="round">
-    <ellipse cx="10" cy="150" rx="230" ry="22" fill="#6b572f" stroke="none" opacity="0.12"/>
-    <path d="M-160 40 l90 -42 90 42 v78 l-90 42 -90 -42 z" fill="#E8D6AC"/>
-    <path d="M-160 40 l90 42 90 -42 M-70 82 v78" fill="none"/>
-    <path d="M-160 40 l38 -20 90 42 -38 20 z" fill="#F2E4C2"/>
-    <path d="M20 66 l80 -37 80 37 v70 l-80 37 -80 -37 z" fill="#DFC998"/>
-    <path d="M20 66 l80 37 80 -37 M100 103 v70" fill="none"/>
-    <g stroke-width="2" opacity=".7"><path d="M-150 96 q4 -5 8 0 t8 0 t8 0 t8 0" fill="none"/><path d="M30 118 q4 -5 8 0 t8 0 t8 0" fill="none"/></g>
-  </g>
+
+  <rect width="1440" height="900" fill="url(#asos)"/>
+  <rect width="1440" height="900" fill="url(#tor)"/>
+  <rect x="820"  y="-320" width="880" height="880" fill="url(#nur1)"/>
+  <rect x="-360" y="420"  width="900" height="900" fill="url(#nur2)"/>
+  <rect x="240"  y="600"  width="700" height="700" fill="url(#nur1)" opacity=".5"/>
+  <rect width="1440" height="900" filter="url(#toqima)" opacity=".9"/>
 </svg>
 
 <!-- ============ LOGIN ============ -->
@@ -107,7 +130,7 @@
 </div>
 <nav class="bottom-nav glass" id="bottomNav"></nav>
 <div class="toasts" id="toasts"></div>
-<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()"><div class="modal glass" id="modalBox"></div></div>
+<div class="overlay" id="overlay" onclick="if(event.target===this&&!this.dataset.qulf)closeModal()"><div class="modal glass" id="modalBox"></div></div>
 
 </body>
 </html>

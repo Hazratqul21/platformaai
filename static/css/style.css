@@ -1,6 +1,6 @@
 /* =====================================================
    TIZIM — Light Liquid Glass · #A0A3FF urg'u
-   Kraft-karton fon · INNASOFT MChJ
+   Fon: sohaga bog'liq bo'lmagan sovuq oq-siyohrang · INNASOFT MChJ
    ===================================================== */
 :root{
   --primary:#7C7FF0; --primary-soft:#A0A3FF; --primary-deep:#5E63E0;
@@ -16,8 +16,8 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{font-family:var(--sans);color:var(--ink);background:#e7dcc4;-webkit-font-smoothing:antialiased;overflow:hidden}
-.paper-bg{position:fixed;inset:0;z-index:-2;background:#e7dcc4}
+body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-smoothing:antialiased;overflow:hidden}
+.paper-bg{position:fixed;inset:0;z-index:-2;background:#EAEDF8}
 .glass{background:radial-gradient(135% 95% at 0% 0%,rgba(255,255,255,.55),transparent 48%),linear-gradient(160deg,rgba(255,255,255,.76),rgba(255,255,255,.54) 55%,rgba(255,255,255,.66));
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border:1px solid transparent;border-radius:var(--radius);box-shadow:var(--shadow);position:relative}
@@ -268,3 +268,129 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
   border:none; background:transparent; cursor:pointer;
   padding:0; max-width:100%; color:inherit;
 }
+
+/* ================== GenUI — AI chizgan komponentlar ==================
+ * Chat oynasi tor (360px atrofida), shuning uchun hamma narsa ixcham:
+ * kichik shrift, kam bo'shliq, jadval gorizontal aylanadi. */
+.genui{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.genui-karta{background:var(--hair);border-radius:12px;padding:10px 11px}
+.genui-sarlavha{font-weight:700;font-size:12.5px;margin-bottom:7px}
+.genui-kichik-sarlavha{font-size:10px;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--muted);margin:9px 0 5px}
+.genui-izoh{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
+
+/* --- jadval --- */
+.genui-aylan{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.genui-jadval{width:100%;border-collapse:collapse;font-size:11.5px}
+.genui-jadval th{text-align:left;font-size:9.5px;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--muted);padding:0 6px 5px 0;white-space:nowrap}
+.genui-jadval td{padding:5px 6px 5px 0;border-top:1px solid var(--ink-2);
+  white-space:nowrap}
+.genui-jadval tbody tr:first-child td{border-top:0}
+.genui-q-ok   td:first-child{box-shadow:inset 2px 0 0 var(--ok)}
+.genui-q-warn td:first-child{box-shadow:inset 2px 0 0 var(--warn)}
+.genui-q-dn   td:first-child{box-shadow:inset 2px 0 0 var(--danger)}
+.genui-q-ok td:first-child,.genui-q-warn td:first-child,
+.genui-q-dn td:first-child{padding-left:7px}
+
+/* --- ko'rsatkichlar --- */
+.genui-plitalar{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:7px}
+.genui-plita{background:var(--card,rgba(255,255,255,.5));border-radius:10px;padding:8px 9px}
+.genui-plita-nom{font-size:9.5px;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:3px}
+.genui-plita-qiymat{font-size:15px;font-weight:700;line-height:1.15}
+.genui-plita-ozg{font-size:10.5px;color:var(--muted);margin-top:2px}
+
+/* --- tafsilot --- */
+.genui-qator{display:flex;justify-content:space-between;gap:10px;
+  font-size:12px;padding:4px 0;border-top:1px solid var(--ink-2)}
+.genui-karta .genui-qator:first-of-type{border-top:0}
+.genui-nom{color:var(--muted)}
+
+/* --- taqsimot (diagramma) --- */
+.genui-bar-qator{display:grid;grid-template-columns:74px 1fr auto;
+  align-items:center;gap:7px;font-size:11px;padding:3px 0}
+.genui-bar-nom{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Yo'lak SUST bo'lsin: to'q bo'lsa ikkinchi ustunga o'xshab,
+   diagramma ikki rangli bo'lib ko'rinadi. */
+.genui-bar-yolak{background:rgba(128,128,128,.16);border-radius:6px;
+  height:8px;overflow:hidden}
+.genui-bar{height:100%;border-radius:6px;background:var(--primary);
+  transition:width .35s ease}
+.genui-b-ok{background:var(--ok)} .genui-b-warn{background:var(--warn)}
+.genui-b-dn{background:var(--danger)}
+.genui-bar-son{font-weight:600;font-size:11px;white-space:nowrap}
+
+/* --- profil oynasi (konstruktor natijasi) --- */
+.genui-profil-nom{font-size:14px;font-weight:700;margin-bottom:3px}
+.genui-oqim{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.genui-oqim-qadam{background:var(--card,rgba(255,255,255,.55));border-radius:7px;
+  padding:3px 7px;font-size:10.5px;font-weight:600}
+.genui-oqim-strelka{color:var(--muted);font-size:10px}
+.genui-maydonlar{display:flex;flex-wrap:wrap;gap:5px}
+.genui-maydon{background:var(--card,rgba(255,255,255,.55));border-radius:8px;
+  padding:4px 8px;display:flex;flex-direction:column}
+.genui-maydon-nom{font-size:11px;font-weight:600}
+.genui-maydon-tur{font-size:9.5px;color:var(--muted)}
+
+/* --- tasdiq (harakat taklifi) --- */
+.genui-tasdiq{border:1px solid var(--primary)}
+.genui-tasdiq.genui-xavfli{border-color:var(--danger)}
+.genui-tasdiq-matn{font-size:12px;line-height:1.5;margin-bottom:8px}
+.genui-tugmalar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.genui-holat{font-size:11px;color:var(--muted)}
+
+/* --- ranglar --- */
+.genui-t-ok{color:var(--ok)} .genui-t-warn{color:var(--warn)}
+.genui-t-dn{color:var(--danger)} .genui-t-mut{color:var(--muted)}
+
+/* ================== AI YORDAMCHI — to'liq ekranli bo'lim ==================
+ * Chap tomonda suhbat (keng — jadval va diagramma sig'sin), o'ng tomonda
+ * «AI nima qildi». Tor ekranda ustma-ust joylashadi. */
+.ai-sahifa{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr);
+  gap:14px;align-items:start}
+@media(max-width:900px){.ai-sahifa{grid-template-columns:1fr}}
+
+.ai-chat-quti{display:flex;flex-direction:column;min-height:min(72vh,640px);padding:14px}
+.ai-bosh{align-items:flex-start;gap:10px;margin-bottom:10px}
+.ai-tanla{font-weight:700;font-size:14px;padding:6px 10px;width:auto;min-width:190px}
+.ai-holat{font-size:11px;margin-top:3px}
+.ai-ogoh{color:var(--danger)}
+
+.ai-oqim{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  padding:4px 2px 8px}
+.ai-xabar{max-width:88%;padding:9px 12px;border-radius:14px;font-size:13px;
+  line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.ai-xabar.meniki{align-self:flex-end;background:var(--primary);color:#fff;
+  border-bottom-right-radius:5px}
+.ai-xabar.agentniki{align-self:flex-start;background:var(--hair);
+  border-bottom-left-radius:5px;max-width:96%}
+.ai-kutish{opacity:.6;font-style:italic}
+/* «Nima qildim» izi — foydalanuvchi raqam qayerdan kelganini ko'rsin */
+.ai-iz{font-size:10.5px;color:var(--muted);margin-top:6px;
+  border-top:1px dashed var(--ink-2);padding-top:5px}
+
+.ai-takliflar{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
+.ai-namuna{font-size:11.5px;opacity:.9}
+
+.ai-kirish{display:flex;gap:8px;align-items:flex-end;
+  border-top:1px solid var(--hair);padding-top:10px}
+.ai-kirish textarea{flex:1;resize:none;border-radius:12px;padding:9px 12px;
+  border:1px solid var(--ink-2);background:var(--card,rgba(255,255,255,.6));
+  font:inherit;font-size:13px;color:inherit}
+.ai-kirish textarea:focus{outline:none;border-color:var(--primary)}
+
+/* --- o'ng ustun: AI faoliyati --- */
+.ai-bayroq{font-size:11.5px;font-weight:600;padding:7px 10px;border-radius:9px;
+  margin-bottom:10px}
+.ai-b-ok{background:rgba(46,160,90,.12);color:var(--ok)}
+.ai-b-dn{background:rgba(220,70,70,.12);color:var(--danger)}
+.ai-kichik{font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--muted);margin:12px 0 6px}
+.ai-bosh-izoh{font-size:11.5px;line-height:1.5}
+.ai-amal{background:var(--hair);border-radius:10px;padding:8px 10px;
+  margin-bottom:6px;font-size:12px}
+.ai-amal-izoh{font-size:11.5px;color:var(--text-main);margin:3px 0;line-height:1.45}
+.ai-vaqt{font-size:10.5px}
+.ai-suhbat{font-size:11.5px;padding:5px 0;border-top:1px solid var(--hair);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

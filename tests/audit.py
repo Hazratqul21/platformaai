@@ -40,7 +40,24 @@ def ck(module, name, cond, detail=""):
         FAILS.append(f"[{module}] {name}: {detail}")
 
 
-rahbar = call("POST", "/api/auth/login", {"login": "admin", "password": "1234"})[1]["token"]
+SINOV_PAROL = "Sinov2026Parol"
+
+
+def kirish():
+    """Admin standart parol bilan qulflangan yaratiladi — avval almashtiramiz."""
+    s, d = call("POST", "/api/auth/login", {"login": "admin", "password": "1234"})
+    if s == 200:
+        if d.get("parol_almashtirilsin"):
+            call("POST", "/api/auth/change-password",
+                 {"old_password": "1234", "new_password": SINOV_PAROL}, d["token"])
+        return d["token"]
+    s, d = call("POST", "/api/auth/login",
+                {"login": "admin", "password": SINOV_PAROL})
+    assert s == 200, d
+    return d["token"]
+
+
+rahbar = kirish()
 
 # ============ CRM ============
 s, cs = call("GET", "/api/clients", token=rahbar)

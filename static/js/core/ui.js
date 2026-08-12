@@ -8,13 +8,22 @@ function toast(c,ic,t,p){
   const el=document.createElement('div');el.className='toast glass alert '+c;
   el.innerHTML=`<div class="ai">${icon(ic,16)}</div><div><b>${esc(t)}</b><p>${esc(p)}</p></div>`;
   document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),4200);}
-function modal(html,wide){
+function modal(html,wide,qulf){
   const box=document.getElementById('modalBox');
   box.innerHTML=html;
   box.classList.toggle('wide',!!wide);   // keng jadvalli oynalar uchun
-  document.getElementById('overlay').classList.add('show');
+  const ov=document.getElementById('overlay');
+  // `qulf` — fon bosilganda yopilmaydi. Majburiy qadamlar uchun
+  // (masalan standart parolni almashtirish): oyna yopilsa foydalanuvchi
+  // hech narsa qila olmaydigan bo'sh ekranda qolardi.
+  if(qulf)ov.dataset.qulf='1'; else delete ov.dataset.qulf;
+  ov.classList.add('show');
 }
-function closeModal(){document.getElementById('overlay').classList.remove('show');}
+function closeModal(){
+  const ov=document.getElementById('overlay');
+  delete ov.dataset.qulf;
+  ov.classList.remove('show');
+}
 const f=id=>document.getElementById(id)?.value||'';
 // Pul maydoni qiymatini toza son qilib olish (probel/vergul olib tashlanadi): fnum('id')
 const fnum=id=>+String(f(id)).replace(/[\s,]/g,'')||0;

@@ -82,10 +82,15 @@ def add_lot(data: LotIn, db: Session = Depends(get_db),
 def finished_stock(db: Session = Depends(get_db), user=Depends(get_user)):
     """Tayyor mahsulot ombori = statusi 'Omborga tushdi' buyurtmalar."""
     rows = db.query(m.Order).filter(m.Order.status.in_(domain.statuslar("tayyor"))).all()
+    # Tavsif SOHA MATNLARIDAN — ilgari `layers`/`grade` deb kartonga xos
+    # ikki maydon qaytarilardi va non zavodida ustun bo'sh turardi.
     return [{
         "order_id": o.id, "company": o.client.company,
-        "size": domain.olcham_matni(o), "layers": soha_oqi(o, "layers"),
-        "grade": soha_oqi(o, "grade"), "qty": o.qty, "total": float(o.total),
+        "size": domain.olcham_matni(o),
+        "tavsif": " · ".join(x for x in (domain.tur_matni(o),
+                                         domain.tarkib_matni(o)) if x),
+        "qty": float(o.qty), "birlik": domain.profil().birlik,
+        "total": float(o.total),
     } for o in rows]
 
 

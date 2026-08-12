@@ -8,7 +8,29 @@ BASE = os.getenv("BASE", "http://localhost:8000")
 FAILS = []
 
 
+# 1-bosqich 4-qadamdan keyin `/api/orders` soha maydonlarini FAQAT
+# `attributes` ichida qabul qiladi (tekis `length_mm=...` yo'q). Bu test
+# karton API si bo'yicha yozilgan va o'qilishi shundayligicha qulay,
+# shuning uchun o'girish shu bitta joyda qilinadi.
+KARTON_MAYDONLARI = {"length_mm", "width_mm", "height_mm", "tur",
+                     "layers", "grade", "colors", "is_offset"}
+
+
+def _attributes_ga(path, body):
+    if not isinstance(body, dict) or not path.startswith("/api/orders"):
+        return body
+    if path.startswith("/api/orders/quote"):
+        return body            # eski karton kalkulyatori tekis qabul qiladi
+    soha = {k: body[k] for k in list(body) if k in KARTON_MAYDONLARI}
+    if not soha:
+        return body
+    yangi = {k: v for k, v in body.items() if k not in KARTON_MAYDONLARI}
+    yangi["attributes"] = {**soha, **(body.get("attributes") or {})}
+    return yangi
+
+
 def call(method, path, body=None, token=None, expect=200):
+    body = _attributes_ga(path, body)
     path = urllib.parse.quote(path, safe="/?=&")
     req = urllib.request.Request(BASE + path, method=method)
     req.add_header("Content-Type", "application/json")
@@ -29,8 +51,19 @@ def check(name, cond, detail=""):
         FAILS.append(f"{name}: {detail}")
 
 
+SINOV_PAROL = "Sinov2026Parol"
+
+
 def login(u):
+    """Admin standart parol bilan QULFLANGAN yaratiladi (prod xavfsizligi) —
+    sinov birinchi kirishda parolni almashtiradi."""
     s, d = call("POST", "/api/auth/login", {"login": u, "password": "1234"})
+    if s == 200 and d.get("parol_almashtirilsin"):
+        call("POST", "/api/auth/change-password",
+             {"old_password": "1234", "new_password": SINOV_PAROL}, d["token"])
+    elif s != 200:
+        s, d = call("POST", "/api/auth/login",
+                    {"login": u, "password": SINOV_PAROL})
     assert s == 200, d
     return d["token"]
 
@@ -130,7 +163,10 @@ s, raw2 = call("GET", "/api/warehouse/raw", token=sklad)
 k1b = [g for g in raw2["groups"] if g["grade"] == "K1"][0]
 oldest_after = [l for l in k1b["lots"] if l["id"] == oldest["id"]][0]
 # kerakli m² ni lot grammaji bo'yicha kg ga o'giramiz
-need_m2 = o["m2_per_box"] * 1000 * 1.05
+# `m2_per_box` endi buyurtmaning tekis maydoni emas — u KARTONGA XOS
+# hosila qiymat va `attributes` ichida yashaydi (JSON'da satr sifatida,
+# Decimal aniqligi yo'qolmasin uchun).
+need_m2 = float(o["attributes"]["m2_per_box"]) * 1000 * 1.05
 need_kg = need_m2 * (k1["grammage"] / 1000)
 check("2.1 FIFO: eng eski lotdan yechildi", oldest_after["remaining_kg"] < before,
       f"{before} -> {oldest_after['remaining_kg']}")
@@ -352,12 +388,14 @@ check("Validatsiya: noma'lum tur rad", s == 400, str(d)[:60])
 s, o = call("POST", "/api/orders", {"length_mm": 300, "width_mm": 200, "height_mm": 150,
             "tur": "Самоклейка", "grade": "K1", "colors": 0, "qty": 100, "client_id": CID,
             "note": "Тагига картон қўйилсин"}, menejer)
+# `layers`/`is_offset` — kartonga xos hosila maydonlar, endi `attributes` da
 check("Tur 'Самоклейка' buyurtma: qavat=1", s == 200 and o["tur"] == "Самоклейка"
-      and o["layers"] == 1, str(o)[:70])
+      and o["attributes"]["layers"] == 1, str(o)[:70])
 check("Qo'shimcha izoh saqlanadi", o.get("note") == "Тагига картон қўйилсин", str(o.get("note")))
 s, o2 = call("POST", "/api/orders", {"length_mm": 300, "width_mm": 200, "height_mm": 150,
              "tur": "Офсет", "grade": "K1", "colors": 0, "qty": 100, "client_id": CID}, menejer)
-check("Tur 'Офсет' is_offset belgisini qo'yadi", s == 200 and o2["is_offset"] is True, str(o2)[:60])
+check("Tur 'Офсет' is_offset belgisini qo'yadi",
+      s == 200 and o2["attributes"]["is_offset"] is True, str(o2)[:60])
 s, d = call("POST", "/api/finance/payments", {"client_id": CID, "amount": -5000}, bux)
 check("Validatsiya: manfiy to'lov rad", s == 400, str(d))
 s, d = call("POST", "/api/warehouse/raw", {"supplier_id": 1, "grade": "K1", "grammage": 120,

@@ -77,7 +77,12 @@ def login(db: Session, login_: str, password: str, ip: str = "") -> dict:
     db.add(m.AuthToken(token=token, user_id=user.id,
                        expires=datetime.utcnow() + timedelta(hours=TOKEN_TTL_HOURS)))
     db.commit()
-    return {"token": token, "name": user.name, "role": user.role, "login": user.login}
+    return {"token": token, "name": user.name, "role": user.role,
+            "login": user.login,
+            # Frontend shu bayroqqa qarab parol almashtirish oynasini
+            # majburan ochadi. Backend ham qulflaydi (get_user) — ya'ni
+            # frontendni chetlab o'tib API ga murojaat qilib bo'lmaydi.
+            "parol_almashtirilsin": bool(user.parol_almashtirilsin)}
 
 
 def logout(token: str, db: Session):
@@ -97,6 +102,29 @@ def get_user(authorization: str = Header(default=""), db: Session = Depends(get_
     if not user:
         db.delete(row)
         db.commit()
+        raise HTTPException(401, "Фойдаланувчи топилмади")
+    if user.parol_almashtirilsin:
+        # Bu tekshiruv AYNAN shu yerda turishi kerak: hamma himoyalangan
+        # endpoint `get_user` orqali o'tadi, shuning uchun bittasi ham
+        # unutilmaydi. Frontendni chetlab o'tib ham bo'lmaydi.
+        raise HTTPException(
+            403, "Стандарт пароль ўзгартирилиши шарт — аввал янги пароль ўрнатинг")
+    return user
+
+
+def get_user_parolsiz(authorization: str = Header(default=""),
+                      db: Session = Depends(get_db)) -> m.User:
+    """`get_user` kabi, lekin parol qulfini tekshirmaydi.
+
+    Faqat parol almashtirish endpointi uchun — aks holda qulflangan
+    foydalanuvchi parolini o'zgartira olmay, tizimga umuman kira olmasdi.
+    """
+    token = authorization.removeprefix("Bearer ").strip()
+    row = db.get(m.AuthToken, token) if token else None
+    if not row or row.expires < datetime.utcnow():
+        raise HTTPException(401, "Авторизация талаб қилинади")
+    user = db.get(m.User, row.user_id)
+    if not user:
         raise HTTPException(401, "Фойдаланувчи топилмади")
     return user
 

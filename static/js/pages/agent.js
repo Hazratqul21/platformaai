@@ -107,7 +107,7 @@ function agentYangiSuhbat() {
     (AGENT_SALOM[AGENT_KALIT] || 'Savolingizni yozing.'));
 }
 
-function agentXabarQosh(kim, matn, asboblar) {
+function agentXabarQosh(kim, matn, asboblar, komponentlar, suhbatId) {
   const oqim = document.getElementById('agentOqim');
   const div = document.createElement('div');
   div.className = 'agent-xabar ' + (kim === 'user' ? 'meniki' : 'agentniki');
@@ -117,6 +117,12 @@ function agentXabarQosh(kim, matn, asboblar) {
   p.className = 'agent-matn';
   p.textContent = matn;
   div.appendChild(p);
+  // GenUI: agent chizgan komponentlar matndan KEYIN keladi. Matn qisqa
+  // xulosa, tafsilot esa jadval/ko'rsatkich/tasdiq tugmasi ko'rinishida.
+  if (komponentlar && komponentlar.length) {
+    const chizilgan = genuiChiz(komponentlar, suhbatId);
+    if (chizilgan) div.appendChild(chizilgan);
+  }
   if (asboblar && asboblar.length) {
     const iz = document.createElement('div');
     iz.className = 'agent-iz';
@@ -147,7 +153,10 @@ async function agentYubor() {
     AGENT_SUHBAT = j.suhbat_id;
     kutish.remove();
     agentXabarQosh('agent', j.javob,
-      (j.izlar || []).map(i => i.asbob));
+      // `korsat` ni izda ko'rsatmaymiz: u foydalanuvchi uchun «asbob»
+      // emas, javobning o'zi — komponent sifatida allaqachon ko'rinadi.
+      (j.izlar || []).map(i => i.asbob).filter(x => x !== 'korsat'),
+      j.komponentlar, j.suhbat_id);
     // Agent profilni o'zgartirgan bo'lishi mumkin — sahifani yangilaymiz,
     // aks holda ekranda eski soha maydonlari turaveradi.
     if ((j.izlar || []).some(i =>

@@ -43,6 +43,10 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(128))
     name: Mapped[str] = mapped_column(String(100))
     role: Mapped[str] = mapped_column(String(30))
+    # Standart parol (admin/1234) bilan ishlab yuborilmasin: bayroq
+    # yoqilgan bo'lsa foydalanuvchi paroldan boshqa hech narsa qila
+    # olmaydi. Yangi mijozning tizimi birinchi kundan ochiq turmasin.
+    parol_almashtirilsin: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class AuthToken(Base):
@@ -139,21 +143,13 @@ class Order(Base):
     attributes: Mapped[dict] = mapped_column(
         MutableDict.as_mutable(JSONB_), default=dict, nullable=False)
 
-    # ---- Quyidagi ustunlar SOHA QATLAMIGA (attributes) ko'chirilmoqda -----
-    # 1-bosqich, 4-qadamda o'chiriladi. Yangi kod bularni O'QIMASIN —
-    # `attributes` dan foydalaning (app/domain.py).
-    # Quti parametrlari (mm)
-    length_mm: Mapped[int] = mapped_column(Integer)
-    width_mm: Mapped[int] = mapped_column(Integer)
-    height_mm: Mapped[int] = mapped_column(Integer)
-    # Buyurtma turi: "3 слой" / "Самоклейка" / "Офсет" ... (ORDER_TURLARI)
-    tur: Mapped[str] = mapped_column(String(30), default=TUR_DEFAULT)
-    layers: Mapped[int] = mapped_column(Integer, default=3)   # tur dan kelib chiqadi (1/2/3/5)
-    grade: Mapped[str] = mapped_column(String(50), default="K1")
-    colors: Mapped[int] = mapped_column(Integer, default=0)   # flekso bosma ranglar soni
-    is_offset: Mapped[bool] = mapped_column(Boolean, default=False)  # eski maydon: tur=="Офсет"
-    m2_per_box: Mapped[Decimal] = mapped_column(Numeric(18, 4))  # karton o'lchovi
-    # ---- ko'chiriladigan ustunlar tugadi ---------------------------------
+    # 1-bosqich 4-qadami BAJARILDI: karton ustunlari (length_mm, width_mm,
+    # height_mm, tur, layers, grade, colors, is_offset, m2_per_box) shu
+    # yerdan o'chirildi va `attributes` ga ko'chdi. Bazada ular ishga
+    # tushishda `jadvalni_qayta_qur` tomonidan tashlanadi.
+    #
+    # Yangi soha maydoni kerak bo'lsa — bu yerga USTUN QO'SHILMAYDI,
+    # profil JSON'iga maydon yoziladi. Yadro sohani bilmasligi kerak.
 
     # ---- YADRO: har biznesda bor ----------------------------------------
     # Mahsulot rasmi — sexda telefonda olinadi, keyin ko'rsatish uchun (fayl nomi)

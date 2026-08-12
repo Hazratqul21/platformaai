@@ -425,6 +425,11 @@ def unit_cost(db: Session, mpb: Decimal, grade: str, layers: int, colors: int) -
 
 
 def quote(db: Session, length_mm, width_mm, height_mm, layers, grade, colors, qty, category="Standart") -> dict:
+    # `qty` Decimal ga o'giriladi: chaqiruvchi float bersa quyida
+    # `Decimal * float` TypeError bo'lardi. Miqdor endi kasrli ham
+    # bo'lishi mumkin (profil `olchov.kasrli`), shuning uchun bu yo'l
+    # haqiqatan ochiq — himoyani chaqiruvchiga qoldirib bo'lmaydi.
+    qty = Decimal(str(qty))
     mpb, ogoh = m2_per_box_ogoh(db, length_mm, width_mm, height_mm)
     cost = unit_cost(db, mpb, grade, layers, colors)
     margin_key = {"VIP": "margin_vip", "Standart": "margin_standart"}.get(category, "margin_yangi")
@@ -553,13 +558,17 @@ def low_stock_alerts(db: Session) -> list[dict]:
 
 # Mijoz qarzi = boshlang'ich qarz + FAQAT TOPSHIRILGAN mol qiymati − to'lovlar.
 # Ishlab chiqilmagan yoki topshirilmagan (delivered_qty=0) buyurtma qarzga kirmaydi.
-# Qisman topshirilsa — faqat berilgan qismi (delivered_qty × unit_price).
+# Qisman topshirilsa — berilgan ULUSHI: total × (berilgan / jami miqdor).
+# `total` dan olinishi MUHIM — u QQS bilan, ya'ni mijoz to'laydigan summa
+# (`client_balances_batch` dagi izohga qarang).
 def client_balance(db: Session, client_id: int) -> dict:
     c = db.get(m.Client, client_id)
     opening = Decimal(c.opening_balance) if c and c.opening_balance else Decimal("0")
     taken = (
-        db.query(func.coalesce(func.sum(m.Order.delivered_qty * m.Order.unit_price), 0))
-        .filter(m.Order.client_id == client_id, m.Order.delivered_qty > 0)
+        db.query(func.coalesce(func.sum(
+            m.Order.total * m.Order.delivered_qty / m.Order.qty), 0))
+        .filter(m.Order.client_id == client_id,
+                m.Order.delivered_qty > 0, m.Order.qty > 0)
         .scalar()
     )
     paid = (
@@ -581,10 +590,20 @@ def _firma_filtri(query, ustun, firm: str | None):
 
 
 def client_balances_batch(db: Session, firm: str | None = None) -> dict[int, dict]:
+    # OLINGAN MOL QIYMATI — `total` ga NISBATAN, `unit_price × miqdor` emas.
+    #
+    # Nega: `unit_price × delivered_qty` QQSSIZ summa beradi, mijozga esa
+    # QQS bilan hisob yoziladi. Natijada 12% QQS qarzdan tushib qolardi —
+    # ya'ni to'liq mol olib hech nima to'lamagan mijoz «12% kam qarzdor»
+    # bo'lib ko'rinardi. `total` esa uchala QQS rejimida ham (yoq/ustiga/
+    # ichida) mijoz TO'LAYDIGAN summa, shuning uchun ulush shundan olinadi.
+    #
+    # `qty > 0` sharti nolga bo'lishdan himoya.
     taken_q = (
         db.query(m.Order.client_id,
-                 func.coalesce(func.sum(m.Order.delivered_qty * m.Order.unit_price), 0).label("taken"))
-        .filter(m.Order.delivered_qty > 0)
+                 func.coalesce(func.sum(
+                     m.Order.total * m.Order.delivered_qty / m.Order.qty), 0).label("taken"))
+        .filter(m.Order.delivered_qty > 0, m.Order.qty > 0)
         .group_by(m.Order.client_id).all()
     )
     taken_map = {row.client_id: Decimal(row.taken) for row in taken_q}
@@ -612,9 +631,20 @@ def debt_aging(db: Session, firm: str | None = None) -> list[dict]:
     today = date.today()
     balances = client_balances_batch(db, firm)
     
+    # MEZON: mol TOPSHIRILGANMI, maqom NOMI emas.
+    #
+    # Ilgari bu yer `status.in_(domain.statuslar(...))` bilan filtrlanardi,
+    # ya'ni FAOL PROFIL maqom nomlariga bog'liq edi. Profil almashtirilsa
+    # (yoki bitta bazada bir nechta soha bo'lsa) eski buyurtmalar
+    # maqomlari ro'yxatga tushmay qolardi va qarz yoshi jadvalidagi
+    # bo'laklar jimgina NOLGA aylanardi — «жами қарз 496 млн» turib,
+    # muddat ustunlari bo'sh chiqardi.
+    #
+    # Topshirilgan mol esa maqom nomidan qat'i nazar qarzdir — qarz
+    # hisobi (`client_balances_batch`) ham aynan shu mezondan foydalanadi.
     all_orders = (
         db.query(m.Order)
-        .filter(m.Order.status.in_(domain.statuslar("ishlab_chiqarish", "tayyor", "topshirildi")))
+        .filter(m.Order.delivered_qty > 0, m.Order.qty > 0)
         .order_by(m.Order.created_at)
         .all()
     )
@@ -630,8 +660,35 @@ def debt_aging(db: Session, firm: str | None = None) -> list[dict]:
         
         credit = bal["paid"]
         b = {"0-15": Decimal("0"), "15-30": Decimal("0"), "30-60": Decimal("0"), "60+": Decimal("0")}
+
+        # TIZIMDAN OLDINGI QOLDIQ. Ikki tomonlama bo'lishi mumkin:
+        #
+        #   MUSBAT — eski qarz. Eng eski bo'lakka tushadi. Ilgari u hech
+        #     qaysi bo'lakka kirmasdi va qarzi asosan shundan iborat
+        #     mijozda «жами қарз 496 млн» turib, muddat ustunlari BO'SH
+        #     ko'rinardi.
+        #   MANFIY — AVANS (mijoz oldindan to'lagan). U to'lov kabi
+        #     ishlaydi, ya'ni bo'laklarni kamaytiradi. Bu ham hisobga
+        #     olinmagani uchun haqiqiy bazada bitta mijozda bo'laklar
+        #     qarzdan 2.4 mln ortiq chiqdi.
+        ochilish = bal.get("opening") or Decimal("0")
+        if ochilish > 0:
+            qoplandi = min(credit, ochilish)
+            credit -= qoplandi
+            b["60+"] += ochilish - qoplandi
+        elif ochilish < 0:
+            credit += -ochilish
+
         for o in orders_by_client[c.id]:
-            t = Decimal(o.total)
+            # TOPSHIRILGAN ULUSH, buyurtma `total` i emas. Qarz butun
+            # tizimda shunday hisoblanadi (`client_balances_batch`) —
+            # bo'laklar boshqacha hisoblansa, ular «жами қарз» ustuniga
+            # to'g'ri kelmaydi va jadval o'z-o'ziga zid bo'ladi.
+            miqdor = Decimal(str(o.qty or 0))
+            berilgan = Decimal(str(o.delivered_qty or 0))
+            if miqdor <= 0 or berilgan <= 0:
+                continue
+            t = (Decimal(str(o.total)) * berilgan / miqdor)
             covered = min(credit, t)
             credit -= covered
             rest = t - covered
@@ -702,8 +759,15 @@ def cash_flow_forecast(db: Session, days: int = 7, firm: str | None = None) -> d
     Buyurtmada firma ustuni yo'q — u mijozning firmasidan olinadi."""
     horizon = date.today() + timedelta(days=days)
     inflow = Decimal("0")
+    # PUL qachon kelishi `payment_due_date` bilan belgilanadi, `due_date`
+    # bilan emas: birinchisi to'lov muddati, ikkinchisi MOL tayyor bo'lish
+    # muddati. Ilgari tayyorlash muddati olinardi — mol bugun tayyor,
+    # to'lovi 30 kundan keyin bo'lsa ham pul «bu hafta keladi» deb
+    # ko'rsatilardi. Eski yozuvlarda `payment_due_date` bo'sh bo'lishi
+    # mumkin, shunda `due_date` ga qaytamiz.
+    tolov_muddati = func.coalesce(m.Order.payment_due_date, m.Order.due_date)
     oq = db.query(m.Order.id, m.Order.total).filter(
-        m.Order.due_date.isnot(None), m.Order.due_date <= horizon,
+        tolov_muddati.isnot(None), tolov_muddati <= horizon,
         m.Order.status.in_(domain.statuslar("ishlab_chiqarish", "tayyor", "topshirildi")),
     )
     if firm:
@@ -711,16 +775,44 @@ def cash_flow_forecast(db: Session, days: int = 7, firm: str | None = None) -> d
     orders = oq.all()
     if orders:
         order_ids = [o.id for o in orders]
-        total_expected = sum((Decimal(o.total) for o in orders), Decimal("0"))
+        # FAQAT TOPSHIRILGAN mol qiymati kutiladi. Ilgari buyurtma
+        # `total` i to'liq olinardi — shu sababli «7 kunda 16 mlrd
+        # keladi» chiqib, holbuki mijozlarning JAMI qarzi 9 mlrd edi.
+        # Kirim qarzdan katta bo'la olmaydi. Tizimning qolgan qismi
+        # qarzni «topshirilgan ulush» bilan hisoblaydi (`client_balance`),
+        # prognoz ham xuddi shunday bo'lishi kerak — aks holda paneldagi
+        # ikki raqam bir-biriga to'g'ri kelmaydi.
+        kutilgan = Decimal(
+            db.query(func.coalesce(func.sum(
+                m.Order.total * m.Order.delivered_qty / m.Order.qty), 0))
+            .filter(m.Order.id.in_(order_ids), m.Order.delivered_qty > 0,
+                    m.Order.qty > 0).scalar())
         paid_total = db.query(func.coalesce(func.sum(m.Payment.amount), 0)).filter(
             m.Payment.order_id.in_(order_ids)
         ).scalar()
-        inflow = total_expected - Decimal(paid_total)
-    outflow = Decimal(
+        inflow = max(Decimal("0"), kutilgan - Decimal(paid_total))
+    # CHIQIM ikki manbadan. Ilgari faqat `PaymentSchedule` (qo'lda
+    # kiritilgan to'lov grafigi) hisoblanardi — natijada panel
+    # «yetkazib beruvchilarga 6.8 mlrd qarzimiz bor» deb turib, 7 kunlik
+    # prognozda chiqim 0 chiqardi. Rahbar uchun bu chalg'ituvchi.
+    grafik = Decimal(
         db.query(func.coalesce(func.sum(m.PaymentSchedule.amount), 0))
-        .filter(m.PaymentSchedule.paid.is_(False), m.PaymentSchedule.due_date <= horizon)
+        .filter(m.PaymentSchedule.paid.is_(False),
+                m.PaymentSchedule.due_date <= horizon)
         .scalar()
     )
+    # To'lanmagan xaridlar: muddati shu oraliqda yoki allaqachon o'tgan.
+    # Muddati ko'rsatilmagan qarz prognozga kirmaydi — qachon to'lanishi
+    # noma'lum, taxmin qilib qo'yish raqamni yolg'on aniq qilardi.
+    xarid_qarzi = Decimal(
+        db.query(func.coalesce(
+            func.sum(m.Purchase.total - m.Purchase.paid_amount), 0))
+        .filter(m.Purchase.due_date.isnot(None),
+                m.Purchase.due_date <= horizon,
+                m.Purchase.total > m.Purchase.paid_amount)
+        .scalar()
+    )
+    outflow = grafik + xarid_qarzi
     return {"days": days, "expected_in": float(inflow), "expected_out": float(outflow),
             "forecast_balance": float(inflow - outflow)}
 

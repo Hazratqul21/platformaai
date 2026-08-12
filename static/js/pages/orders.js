@@ -1,14 +1,17 @@
-/* ---- Buyurtmalar ---- */
-const FLOW={'Kutishda':['Sexda kesilmoqda','Muzokara','Bekor qilindi'],'Muzokara':['Sexda kesilmoqda','Kutishda','Bekor qilindi'],
-'Sexda kesilmoqda':['Omborga tushdi','Bekor qilindi'],'Omborga tushdi':['Yetkazib berildi'],'Yetkazib berildi':[],'Bekor qilindi':[]};
-const STEPS=['Kutishda','Sexda kesilmoqda','Omborga tushdi','Yetkazib berildi'];
+/* ---- Buyurtmalar ----
+ *
+ * Oqim (qaysi statusdan qayoqqa) va bosqichlar profildan olinadi:
+ * `soha.js` -> sohaKeyingi()/sohaQadamlar(). Ilgari bu yerda karton
+ * statuslari qotirilgan edi va boshqa sohada tugmalar umuman chiqmasdi.
+ */
 PAGES.orders=async()=>{
   if(window._ordArchive===undefined)window._ordArchive=false;
-  const os=await api('/api/orders'+(window._ordArchive?'?archive=1':''));
+  const [os]=await Promise.all([
+    api('/api/orders'+(window._ordArchive?'?archive=1':'')), sohaYukla()]);
   window._orders=os;window._ordFilter='Hammasi';window._postRender=renderOrders;
   const counts={};os.forEach(o=>counts[o.status]=(counts[o.status]||0)+1);
   // arxivda faqat Ҳаммаси, faol'da esa holat bo'yicha
-  const tabs=window._ordArchive?['Hammasi']:['Hammasi','Kutishda','Muzokara','Sexda kesilmoqda','Omborga tushdi'];
+  const tabs=window._ordArchive?['Hammasi']:['Hammasi',...sohaFiltrStatuslari()];
   return `
   <div class="between mb" style="align-items:center">
     <b style="font-size:13px">${window._ordArchive?'📦 Архив — тугалланган ва бекор қилинган':'Фаол буюртмалар'}</b>
@@ -16,7 +19,7 @@ PAGES.orders=async()=>{
       ${window._ordArchive?'← Фаол буюртмалар':'📦 Архив'}</button>
   </div>
   <div class="chips">${tabs.map(s=>{
-    const label=s==='Hammasi'?'Ҳаммаси':s==='Sexda kesilmoqda'?'Цехда':s==='Omborga tushdi'?'Тайёр':kir(s);
+    const label=s==='Hammasi'?'Ҳаммаси':kir(s);
     const n=s==='Hammasi'?os.length:(counts[s]||0);
     return `<button class="fchip ${s==='Hammasi'?'on':''}" data-st="${s}" onclick="window._ordFilter='${s}';document.querySelectorAll('.chips .fchip').forEach(b=>b.classList.toggle('on',b.dataset.st==='${s}'));renderOrders()">${label} ${n?`· ${n}`:''}</button>`;}).join('')}</div>
   <div class="grid g2" id="orderCards"></div>`;
@@ -31,23 +34,24 @@ async function ordToggleArchive(){
 function renderOrders(){
   const box=document.getElementById('orderCards');if(!box)return;
   const list=window._orders.filter(o=>window._ordFilter==='Hammasi'||o.status===window._ordFilter);
+  const QADAM=sohaQadamlar();
   box.innerHTML=list.map(o=>{
-    const si=STEPS.indexOf(o.status);
+    const si=QADAM.findIndex(q=>q.nom===o.status);
     const tracker=si>=0?`
-      <div class="trk">${STEPS.map((_,i)=>`${i?`<div class="tl ${i<=si?'on':''}"></div>`:''}<div class="td ${i<=si?'on':''}"></div>`).join('')}</div>
-      <div class="trk-labs"><span>Кутишда</span><span>Цехда</span><span>Омборда</span><span>Берилди</span></div>`:'';
+      <div class="trk">${QADAM.map((_,i)=>`${i?`<div class="tl ${i<=si?'on':''}"></div>`:''}<div class="td ${i<=si?'on':''}"></div>`).join('')}</div>
+      <div class="trk-labs">${QADAM.map(q=>`<span>${esc(kir(q.nom))}</span>`).join('')}</div>`:'';
     return `<div class="glass ccard" style="cursor:default">
       <div class="between"><span><b style="font-size:14px">№ ${o.id}</b> <span class="muted" style="font-size:11px">· ${o.created_at.slice(0,10)}</span></span>
-        <span class="tag ${stTag(o.status)}">${kir(o.status)}</span></div>
+        <span class="tag ${sohaTag(o.status)}">${kir(o.status)}</span></div>
       ${o.photo_url?`<img src="${esc(o.photo_url)}" alt="маҳсулот расми" loading="lazy"
         style="width:100%;height:130px;object-fit:cover;border-radius:10px;margin-top:8px;cursor:zoom-in"
         onclick="rasmniKatta('${esc(o.photo_url)}')"/>`:''}
       <div style="font-size:12.5px;margin-top:4px"><b>${esc(o.company)}</b></div>
       ${o.product_name ? `<div style="font-size:12px;margin-top:2px;color:var(--text-main)">📦 ${esc(o.product_name)}</div>` : ''}
-      <div class="muted" style="font-size:11.5px;margin-top:2px">${esc(o.size)} мм · <b>${esc(o.tur||o.layers+' слой')}</b> · ${esc(o.grade)}${o.colors?' · '+esc(o.colors)+' ранг':''}</div>
+      <div class="muted" style="font-size:11.5px;margin-top:2px">${esc(o.size||'')}${o.tur?` · <b>${esc(o.tur)}</b>`:''}${o.tarkib?` · ${esc(o.tarkib)}`:''}</div>
       ${o.note?`<div class="muted" style="font-size:11px;margin-top:3px;font-style:italic">📝 ${esc(o.note)}</div>`:''}
       <div class="between" style="margin-top:8px;font-size:13px">
-        <span>${new Intl.NumberFormat('ru-RU').format(o.qty)} дона</span><b>${money(o.total)}</b></div>
+        <span>${new Intl.NumberFormat('ru-RU').format(o.qty)} ${esc(o.qty_birlik||'')}</span><b>${money(o.total)}</b></div>
       ${o.delivered_qty>0&&o.qolgan_qty>0?`<div class="between" style="font-size:11px;margin-top:2px"><span class="muted">Топширилди: ${new Intl.NumberFormat('ru-RU').format(o.delivered_qty)}</span><span class="tag warn" style="font-size:9.5px">қолди ${new Intl.NumberFormat('ru-RU').format(o.qolgan_qty)}</span></div>`:''}
       ${o.tolanmadi?`<div class="between" style="font-size:11px;margin-top:2px"><span class="muted">Топширилган мол пули</span><span class="tag dn" style="font-size:9.5px">💸 Тўланмади</span></div>`:''}
       <div class="between muted" style="font-size:10.5px;margin-top:3px">
@@ -58,14 +62,14 @@ function renderOrders(){
       ${tracker}
       <div class="row" style="flex-wrap:wrap;gap:5px;margin-top:8px">
         <button class="btn sm" onclick="orderCard(${o.id})">${o.photo_url?'🖼':'📷'} Ичини кўриш</button>
-        ${FLOW[o.status].filter(s=>s!=='Bekor qilindi'&&s!=='Kutishda').map(s=>s==='Yetkazib berildi'
+        ${sohaKeyingi(o.status).filter(s=>!['bekor','boshlanish'].includes(sohaMano(s))).map(s=>sohaMano(s)==='topshirildi'
           ?`<button class="btn sm pri" onclick='deliverForm(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📤 ${o.delivered_qty>0?'Яна топшириш':'Мижозга топшириш'}</button>`
-          :`<button class="btn sm ${s==='Muzokara'?'':'pri'}" onclick="setStatus(${o.id},'${s}',this)">${s==='Sexda kesilmoqda'?'▶ Цехга бериш':s==='Omborga tushdi'?'✓ Омборга':'💬 Музокара'}</button>`).join('')}
-        ${o.delivered_qty>0&&o.status!=='Yetkazib berildi'&&o.status!=='Bekor qilindi'&&['Rahbar','Menejer','Sklad mudiri'].includes(ME.role)
+          :`<button class="btn sm ${sohaMano(s)==='muzokara'?'':'pri'}" onclick="setStatus(${o.id},'${esc(s)}',this)">${esc(sohaTugmaMatni(s))}</button>`).join('')}
+        ${o.delivered_qty>0&&!['topshirildi','bekor'].includes(sohaMano(o.status))&&['Rahbar','Menejer','Sklad mudiri'].includes(ME.role)
           ?`<button class="btn sm${o.qolgan_qty<=0?' pri':''}" onclick="yakunla(${o.id},${o.delivered_qty},${o.qty},this)" title="${o.qolgan_qty<=0?'Ҳаммаси берилган — архивга ўтказиш':'Тираж кам чиққан бўлса — шу берилган миқдор билан ёпиш'}">🏁 Якунлаш</button>`:''}
-        ${FLOW[o.status].includes('Bekor qilindi')&&['Rahbar','Menejer'].includes(ME.role)?`<button class="btn sm dngr" onclick="if(confirm('№${o.id} буюртма бекор қилинсинми? Материал омборга қайтади.'))setStatus(${o.id},'Bekor qilindi',this)">✕ Бекор</button>`:''}
-        ${o.status!=='Kutishda'&&o.status!=='Bekor qilindi'?dl('/api/reports/act/'+o.id+'.pdf','Акт'):''}
-        ${['Omborga tushdi','Yetkazib berildi'].includes(o.status)?`<span class="muted" style="font-size:10.5px;width:100%;margin-top:2px">Юк хати:</span>${dl('/api/reports/nakladnoy/'+o.id+'.pdf','PDF')}${dl('/api/reports/nakladnoy/'+o.id+'.xlsx','Excel')}${dl('/api/reports/nakladnoy/'+o.id+'.docx','Word')}`:''}
+        ${sohaKeyingi(o.status).some(s=>sohaMano(s)==='bekor')&&['Rahbar','Menejer'].includes(ME.role)?`<button class="btn sm dngr" onclick="if(confirm('№${o.id} буюртма бекор қилинсинми? Материал омборга қайтади.'))setStatus(${o.id},'${esc(sohaKeyingi(o.status).find(s=>sohaMano(s)==='bekor')||'')}',this)">✕ Бекор</button>`:''}
+        ${!['boshlanish','bekor'].includes(sohaMano(o.status))?dl('/api/reports/act/'+o.id+'.pdf','Акт'):''}
+        ${['tayyor','topshirildi'].includes(sohaMano(o.status))?`<span class="muted" style="font-size:10.5px;width:100%;margin-top:2px">Юк хати:</span>${dl('/api/reports/nakladnoy/'+o.id+'.pdf','PDF')}${dl('/api/reports/nakladnoy/'+o.id+'.xlsx','Excel')}${dl('/api/reports/nakladnoy/'+o.id+'.docx','Word')}`:''}
         ${o.accepted_stamp?'<span class="tag ok" style="font-size:9.5px">✔ мижоз қабул қилган</span>':''}
       </div>
     </div>`;}).join('')||'<div class="glass card muted" style="grid-column:1/-1;text-align:center">Бу ҳолатда буюртма йўқ</div>';
@@ -76,21 +80,21 @@ function orderCard(id){
   if(!o)return;
   modal(`<h2 class="sec">Буюртма № ${o.id}</h2>
   <div class="muted" style="font-size:12px;margin:4px 0 10px">${esc(o.company)} · ${o.created_at.slice(0,10)}
-    <span class="tag ${stTag(o.status)}" style="margin-left:6px">${kir(o.status)}</span></div>
+    <span class="tag ${sohaTag(o.status)}" style="margin-left:6px">${kir(o.status)}</span></div>
   <div id="ord_photo_box">${ordPhotoGallery(o)}</div>
   <input type="file" id="ord_photo_file" accept="image/*" capture="environment" multiple style="display:none"
     onchange="ordRasmYukla(${o.id},this)"/>
   <div class="glass card" style="padding:10px;background:var(--hair);margin-top:10px">
     ${o.product_name?`<div class="between" style="font-size:12.5px"><span>Маҳсулот</span><b>${esc(o.product_name)}</b></div>`:''}
-    <div class="between" style="font-size:12.5px"><span>Ўлчам</span><b>${esc(o.size)} мм</b></div>
-    <div class="between" style="font-size:12.5px"><span>Тури</span><b>${esc(o.tur||o.layers+' слой')}</b></div>
-    <div class="between" style="font-size:12.5px"><span>Қоғоз маркаси</span><b>${esc(o.grade)}</b></div>
-    ${o.colors?`<div class="between" style="font-size:12.5px"><span>Босма</span><b>${o.colors} ранг</b></div>`:''}
-    <div class="between" style="font-size:12.5px"><span>Миқдори</span><b>${new Intl.NumberFormat('ru-RU').format(o.qty)} дона</b></div>
-    <div class="between" style="font-size:12.5px"><span>Дона нархи</span><b>${money(o.unit_price)}</b></div>
+    ${sohaTavsifHtml(o)}
+    <div class="between" style="font-size:12.5px"><span>Миқдори</span><b>${new Intl.NumberFormat('ru-RU').format(o.qty)} ${esc(o.qty_birlik||'')}</b></div>
+    <div class="between" style="font-size:12.5px"><span>1 ${esc(o.qty_birlik||'дона')} нархи</span><b>${money(o.unit_price)}</b></div>
+    ${o.qqs_summa?`<div class="between muted" style="font-size:12px"><span>ҚҚС ${o.qqs_stavka}%</span><span>${money(o.qqs_summa)}</span></div>`:''}
     <div class="between" style="font-size:14px;border-top:1px solid var(--ink-2);margin-top:6px;padding-top:6px">
       <b>Жами</b><b style="color:var(--primary-deep)">${money(o.total)}</b></div>
   </div>
+  <div id="ord_retsept" class="glass card" style="padding:10px;margin-top:8px;font-size:12px">
+    <div class="muted">Хомашё ҳисоби юкланмоқда…</div></div>
   <div class="between muted" style="font-size:11.5px;margin-top:8px">
     <span>Тайёр бўлиши: <b>${o.due_date||'—'}</b></span>
     <span>Тўлов: <b>${o.payment_due_date||'—'}</b></span></div>
@@ -101,7 +105,52 @@ function orderCard(id){
     ${['Rahbar','Menejer','Buxgalter'].includes(ME.role)&&!['Yetkazib berildi','Bekor qilindi'].includes(o.status)
       ?`<button class="btn" onclick='orderEdit(${JSON.stringify(o).replace(/'/g,"&#39;")})'>✎ Таҳрирлаш</button>`:'<span></span>'}
     <button class="btn pri" onclick="closeModal()">Ёпиш</button></div>`);
+  ordRetsept(o.id);
   if(o.delivered_qty>0) ordTopshirishlar(o.id);
+}
+
+/* ---- Соҳа майдонлари: профилдаги НОМ билан кўрсатилади ----
+ * Ilgari bu yerda «Ўлчам / Тури / Қоғоз маркаси» qotirilgan edi.
+ * Endi qaysi maydon bo'lsa — o'sha, o'z nomi bilan chiqadi. */
+function sohaTavsifHtml(o){
+  const at=o.attributes||{};
+  const qatorlar=sohaMaydonlar().map(md=>{
+    let v=at[md.kalit];
+    if(v===undefined||v===null||v==='')return '';
+    if(md.tur==='mantiq')v=v?'Ҳа':'Йўқ';
+    return `<div class="between" style="font-size:12.5px"><span>${esc(md.nom)}</span>
+      <b>${esc(v)}${md.birlik?' '+esc(md.birlik):''}</b></div>`;
+  }).filter(Boolean).join('');
+  // Profil almashgan bo'lsa eski buyurtma maydonlari ro'yxatda yo'q —
+  // shunda hech bo'lmasa tayyor matnni ko'rsatamiz, bo'sh qolmasin.
+  return qatorlar||`<div class="between" style="font-size:12.5px"><span>Тавсиф</span>
+    <b>${esc([o.size,o.tur,o.tarkib].filter(Boolean).join(' · ')||'—')}</b></div>`;
+}
+
+/* ---- Хомашё: нима кетади, қанчага ва зарарига сотилмаяптими ---- */
+async function ordRetsept(id){
+  const box=()=>document.getElementById('ord_retsept');
+  try{
+    const d=await api(`/api/orders/${id}/retsept`);
+    const el=box(); if(!el)return;
+    if(!d.retsept_bor){ el.remove(); return; }   // ретцептсиз соҳа — блок керак эмас
+    const n=v=>new Intl.NumberFormat('ru-RU').format(v);
+    el.innerHTML=`
+      <div style="font-weight:700;margin-bottom:6px">🧾 Хомашё (шу буюртмага)</div>
+      ${d.qatorlar.map(q=>`
+        <div class="between" style="padding:5px 0;border-top:1px solid var(--hair)">
+          <span>${esc(q.material)} <span class="muted">${n(q.kerak_material_birligida??q.kerak)} ${esc(q.material_birligi||q.birlik)}</span></span>
+          <span>${q.summa!=null?`<b>${money(q.summa)}</b> `:''}
+            <span class="tag ${q.yetadi?'ok':'dn'}" style="font-size:9.5px">${q.yetadi?'етади':'ЕТМАЙДИ'}</span></span>
+        </div>`).join('')}
+      <div class="between" style="border-top:1px solid var(--ink-2);margin-top:6px;padding-top:6px;font-weight:700">
+        <span>Хомашё жами</span><span>${money(d.xomashyo_summasi||0)}</span></div>
+      <div class="between muted" style="font-size:11.5px">
+        <span>Буюртма (ҚҚСсиз)</span><span>${money(d.qqssiz_summa||0)}</span></div>
+      ${d.zarar_ogoh?alertBox('d','alertic','Зарарига сотилмоқда',esc(d.zarar_ogoh)):''}`;
+  }catch(e){
+    const el=box(); if(el)el.innerHTML='<div class="muted">Хомашё ҳисобини олиб бўлмади</div>';
+  }
 }
 
 /* ---- Мол қачон, соат нечида берилган ---- */
@@ -137,26 +186,21 @@ async function ordTopshirishlar(id){
 }
 /* ---- Buyurtmani tuzatish (yaratilgandan keyin) ---- */
 function orderEdit(o){
-  const [L,W,H]=(o.size||'0x0x0').split(/[x×]/);
+  const birlik=esc(o.qty_birlik||'дона');
+  const qadam=(SOHA&&SOHA.kasrli)?' step="any"':'';
   modal(`<h2 class="sec">Буюртма № ${o.id} ни таҳрирлаш</h2>
   <label class="fl">Маҳсулот номи</label><input class="fld" id="oe_name" value="${esc(o.product_name||'')}"/>
-  <div class="grid g3" style="gap:8px">
-    <div><label class="fl">Узунлик, мм</label><input class="fld" id="oe_l" type="number" value="${+L||''}"/></div>
-    <div><label class="fl">Кенглик, мм</label><input class="fld" id="oe_w" type="number" value="${+W||''}"/></div>
-    <div><label class="fl">Баландлик, мм</label><input class="fld" id="oe_h" type="number" value="${+H||''}"/></div>
+  ${sohaFormaHtml('oe_',o.attributes||{})}
+  <div class="grid g2" style="gap:8px;margin-top:8px">
+    <div><label class="fl">Миқдор, ${birlik}</label>
+      <input class="fld" id="oe_qty" type="number"${qadam} value="${o.qty}" oninput="oeRecalc()"/></div>
+    <div><label class="fl">1 ${birlik} нархи</label>
+      <input class="fld" id="oe_price" type="number" step="any" value="${o.unit_price}" oninput="oeRecalc()"/></div>
   </div>
-  <div class="grid g2" style="gap:8px">
-    <div><label class="fl">Тури</label><select class="fld" id="oe_tur">${TURLAR.map(x=>`<option ${((o.tur||o.layers+' слой')===x)?'selected':''}>${x}</option>`).join('')}</select></div>
-    <div><label class="fl">Қоғоз маркаси</label><input class="fld" id="oe_grade" value="${esc(o.grade||'')}"/></div>
-  </div>
-  <div class="grid g3" style="gap:8px">
-    <div><label class="fl">Ранглар</label><input class="fld" id="oe_colors" type="number" value="${o.colors||0}"/></div>
-    <div><label class="fl">Дона (тираж)</label><input class="fld" id="oe_qty" type="number" value="${o.qty}" oninput="oeRecalc()"/></div>
-    <div><label class="fl">Дона нархи</label><input class="fld" id="oe_price" type="number" value="${Math.round(o.unit_price)}" oninput="oeRecalc()"/></div>
-  </div>
-  <div class="between" style="font-size:14px;padding:6px 0"><span>Жами</span><b id="oe_total" style="color:var(--primary-deep)">${money(o.total)}</b></div>
+  <div class="between" style="font-size:14px;padding:6px 0"><span>Жами (ҚҚСсиз)</span>
+    <b id="oe_total" style="color:var(--primary-deep)">${money(o.qqssiz_summa??o.total)}</b></div>
   <label class="fl">Изоҳ</label><input class="fld" id="oe_note" value="${esc(o.note||'')}"/>
-  ${o.delivered_qty>0?`<div class="muted" style="font-size:11px;margin-top:4px;color:var(--warn)">⚠️ ${new Intl.NumberFormat('ru-RU').format(o.delivered_qty)} дона аллақачон топширилган — тираж ундан кам бўлмасин</div>`:''}
+  ${o.delivered_qty>0?`<div class="muted" style="font-size:11px;margin-top:4px;color:var(--warn)">⚠️ ${new Intl.NumberFormat('ru-RU').format(o.delivered_qty)} ${birlik} аллақачон топширилган — миқдор ундан кам бўлмасин</div>`:''}
   <div class="row" style="margin-top:16px;justify-content:flex-end">
     <button class="btn" onclick="closeModal()">Бекор</button>
     <button class="btn pri" onclick="orderEditSave(${o.id})">Сақлаш</button></div>`);
@@ -166,9 +210,10 @@ function oeRecalc(){
   const el=_id('oe_total'); if(el)el.textContent=money(t);
 }
 async function orderEditSave(id){
-  const body={product_name:f('oe_name'),length_mm:+f('oe_l'),width_mm:+f('oe_w'),height_mm:+f('oe_h'),
-    tur:f('oe_tur'),grade:f('oe_grade'),colors:+f('oe_colors'),qty:+f('oe_qty'),
-    unit_price:+f('oe_price'),note:f('oe_note')};
+  const bosh=sohaTekshir('oe_');
+  if(bosh)return toast('w','alertic','Майдон тўлдирилмаган',bosh);
+  const body={product_name:f('oe_name'), attributes:sohaFormaOl('oe_'),
+    qty:+f('oe_qty'), unit_price:+f('oe_price'), note:f('oe_note')};
   try{
     const r=await api('/api/orders/'+id,{method:'PUT',body:JSON.stringify(body)});
     closeModal();
@@ -240,15 +285,13 @@ function deliverForm(o){
   <div class="glass card mb" style="padding:10px;background:var(--hair)">
     <div class="muted" style="font-size:10.5px;margin-bottom:6px">ТОПШИРИЛАЁТГАН МОЛ</div>
     <div class="between" style="font-size:12.5px"><span>Маҳсулот</span><b>${esc(o.product_name||'—')}</b></div>
-    <div class="between" style="font-size:12.5px"><span>Ўлчам/формат</span><b>${esc(o.size)}</b></div>
-    <div class="between" style="font-size:12.5px"><span>Тури</span><b>${esc(o.tur||o.layers+' слой')}</b></div>
-    <div class="between" style="font-size:12.5px"><span>Қоғоз маркаси</span><b>${esc(o.grade)}</b></div>
+    ${sohaTavsifHtml(o)}
     ${o.note?`<div class="between" style="font-size:12px"><span>Изоҳ</span><b style="font-style:italic">${esc(o.note)}</b></div>`:''}
-    <div class="between" style="font-size:12.5px"><span>Жами буюртма</span><b>${new Intl.NumberFormat('ru-RU').format(o.qty)} дона</b></div>
-    ${berilgan>0?`<div class="between" style="font-size:12.5px"><span>Аввал топширилган</span><b style="color:var(--ok)">${new Intl.NumberFormat('ru-RU').format(berilgan)} дона</b></div>`:''}
-    <div class="between" style="font-size:12.5px"><span>Дона нархи</span><b>${money(o.unit_price)}</b></div>
+    <div class="between" style="font-size:12.5px"><span>Жами буюртма</span><b>${new Intl.NumberFormat('ru-RU').format(o.qty)} ${esc(o.qty_birlik||'')}</b></div>
+    ${berilgan>0?`<div class="between" style="font-size:12.5px"><span>Аввал топширилган</span><b style="color:var(--ok)">${new Intl.NumberFormat('ru-RU').format(berilgan)} ${esc(o.qty_birlik||'')}</b></div>`:''}
+    <div class="between" style="font-size:12.5px"><span>1 ${esc(o.qty_birlik||'дона')} нархи</span><b>${money(o.unit_price)}</b></div>
   </div>
-  <label class="fl">Ҳозир нечта дона топширилади? <span style="color:var(--danger)">(жами ${new Intl.NumberFormat('ru-RU').format(qolgan)} қолган)</span></label>
+  <label class="fl">Ҳозир қанча топширилади (${esc(o.qty_birlik||'дона')})? <span style="color:var(--danger)">(жами ${new Intl.NumberFormat('ru-RU').format(qolgan)} қолган)</span></label>
   <input class="fld" id="dl_qty" type="number" max="${qolgan}" placeholder="масалан: 500 (ҳаммасини эмас!)" oninput="dlQtyChange(${o.unit_price},${qolgan})"/>
   <div class="row" style="gap:6px;margin:6px 0">
     <button class="btn sm" onclick="_id('dl_qty').value=${qolgan};dlQtyChange(${o.unit_price},${qolgan})">Ҳаммаси (${new Intl.NumberFormat('ru-RU').format(qolgan)})</button>
@@ -305,14 +348,15 @@ async function deliverSave(id,price,qolgan){
 // Тираж буюртмадан кам чиққанда — берилган миқдор билан ёпиб, архивга юбориш
 async function yakunla(id,berildi,qty,btn){
   const n=v=>v.toLocaleString('ru');
+  const b=sohaBirlik();
   const qoldi=qty-berildi;
   // Ikki xil holat: (a) tiraj kam chiqqan — qolgani yopiladi,
   //                 (b) hammasi berilgan — faqat arxivga o'tkaziladi.
   const matn = qoldi>0
     ? `№${id} буюртма якунлансинми?\n\n`+
-      `Буюртма: ${n(qty)} дона\n`+
-      `Берилди:  ${n(berildi)} дона\n`+
-      `Ёпилади:  ${n(qoldi)} дона (тираж кам чиққан)\n\n`+
+      `Буюртма: ${n(qty)} ${b}\n`+
+      `Берилди:  ${n(berildi)} ${b}\n`+
+      `Ёпилади:  ${n(qoldi)} ${b} (миқдор кам чиққан)\n\n`+
       `Берилган ${n(berildi)} дона якуний ҳисобланади ва буюртма архивга ўтади.\n`+
       `Қарз ўзгармайди — у аллақачон фақат берилган мол бўйича ҳисобланган.\n\n`+
       `ДИҚҚАТ: якунлангач буюртмани таҳрирлаб бўлмайди.`
@@ -340,18 +384,21 @@ async function setStatus(id,st,btn){
   _stBusy.add(id);
   if(btn){btn.disabled=true;btn.style.opacity='.55';}
   try{
-    if(st==='Sexda kesilmoqda'){
+    // Ишлаб чиқаришга беришдан олдин хомашё етадими — ҳар соҳада
+    // ишлайдиган умумий ретцепт орқали (олдин фақат картон учун
+    // ёзилган `check-stock` чақириларди ва бошқа соҳада фойдасиз эди).
+    if(sohaMano(st)==='ishlab_chiqarish'){
       try{
-        const chk = await api('/api/orders/'+id+'/check-stock');
-        if(!chk.ok){
-          if(!confirm('⚠️ Омборда етарли хомашё йўқ (тахминан ' + chk.missing_kg.toFixed(1) + ' кг камомад).\n\nБарибир цехга беришни давом эттирасизми? (Омбор қолдиғи минусга ўтади)')) return;
+        const r=await api('/api/orders/'+id+'/retsept');
+        if(r.retsept_bor&&!r.yetadi){
+          const kam=r.qatorlar.filter(q=>!q.yetadi)
+            .map(q=>`${q.material}: керак ${q.kerak_material_birligida??q.kerak}, бор ${q.omborda}`).join('\n');
+          if(!confirm('⚠️ Омборда хомашё етмайди:\n\n'+kam+'\n\nБарибир давом эттирасизми? (Қолдиқ минусга ўтади)'))return;
         }
-      }catch(e){
-        console.error(e);
-      }
+      }catch(e){ console.error(e); }
     }
     await api(`/api/orders/${id}/status?status=${encodeURIComponent(st)}`,{method:'POST'});
-    toast('o','check',`№${id} → ${kir(st)}`,st==='Sexda kesilmoqda'?'Хомашё FIFO бўйича ечилди (5% брак билан)':'');
+    toast('o','check',`№${id} → ${kir(st)}`,sohaMano(st)==='ishlab_chiqarish'?'Хомашё FIFO бўйича ечилди':'');
     go('orders');
   }catch(e){toast('d','alertic','Хатолик',e.message);}
   finally{_stBusy.delete(id);if(btn){btn.disabled=false;btn.style.opacity='';}}

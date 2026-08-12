@@ -27,9 +27,11 @@ ICHKI KO'RINISH (provayderdan mustaqil):
 Har provayder shu ko'rinishga o'giradi. Tarix bazada SHU ko'rinishda
 saqlanadi — provayder almashtirilsa eski suhbat o'qilaveradi.
 """
+import base64
 import json
 import logging
 import os
+import time
 
 log = logging.getLogger("gofra.llm")
 
@@ -37,7 +39,10 @@ log = logging.getLogger("gofra.llm")
 PROVAYDERLAR = {
     "anthropic": ("ANTHROPIC_API_KEY", "claude-opus-5"),
     "openai": ("OPENAI_API_KEY", "gpt-5"),
-    "gemini": ("GEMINI_API_KEY", "gemini-2.5-pro"),
+    # `gemini-2.5-pro` BEPUL tarifda umuman ochiq emas (limit: 0) —
+    # jonli sinovda kalit to'g'ri bo'lsa ham 429 qaytardi. Flash modeli
+    # bepul tarifda ham ishlaydi va asbob chaqirishga yetarli.
+    "gemini": ("GEMINI_API_KEY", "gemini-3.5-flash"),
 }
 
 
@@ -66,12 +71,31 @@ def joriy_model() -> str:
     return _muhit("LLM_MODEL") or PROVAYDERLAR[p][1]
 
 
+# Haqiqiy kalitlar uzun bo'ladi (Anthropic/OpenAI ~100+, Gemini ~39).
+# `.env.example` dan ko'chirilgan «sk-...» kabi o'rin egallovchi qiymat
+# esa qisqa. Buni tekshirmasak — chat oynasi «tayyor» deb turadi,
+# foydalanuvchi yozadi va faqat shunda 502 xatosini ko'radi.
+ENG_QISQA_KALIT = 20
+
+
+def kalit_shubhali(qiymat: str) -> bool:
+    if len(qiymat) < ENG_QISQA_KALIT:
+        return True
+    past = qiymat.lower()
+    return any(x in past for x in ("...", "xxx", "your", "sizning", "here",
+                                   "kalit", "placeholder", "example"))
+
+
 def tayyormi() -> tuple[bool, str]:
     """(tayyormi, izoh). Izoh foydalanuvchiga ko'rsatiladi."""
     p = joriy_provayder()
     kalit_nomi = PROVAYDERLAR[p][0]
-    if not _muhit(kalit_nomi):
+    kalit = _muhit(kalit_nomi)
+    if not kalit:
         return False, f"{kalit_nomi} qo'yilmagan — .env ga yozing"
+    if kalit_shubhali(kalit):
+        return False, (f"{kalit_nomi} haqiqiy kalitga o'xshamaydi "
+                       f"(o'rin egallovchi qiymat qolib ketganmi?)")
     return True, f"{p} · {joriy_model()}"
 
 
@@ -221,8 +245,12 @@ def _gemini(xabarlar, asboblar, korsatma, model):
             if x.get("matn"):
                 qismlar.append(types.Part.from_text(text=x["matn"]))
             for c in x.get("asbob_chaqiruvlari") or []:
-                qismlar.append(types.Part.from_function_call(
-                    name=c["nom"], args=c["kirish"]))
+                qism = types.Part.from_function_call(
+                    name=c["nom"], args=c["kirish"])
+                if c.get("imzo"):
+                    # Muhrlangan fikr izi — o'zgartirmasdan qaytariladi
+                    qism.thought_signature = base64.b64decode(c["imzo"])
+                qismlar.append(qism)
             tarkib.append(types.Content(role="model", parts=qismlar or [
                 types.Part.from_text(text=".")]))
         else:
@@ -233,6 +261,10 @@ def _gemini(xabarlar, asboblar, korsatma, model):
         model=model, contents=tarkib,
         config=types.GenerateContentConfig(
             system_instruction=korsatma,
+            # 2.5 modellarida «fikrlash» standart yoqilgan va u chiqish
+            # byudjetini yeydi: javob umuman chiqmay, `content=None`
+            # bilan MAX_TOKENS qaytardi. Chegara kengaytiriladi.
+            max_output_tokens=8192,
             tools=[types.Tool(function_declarations=[
                 types.FunctionDeclaration(
                     name=a["nom"], description=a["izoh"],
@@ -240,18 +272,46 @@ def _gemini(xabarlar, asboblar, korsatma, model):
                 for a in asboblar])]),
     )
 
-    matn, chaqiruvlar = "", []
+    matn, chaqiruvlar, sabablar = "", [], []
     for nomzod in javob.candidates or []:
-        for qism in (nomzod.content.parts or []):
+        sabab = str(getattr(nomzod, "finish_reason", "") or "")
+        if sabab:
+            sabablar.append(sabab)
+        # `content` NONE bo'lishi mumkin: model fikrlash byudjetini
+        # tugatsa (MAX_TOKENS), xavfsizlik filtri to'xtatsa yoki javob
+        # bo'sh bo'lsa. Bu yerda tekshirilmasa `.parts` da
+        # «NoneType has no attribute 'parts'» chiqadi va butun suhbat
+        # 502 bilan yiqiladi — sababi esa foydalanuvchiga ko'rinmaydi.
+        tarkib = getattr(nomzod, "content", None)
+        for qism in (getattr(tarkib, "parts", None) or []):
             if getattr(qism, "text", None):
                 matn += qism.text
             fc = getattr(qism, "function_call", None)
             if fc:
                 # Gemini chaqiruv id bermaydi — o'zimiz yasaymiz, chunki
                 # ichki ko'rinish natijani chaqiruvga id bilan bog'laydi.
+                #
+                # `thought_signature` — Gemini 3.x fikrlaydigan modellari
+                # beradigan MUHRLANGAN fikr izi. Suhbat davom etganda u
+                # AYNAN qaytarib yuborilishi shart, aks holda API
+                # «Function call is missing a thought_signature» deb 400
+                # qaytaradi va agent ikkinchi qadamda yiqiladi. Tarix
+                # JSON bo'lib bazada saqlanadi, shuning uchun baytlar
+                # base64 ga o'giriladi.
+                imzo = getattr(qism, "thought_signature", None)
                 chaqiruvlar.append({
                     "id": f"gem_{len(chaqiruvlar)}_{fc.name}",
-                    "nom": fc.name, "kirish": dict(fc.args or {})})
+                    "nom": fc.name, "kirish": dict(fc.args or {}),
+                    "imzo": base64.b64encode(imzo).decode() if imzo else None})
+
+    if not matn and not chaqiruvlar:
+        # Nima uchun bo'sh qolgani AYTILADI. Jim qolinsa foydalanuvchi
+        # «agent javob bermadi» deb o'ylab, sababini bilmaydi.
+        sabab = ", ".join(sorted(set(sabablar))) or "noma'lum"
+        if "SAFETY" in sabab or "PROHIBITED" in sabab:
+            return {"matn": "", "chaqiruvlar": [], "rad_etildi": True}
+        matn = (f"Model bo'sh javob qaytardi (sabab: {sabab}). "
+                f"Savolni qisqaroq yoki aniqroq yozib ko'ring.")
     return {"matn": matn, "chaqiruvlar": chaqiruvlar, "rad_etildi": False}
 
 
@@ -272,6 +332,23 @@ def _gemini_sxema(sxema: dict) -> dict:
     return tozalangan
 
 
+# Asosiy model ishlamasa ketma-ket sinaladigan zaxiralar. Tartib:
+# sifatliroqdan arzonroqqa. Ro'yxatdagi model mavjud bo'lmasa ham
+# xato emas — shunchaki o'tkazib yuboriladi.
+ZAXIRA_MODELLAR = {
+    "gemini": ["gemini-2.5-flash", "gemini-3.5-flash-lite",
+               "gemini-flash-latest"],
+    "openai": ["gpt-5-mini", "gpt-4.1-mini"],
+    "anthropic": ["claude-sonnet-5", "claude-haiku-4-5-20251001"],
+}
+
+
+def _yoq_model(e: Exception) -> bool:
+    """Model yo'q yoki shu kalitda kvotasi nol — kutish yordam bermaydi."""
+    matn = str(e)
+    return ("404" in matn and "model" in matn.lower()) or "limit: 0" in matn
+
+
 MOSLASHTIRGICHLAR = {
     "anthropic": _anthropic,
     "openai": _openai,
@@ -279,14 +356,101 @@ MOSLASHTIRGICHLAR = {
 }
 
 
+# Vaqtinchalik xatolar: model band (503), so'rov chegarasi (429),
+# tarmoq uzilishi (5xx). Bular O'TKINCHI — biroz kutib qayta urinilsa
+# odatda o'tadi. Qayta urinmasak, foydalanuvchi 502 oladi va qaytadan
+# yozishga majbur bo'ladi (jonli sinovda bepul tarifda aynan shunday
+# bo'ldi: 4 ta so'rovdan 3 tasi shu sababdan yiqildi).
+QAYTA_URINISH = 3
+KUTISH_SEK = (2, 6, 14)     # har urinishdan keyin — o'sib boradigan pauza
+OTKINCHI = ("429", "503", "500", "502", "504", "RESOURCE_EXHAUSTED",
+            "UNAVAILABLE", "overloaded", "rate limit", "timeout")
+
+
+def _otkinchimi(xato: Exception) -> bool:
+    matn = str(xato)
+    return any(belgi.lower() in matn.lower() for belgi in OTKINCHI)
+
+
+class LLMBand(RuntimeError):
+    """Provayder vaqtincha javob bermayapti — foydalanuvchiga tushunarli xabar."""
+
+
+def _modellar_zanjiri(provayder: str) -> list[str]:
+    """Qaysi modellarni ketma-ket sinash: asosiy, keyin yengilroqlari.
+
+    NEGA KERAK: mijoz o'z kalitini qo'yadi va uning tarifi noma'lum.
+    Bepul Gemini kalitida `gemini-3.5-flash` uchun kvota NOL bo'lishi
+    mumkin, `gemini-2.5-flash` esa ishlaydi — buni oldindan bilib
+    bo'lmaydi. Kvota tugagan yoki model yo'q bo'lsa keyingisiga
+    o'tamiz, aks holda foydalanuvchi «AI ishlamayapti» degan xulosaga
+    keladi, holbuki kalit joyida.
+
+    `LLM_MODEL` aniq berilgan bo'lsa u BIRINCHI turadi — foydalanuvchi
+    tanlovi hurmat qilinadi, lekin u ishlamasa ham yo'l berkilmaydi.
+    """
+    tanlangan = _muhit("LLM_MODEL")
+    zanjir = [tanlangan] if tanlangan else []
+    zanjir.append(PROVAYDERLAR[provayder][1])
+    zanjir.extend(ZAXIRA_MODELLAR.get(provayder, []))
+    korilgan, natija = set(), []
+    for x in zanjir:
+        if x and x not in korilgan:
+            korilgan.add(x)
+            natija.append(x)
+    return natija
+
+
 def javob_ol(xabarlar: list[dict], asboblar: list[dict],
-             korsatma: str) -> dict:
-    """Provayderdan javob oladi. Agent kodi faqat shuni chaqiradi."""
+             korsatma: str, qotirilgan_model: str | None = None) -> dict:
+    """Provayderdan javob oladi. Agent kodi faqat shuni chaqiradi.
+
+    `qotirilgan_model` — suhbat BOSHLANGAN model. Halqaning ikkinchi
+    qadamida boshqa modelga o'tib bo'lmaydi: Gemini 3.x asbob
+    chaqiruviga «thought_signature» muhrini qo'yadi va uni FAQAT o'sha
+    model qabul qiladi. Model almashsa API «Function call is missing a
+    thought_signature» deb 400 qaytaradi va agent o'rtada yiqiladi.
+    Shuning uchun zaxira modelga o'tish faqat BIRINCHI qadamda mumkin.
+    """
     provayder = joriy_provayder()
-    model = joriy_model()
     tayyor, izoh = tayyormi()
     if not tayyor:
         raise RuntimeError(izoh)
-    natija = MOSLASHTIRGICHLAR[provayder](xabarlar, asboblar, korsatma, model)
-    natija["provayder"], natija["model"] = provayder, model
-    return natija
+
+    oxirgi = None
+    zanjir = ([qotirilgan_model] if qotirilgan_model
+              else _modellar_zanjiri(provayder))
+    for model in zanjir:
+        for urinish in range(QAYTA_URINISH):
+            try:
+                natija = MOSLASHTIRGICHLAR[provayder](
+                    xabarlar, asboblar, korsatma, model)
+                natija["provayder"], natija["model"] = provayder, model
+                return natija
+            except Exception as e:                            # noqa: BLE001
+                oxirgi = e
+                if _yoq_model(e):
+                    # Bu model umuman yo'q yoki kvotasi nol — kutish
+                    # foyda bermaydi, darhol keyingisiga o'tamiz.
+                    log.warning("«%s» ishlamadi (%s), keyingi modelga o'tamiz",
+                                model, str(e)[:90])
+                    break
+                if not _otkinchimi(e) or urinish == QAYTA_URINISH - 1:
+                    break
+                kut = KUTISH_SEK[min(urinish, len(KUTISH_SEK) - 1)]
+                log.warning("LLM o'tkinchi xato (%s), %s sek kutib qayta urinamiz: %s",
+                            urinish + 1, kut, str(e)[:120])
+                time.sleep(kut)
+        else:
+            continue
+        if oxirgi is not None and not (_yoq_model(oxirgi) or _otkinchimi(oxirgi)):
+            break
+
+    if oxirgi is not None and _otkinchimi(oxirgi):
+        # Xom API matnini foydalanuvchiga ko'rsatmaymiz — u inglizcha va
+        # texnik. Sababi logda qoladi.
+        log.error("LLM band: %s", str(oxirgi)[:300])
+        raise LLMBand(
+            "Sun'iy intellekt xizmati hozir band yoki so'rov chegarasi "
+            "tugagan. Bir necha daqiqadan so'ng qayta urinib ko'ring.")
+    raise oxirgi if oxirgi else RuntimeError("noma'lum xato")

@@ -6,6 +6,11 @@ const NAV=[
   {p:'orders',t:t('orders'),i:'cart',roles:['Rahbar','Menejer',"Sex boshlig'i",'Sklad mudiri','Buxgalter']},
   {p:'crm',t:t('clients'),i:'users',roles:['Rahbar','Menejer','Buxgalter']},
   {p:'dash',t:t('dash'),i:'dash',roles:['Rahbar','Menejer','Buxgalter']},
+  // AI yordamchi — yon menyuda ALOHIDA bo'lim. O'ng paneldagi tugma
+  // boshqa ish qilayotib savol berish uchun, bu esa AI bilan ishlashning
+  // asosiy joyi: keng ekran, jadval va diagramma sig'adi, va eng
+  // muhimi — «AI nima qildi» ro'yxati shu yerda ko'rinadi.
+  {p:'ai',t:'AI ёрдамчи',i:'ai',roles:['Rahbar','Menejer',"Sex boshlig'i",'Sklad mudiri','Buxgalter']},
   {p:'wh',t:t('wh'),i:'box',roles:['Rahbar','Sklad mudiri',"Sex boshlig'i"]},
   {p:'mat',t:t('mats'),i:'boxIn',roles:['Rahbar','Sklad mudiri']},
   {p:'zakup',t:t('zakup'),i:'boxIn',roles:['Rahbar','Sklad mudiri','Buxgalter']},
@@ -29,6 +34,7 @@ const META={
   kassa:[t('kassa'), t('kassa_sub')],
   exp:[t('exp'), t('exp_sub')],
   set:[t('set'), t('set_sub')],
+  ai:['AI ёрдамчи', 'Савол беринг, ҳисоблатинг, тизимни созланг'],
   help:['Йўриқнома', 'Пул киритилса — қаерда кўринади']
 };
 let PAGE='dash';

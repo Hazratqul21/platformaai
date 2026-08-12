@@ -206,8 +206,14 @@ def seed(db: Session):
 
     # --- bitta boshqaruvchi: hammasini o'zi boshqaradi,
     #     kerak bo'lsa xodimlarga o'zi login yaratadi (Sozlamalar bo'limida) ---
-    db.add(m.User(login="admin", password_hash=hash_pw("1234"),
-                  name="Boshqaruvchi", role="Rahbar"))
+    # Standart parol qulflangan holda yaratiladi: birinchi kirishda
+    # foydalanuvchi uni almashtirmaguncha tizim ochilmaydi. `ADMIN_PAROL`
+    # berilgan bo'lsa — o'sha ishlatiladi va qulf qo'yilmaydi (avtomat
+    # o'rnatishlar uchun).
+    boshlangich = (os.getenv("ADMIN_PAROL") or "").strip()
+    db.add(m.User(login="admin", password_hash=hash_pw(boshlangich or "1234"),
+                  name="Boshqaruvchi", role="Rahbar",
+                  parol_almashtirilsin=not boshlangich))
 
     # --- standart kataloglar (prod rejimda ham kerak) ---
     seed_catalogs(db)
@@ -311,8 +317,13 @@ def seed(db: Session):
         q = s.quote(db, L, W, H, layers, grade, colors, qty, c.category)
         created = datetime.utcnow() - timedelta(days=days_ago, hours=random.randint(0, 10))
         o = m.Order(
-            client_id=c.id, length_mm=L, width_mm=W, height_mm=H, layers=layers,
-            grade=grade, colors=colors, qty=qty, m2_per_box=q["m2_per_box"],
+            client_id=c.id, qty=qty,
+            # Soha maydonlari endi FAQAT `attributes` da (1-bosqich 4-qadam:
+            # eski ustunlar o'chirildi). Karton profili faol bo'lganda
+            # domain shu kalitlarni taniydi.
+            attributes={"length_mm": L, "width_mm": W, "height_mm": H,
+                        "layers": layers, "grade": grade, "colors": colors,
+                        "m2_per_box": str(q["m2_per_box"])},
             unit_cost=q["unit_cost"], unit_price=q["unit_price"], total=q["total"],
             status=status, created_at=created,
             due_date=created.date() + timedelta(days=15),
@@ -323,10 +334,10 @@ def seed(db: Session):
         db.add(o)
         orders.append(o)
     db.flush()
-    # 2-qadam: soha maydonlarini attributes ga ham yozamiz. flush'dan keyin —
-    # bu yerda `tur`/`is_offset` berilmagan, ular ustun standartidan keladi.
+    # Hosila maydonlarni (tur, is_offset...) profil qoidalari bilan
+    # to'ldiramiz — yuqorida faqat asosiylari berilgan.
     for o in orders:
-        soha_yoz(o)
+        soha_yoz(o, dict(o.attributes))
 
     # --- spisaniya (sotilganlar uchun FIFO retrospektiv emas — soddalashtirib bugungi lotlardan) ---
     for o in orders:
