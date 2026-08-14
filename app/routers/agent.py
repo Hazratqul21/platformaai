@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -131,6 +132,78 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
             # GenUI: frontend shularni haqiqiy UI qilib chizadi
             "komponentlar": natija.get("komponentlar") or [],
             "provayder": natija.get("provayder"), "model": natija.get("model")}
+
+
+@router.post("/oqim")
+def oqim(data: XabarIn, db: Session = Depends(get_db), user=Depends(get_user)):
+    """Agent javobini QADAMMA-QADAM oqim qilib beradi (NDJSON).
+
+    `/xabar` bilan bir xil ish qiladi, lekin javobni kutib o'tirmaydi:
+    har qadam sodir bo'lishi bilan bitta JSON qatori yuboriladi.
+    Foydalanuvchi «qarzdorlar chaqirilmoqda…» ni JONLI ko'radi.
+
+    Nega SSE emas, NDJSON: SSE odatda GET bilan ishlaydi, bizga esa
+    xabar matni kerak (POST). Oddiy qatorli oqimni brauzer
+    `response.body.getReader()` bilan hech qanday kutubxonasiz o'qiydi.
+    """
+    a = ai.AGENTLAR.get(data.agent)
+    if not a:
+        raise HTTPException(404, f"'{data.agent}' — bunday yordamchi yo'q")
+    if user.role not in a["rollar"]:
+        raise HTTPException(403, f"«{a['nom']}» sizning rolingizga ochiq emas")
+    tayyor, izoh = llm.tayyormi()
+    if not tayyor:
+        raise HTTPException(400, izoh)
+    matn = (data.matn or "").strip()
+    if not matn:
+        raise HTTPException(400, "Xabar bo'sh")
+
+    if data.suhbat_id:
+        s = db.get(m.AgentSuhbat, data.suhbat_id)
+        if not s:
+            raise HTTPException(404, "Suhbat topilmadi")
+        tarix = json.loads(s.xabarlar_json)
+    else:
+        s = m.AgentSuhbat(sarlavha=matn[:60], xabarlar_json="[]")
+        db.add(s)
+        db.flush()
+        tarix = []
+    tarix.append({"rol": "user", "matn": matn})
+    suhbat_id = s.id
+
+    def qatorlar():
+        yield json.dumps({"tur": "boshlandi", "suhbat_id": suhbat_id},
+                         ensure_ascii=False) + "\n"
+        yakuniy = None
+        try:
+            for hodisa in ai.suhbat_oqim(db, tarix, data.agent):
+                if hodisa.get("tur") == "yakun":
+                    yakuniy = hodisa
+                    # Xom tarixni mijozga bermaymiz — u katta va kerak emas
+                    chiqish = {k: v for k, v in hodisa.items() if k != "xabarlar"}
+                    chiqish["suhbat_id"] = suhbat_id
+                    yield json.dumps(chiqish, ensure_ascii=False, default=str) + "\n"
+                else:
+                    yield json.dumps(hodisa, ensure_ascii=False) + "\n"
+        except Exception as e:                          # noqa: BLE001
+            # Suhbatni yo'qotmaymiz: foydalanuvchi xabari saqlanadi
+            s.xabarlar_json = json.dumps(tarix, ensure_ascii=False, default=str)
+            s.updated_at = datetime.utcnow()
+            db.commit()
+            yield json.dumps({"tur": "xato", "matn": str(e)},
+                             ensure_ascii=False) + "\n"
+            return
+        if yakuniy is not None:
+            s.xabarlar_json = json.dumps(yakuniy["xabarlar"],
+                                         ensure_ascii=False, default=str)
+            s.updated_at = datetime.utcnow()
+            db.commit()
+
+    return StreamingResponse(qatorlar(), media_type="application/x-ndjson",
+                             # nginx oqimni buferlamasin — aks holda
+                             # hamma qadam oxirida birdan keladi
+                             headers={"X-Accel-Buffering": "no",
+                                      "Cache-Control": "no-cache"})
 
 
 class AmalIn(BaseModel):

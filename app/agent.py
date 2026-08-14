@@ -387,7 +387,8 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
         if kirish.get("holat"):
             q = q.filter(m.Order.status == kirish["holat"])
         chiqish = []
-        for o in q.order_by(m.Order.created_at.desc()).limit(100):
+        nechta = max(1, min(int(kirish.get("nechta") or 20), 60))
+        for o in q.order_by(m.Order.created_at.desc()).limit(nechta):
             kechikkan = bool(o.due_date and o.due_date < date.today()
                              and domain.manosi(o.status) not in
                              ("topshirildi", "bekor"))
@@ -399,7 +400,8 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
                 "summa": float(o.total), "maqom": o.status,
                 "muddat": o.due_date.isoformat() if o.due_date else None,
                 "kechikkan": kechikkan})
-        return {"buyurtmalar": chiqish, "soni": len(chiqish)}
+        return {"buyurtmalar": chiqish, "korsatilgan": len(chiqish),
+                "jami_soni": q.count()}
 
     if nom == "buyurtma_retsepti":
         from .services import material_top, _konversiya
@@ -473,8 +475,19 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
                 "eng_eski_muddat": eng_eski.isoformat() if eng_eski else None,
                 "kechikkan_kun": (date.today() - eng_eski).days
                                  if eng_eski and eng_eski < date.today() else 0})
-        return {"qarzdorlar": chiqish,
-                "jami_qarz": round(sum(x["qarz"] for x in chiqish), 2)}
+        # ENG KATTALARI qaytariladi, hammasi emas.
+        #
+        # Nega: 53 mijozning hammasini bersak, model ularni jadvalga
+        # ko'chirishga urinadi va chiqish byudjetiga urilib, javob
+        # o'rtasida uzilib qoladi (MALFORMED_FUNCTION_CALL). Amalda
+        # rahbarga eng katta qarzdorlar kerak; qolgani jamida ko'rinadi.
+        nechta = int(kirish.get("nechta") or 15)
+        nechta = max(1, min(nechta, 50))
+        jami = round(sum(x["qarz"] for x in chiqish), 2)
+        return {"qarzdorlar": chiqish[:nechta],
+                "korsatilgan": min(nechta, len(chiqish)),
+                "jami_soni": len(chiqish),
+                "jami_qarz": jami}
 
     if nom == "pul_holati":
         from .routers.finance import _sotilgan
@@ -556,13 +569,56 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
 #  Suhbat halqasi
 # =====================================================================
 
-def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
-    """Bitta navbatni oxirigacha yuritadi (asboblar bilan birga).
+# Asbob javobi modelga MATN bo'lib boradi va u shu matnni jadvalga
+# ko'chirmoqchi bo'ladi. Javob juda katta bo'lsa model chiqish
+# byudjetiga urilib, `korsat` chaqiruvi o'rtasida uzilib qoladi —
+# API buni MALFORMED_FUNCTION_CALL deb qaytaradi va javob BUTUNLAY
+# yo'qoladi. Shuning uchun har asbob javobi shu chegara bilan
+# qisqartiriladi. Yangi asbob qo'shilganda ham himoya o'z-o'zidan
+# ishlaydi — har biriga alohida chegara yozish shart emas.
+MAX_ASBOB_JAVOBI = 12_000     # belgi
 
-    `xabarlar` — ICHKI ko'rinishdagi tarix (app/llm.py ga qarang). U
-    provayderdan mustaqil: kalit almashtirilsa eski suhbat o'qilaveradi.
 
-    Qaytaradi: {"xabarlar", "javob", "izlar", "provayder", "model"}
+def _javobni_qisqartir(natija: dict) -> dict:
+    """Katta ro'yxatlarni kesadi va modelga nima bo'lganini aytadi."""
+    xom = json.dumps(natija, ensure_ascii=False, default=str)
+    if len(xom) <= MAX_ASBOB_JAVOBI:
+        return natija
+
+    qisqa = dict(natija)
+    for kalit, qiymat in natija.items():
+        if not isinstance(qiymat, list) or len(qiymat) <= 5:
+            continue
+        # Ro'yxatni ikkiga bo'lib qisqartiramiz, chegaraga sig'guncha
+        n = len(qiymat)
+        while n > 5:
+            n //= 2
+            qisqa[kalit] = qiymat[:n]
+            if len(json.dumps(qisqa, ensure_ascii=False, default=str)) <= MAX_ASBOB_JAVOBI:
+                break
+        qisqa["_qisqartirildi"] = (
+            f"«{kalit}» juda uzun edi: {len(qiymat)} tadan {n} tasi berildi. "
+            f"Kerak bo'lsa `nechta` yoki filtr bilan qayta so'rang.")
+    return qisqa
+
+
+def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash"):
+    """Bitta navbatni yuritadi va HAR QADAMNI oqim sifatida chiqaradi.
+
+    NEGA OQIM: agent bitta savolga 10–25 soniya sarflaydi (model
+    o'ylaydi, asbob chaqiradi, yana o'ylaydi). Shu vaqt davomida
+    ekranda faqat «O'ylayapman…» tursa, foydalanuvchi tizim qotib
+    qoldimi deb o'ylaydi va sahifani yangilaydi — javob esa yo'qoladi.
+    Endi u qaysi asbob ishlayotganini ko'rib turadi.
+
+    Chiqaradigan hodisalar (har biri lug'at):
+        {"tur": "qadam",  "nomer": 1}              — modelga so'rov ketdi
+        {"tur": "asbob",  "nom": "qarzdorlar"}     — asbob chaqirilmoqda
+        {"tur": "asbob_ok", "nom": ..., "xato": bool}
+        {"tur": "yakun",  ...}                     — to'liq natija
+
+    `suhbat()` shu generatorning ustiga qurilgan — eski chaqiruvchilar
+    (masalan Telegram bot) o'zgarishsiz ishlayveradi.
     """
     a = AGENTLAR[agent_kalit]
     # `korsat` HAR agentga beriladi: ko'rinish chizish bo'limga bog'liq
@@ -575,29 +631,57 @@ def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
     komponentlar = []
     provayder = model = ""
 
-    for _ in range(MAX_QADAM):
-        # Birinchi javobdan keyin model QOTIRILADI — suhbat o'rtasida
-        # boshqa modelga o'tish asbob chaqiruvi muhrini buzadi
-        # (app/llm.py dagi izohga qarang).
-        javob = llm.javob_ol(tarix, asboblar, korsatma, model or None)
+    def yakun(javob_matni):
+        return {"tur": "yakun", "xabarlar": tarix, "javob": javob_matni,
+                "izlar": izlar, "komponentlar": komponentlar,
+                "provayder": provayder, "model": model}
+
+    qayta_boshlandi = False
+    qadam = 0
+    while qadam < MAX_QADAM:
+        qadam += 1
+        yield {"tur": "qadam", "nomer": qadam}
+        try:
+            # Birinchi javobdan keyin model QOTIRILADI — suhbat o'rtasida
+            # boshqa modelga o'tish asbob chaqiruvi muhrini buzadi
+            # (app/llm.py dagi izohga qarang).
+            javob = llm.javob_ol(tarix, asboblar, korsatma, model or None)
+        except llm.LLMBand:
+            # Qotirilgan model o'rtada tugab qoldi (kvota). Zaxira
+            # modelga O'TIB BO'LMAYDI — uning muhri boshqa. Shuning
+            # uchun navbatni BOSHIDAN boshlaymiz: tarix tozalanadi,
+            # model bo'shatiladi va zanjir keyingisini tanlaydi.
+            # Asboblar qaytadan chaqiriladi — bir oz isrof, lekin
+            # foydalanuvchi javobsiz qolmaydi.
+            if qayta_boshlandi or not model:
+                raise
+            log.warning("«%s» o'rtada tugadi — navbat zaxira model bilan "
+                        "qaytadan boshlanmoqda", model)
+            qayta_boshlandi = True
+            tarix = list(xabarlar)
+            izlar.clear()
+            komponentlar.clear()
+            model = ""
+            qadam = 0
+            yield {"tur": "qayta_boshlandi"}
+            continue
         provayder, model = javob["provayder"], javob["model"]
 
         if javob["rad_etildi"]:
-            return {"xabarlar": tarix, "izlar": izlar, "komponentlar": komponentlar,
-                    "provayder": provayder, "model": model,
-                    "javob": "Kechirasiz, bu so'rovga javob bera olmadim. "
-                             "Iltimos, boshqacha ifodalab ko'ring."}
+            yield yakun("Kechirasiz, bu so'rovga javob bera olmadim. "
+                        "Iltimos, boshqacha ifodalab ko'ring.")
+            return
 
         tarix.append({"rol": "assistant", "matn": javob["matn"],
                       "asbob_chaqiruvlari": javob["chaqiruvlar"]})
 
         if not javob["chaqiruvlar"]:
-            return {"xabarlar": tarix, "javob": javob["matn"], "izlar": izlar,
-                    "komponentlar": komponentlar,
-                    "provayder": provayder, "model": model}
+            yield yakun(javob["matn"])
+            return
 
         natijalar = []
         for chaqiruv in javob["chaqiruvlar"]:
+            yield {"tur": "asbob", "nom": chaqiruv["nom"]}
             try:
                 natija = _asbobni_bajar(db, chaqiruv["nom"], chaqiruv["kirish"] or {})
                 xato = bool(natija.get("xato"))
@@ -607,6 +691,8 @@ def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
                 log.exception("Agent asbobi yiqildi: %s", chaqiruv["nom"])
                 db.rollback()
                 natija, xato = {"xato": str(e)}, True
+            yield {"tur": "asbob_ok", "nom": chaqiruv["nom"], "xato": xato}
+
             # Komponentlar javobga alohida chiqadi, model tarixiga esa
             # ularning NUSXASI kerak emas — faqat «chizildi» tasdig'i.
             # Aks holda har navbatda butun jadval tarixga qo'shilib,
@@ -618,14 +704,31 @@ def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
                           "natija": natija})
             natijalar.append({
                 "id": chaqiruv["id"], "nom": chaqiruv["nom"],
-                "natija": json.dumps(natija, ensure_ascii=False, default=str),
+                "natija": json.dumps(_javobni_qisqartir(natija),
+                                     ensure_ascii=False, default=str),
                 "xato": xato})
         tarix.append({"rol": "user", "matn": "", "asbob_natijalari": natijalar})
 
-    return {"xabarlar": tarix, "izlar": izlar, "komponentlar": komponentlar,
-            "provayder": provayder, "model": model,
-            "javob": "Juda ko'p qadam bo'ldi — to'xtatdim. "
-                     "Nima qilishimni aniqroq ayting."}
+    yield yakun("Juda ko'p qadam bo'ldi — to'xtatdim. "
+                "Nima qilishimni aniqroq ayting.")
+
+
+def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
+    """Oqimsiz variant — oxirgi natijani qaytaradi.
+
+    `suhbat_oqim` ustiga qurilgan, ya'ni mantiq bitta joyda. Oqim
+    kerak bo'lmagan chaqiruvchilar (bot, testlar) shuni ishlatadi.
+    """
+    oxirgi = None
+    for hodisa in suhbat_oqim(db, xabarlar, agent_kalit):
+        if hodisa.get("tur") == "yakun":
+            oxirgi = hodisa
+    if oxirgi is None:                       # bo'lmasligi kerak, lekin
+        return {"xabarlar": list(xabarlar), "javob": "", "izlar": [],
+                "komponentlar": [], "provayder": "", "model": ""}
+    natija = dict(oxirgi)
+    natija.pop("tur", None)
+    return natija
 
 
 # =====================================================================
@@ -742,8 +845,11 @@ HAMMA_ASBOBLAR += [
                  "maqom, muddat va kechikkanmi."),
         "sxema": {
             "type": "object",
-            "properties": {"holat": {"type": "string",
-                                     "description": "Maqom nomi, masalan 'Kutishda'"}},
+            "properties": {
+                "holat": {"type": "string",
+                          "description": "Maqom nomi, masalan 'Kutishda'"},
+                "nechta": {"type": "integer",
+                           "description": "Nechta buyurtma (standart 20)"}},
             "additionalProperties": False,
         },
     },
@@ -761,8 +867,14 @@ HAMMA_ASBOBLAR += [
     {
         "nom": "qarzdorlar",
         "izoh": ("Qarzdor mijozlar: kim qancha qarzdor, muddati o'tganmi, "
-                 "necha kun kechikkan."),
-        "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
+                 "necha kun kechikkan. Eng kattalaridan boshlab beriladi. "
+                 "`nechta` — nechtasi kerakligi (standart 15)."),
+        "sxema": {
+            "type": "object",
+            "properties": {"nechta": {"type": "integer",
+                                      "description": "Nechta mijoz (1-50)"}},
+            "additionalProperties": False,
+        },
     },
     {
         "nom": "pul_holati",

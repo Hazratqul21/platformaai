@@ -261,10 +261,14 @@ def _gemini(xabarlar, asboblar, korsatma, model):
         model=model, contents=tarkib,
         config=types.GenerateContentConfig(
             system_instruction=korsatma,
-            # 2.5 modellarida «fikrlash» standart yoqilgan va u chiqish
-            # byudjetini yeydi: javob umuman chiqmay, `content=None`
-            # bilan MAX_TOKENS qaytardi. Chegara kengaytiriladi.
-            max_output_tokens=8192,
+            # 2.5+ modellarida «fikrlash» standart yoqilgan va u chiqish
+            # byudjetini yeydi. Ustiga `korsat` asbobi butun jadvalni
+            # JSON MATN qilib yuboradi — 50 qatorli qarzdorlar ro'yxati
+            # osongina bir necha ming token bo'ladi. Byudjet kam bo'lsa
+            # model matn o'rtasida uzilib qoladi va API buni
+            # MALFORMED_FUNCTION_CALL deb qaytaradi (javob umuman
+            # yo'qoladi). Shuning uchun chegara keng olinadi.
+            max_output_tokens=32768,
             tools=[types.Tool(function_declarations=[
                 types.FunctionDeclaration(
                     name=a["nom"], description=a["izoh"],
