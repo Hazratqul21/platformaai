@@ -120,15 +120,21 @@ biri o'z rolidagi odamga ochiq:
 
 ### Kalit qo'yish
 
-`.env` ga **bittasini** yozing — tizim qaysi biri borligini o'zi topadi:
+`.env` ga **bittasi ham, hammasi ham** yozilishi mumkin:
 
 ```dotenv
 GEMINI_API_KEY=...        # https://aistudio.google.com
-# yoki
 ANTHROPIC_API_KEY=...     # https://platform.claude.com
-# yoki
 OPENAI_API_KEY=...        # https://platform.openai.com
 ```
+
+Bir nechta kalit qo'yilsa **hammasi ishlatiladi**: birinchisining
+kvotasi tugasa tizim keyingisiga o'zi o'tadi. Tartibni belgilash uchun
+`LLM_PROVAYDER=anthropic` yozing — u birinchi turadi, qolganlari zaxira
+bo'lib qoladi.
+
+Qaysi kalit ulanganini AI bo'limining o'ng ustunida ko'rasiz:
+● ulangan · ○ qo'yilmagan.
 
 Keyin `docker compose up -d --force-recreate app`.
 

@@ -71,6 +71,21 @@ def joriy_model() -> str:
     return _muhit("LLM_MODEL") or PROVAYDERLAR[p][1]
 
 
+def ulangan_provayderlar() -> list[str]:
+    """HAQIQIY kaliti bor provayderlar — afzallik tartibida.
+
+    `LLM_PROVAYDER` berilgan bo'lsa u birinchi turadi, lekin qolganlari
+    ham ro'yxatda qoladi: mijoz uchta kalit qo'ysa, uchalasi ham
+    ishlatiladi. Bittasining kvotasi tugasa keyingisiga o'tiladi —
+    aks holda pulli kalit turgani bilan tizim «AI ishlamayapti» derdi.
+    """
+    tanlangan = _muhit("LLM_PROVAYDER").lower()
+    tartib = ([tanlangan] if tanlangan in PROVAYDERLAR else []) + [
+        nom for nom in PROVAYDERLAR if nom != tanlangan]
+    return [nom for nom in tartib
+            if (k := _muhit(PROVAYDERLAR[nom][0])) and not kalit_shubhali(k)]
+
+
 # Haqiqiy kalitlar uzun bo'ladi (Anthropic/OpenAI ~100+, Gemini ~39).
 # `.env.example` dan ko'chirilgan «sk-...» kabi o'rin egallovchi qiymat
 # esa qisqa. Buni tekshirmasak — chat oynasi «tayyor» deb turadi,
@@ -100,14 +115,24 @@ def tayyormi() -> tuple[bool, str]:
 
 
 def holat() -> dict:
-    """Hamma provayderlar holati — sozlamalar ekrani uchun."""
+    """Hamma provayderlar holati — sozlamalar va AI ekrani uchun."""
     tayyor, izoh = tayyormi()
+    ulangan = ulangan_provayderlar()
     return {
         "tayyor": tayyor, "izoh": izoh,
         "provayder": joriy_provayder(), "model": joriy_model(),
+        # Ulangan provayderlar TARTIB bilan: birinchisi ishlatiladi,
+        # kvotasi tugasa keyingisiga o'tiladi.
+        "ulangan": ulangan,
+        "zanjir": [{"provayder": p, "model": md} for p, md in _zanjir()],
         "provayderlar": [
             {"nom": nom, "kalit": kalit_nomi,
-             "kalit_bor": bool(_muhit(kalit_nomi)), "standart_model": model}
+             "kalit_bor": bool(_muhit(kalit_nomi)),
+             "ishlaydi": nom in ulangan,
+             "izoh": ("ulangan" if nom in ulangan
+                      else ("kalit haqiqiyga o'xshamaydi"
+                            if _muhit(kalit_nomi) else "kalit qo'yilmagan")),
+             "standart_model": model}
             for nom, (kalit_nomi, model) in PROVAYDERLAR.items()],
     }
 
@@ -314,6 +339,9 @@ def _gemini(xabarlar, asboblar, korsatma, model):
         sabab = ", ".join(sorted(set(sabablar))) or "noma'lum"
         if "SAFETY" in sabab or "PROHIBITED" in sabab:
             return {"matn": "", "chaqiruvlar": [], "rad_etildi": True}
+        if "MALFORMED" in sabab or "MAX_TOKENS" in sabab:
+            # Tiklanadigan hol — agent qisqaroq javob bilan qayta uradi
+            raise JavobBuzildi(sabab)
         matn = (f"Model bo'sh javob qaytardi (sabab: {sabab}). "
                 f"Savolni qisqaroq yoki aniqroq yozib ko'ring.")
     return {"matn": matn, "chaqiruvlar": chaqiruvlar, "rad_etildi": False}
@@ -376,8 +404,35 @@ def _otkinchimi(xato: Exception) -> bool:
     return any(belgi.lower() in matn.lower() for belgi in OTKINCHI)
 
 
+class JavobBuzildi(RuntimeError):
+    """Model javobi yarim yo'lda uzilib qoldi (buzuq asbob chaqiruvi).
+
+    Gemini da bu `MALFORMED_FUNCTION_CALL` deb keladi va deyarli har
+    doim BITTA sabab bilan: model juda uzun asbob argumentini yozmoqchi
+    bo'ladi (masalan 50 qatorli jadvalning JSON matni) va chiqish
+    chegarasiga urilib, JSON yarmida to'xtaydi.
+
+    Bu XATO EMAS, TIKLANADIGAN hol: agentga qisqaroq javob berishni
+    aytib, qadamni qayta yurgizsa bo'ladi.
+    """
+
+
 class LLMBand(RuntimeError):
     """Provayder vaqtincha javob bermayapti — foydalanuvchiga tushunarli xabar."""
+
+
+def _zanjir() -> list[tuple[str, str]]:
+    """Sinaladigan (provayder, model) juftliklari — to'liq ro'yxat.
+
+    Avval birinchi provayderning hamma modellari, keyin ikkinchisiniki
+    va hokazo. Shu bilan «hamma kalitlar ulangan» degani amalda ham
+    to'g'ri bo'ladi: birinchisi tugasa ikkinchisi javob beradi.
+    """
+    natija = []
+    for p in ulangan_provayderlar():
+        for md in _modellar_zanjiri(p):
+            natija.append((p, md))
+    return natija
 
 
 def _modellar_zanjiri(provayder: str) -> list[str]:
@@ -393,7 +448,11 @@ def _modellar_zanjiri(provayder: str) -> list[str]:
     `LLM_MODEL` aniq berilgan bo'lsa u BIRINCHI turadi — foydalanuvchi
     tanlovi hurmat qilinadi, lekin u ishlamasa ham yo'l berkilmaydi.
     """
-    tanlangan = _muhit("LLM_MODEL")
+    # `LLM_MODEL` FAQAT o'z provayderiga tegishli: «gemini-2.5-flash» ni
+    # Anthropic ga yuborib bo'lmaydi. Shuning uchun u tanlangan
+    # provayderdagina birinchi o'ringa qo'yiladi.
+    tanlangan = (_muhit("LLM_MODEL")
+                 if _muhit("LLM_PROVAYDER").lower() in ("", provayder) else "")
     zanjir = [tanlangan] if tanlangan else []
     zanjir.append(PROVAYDERLAR[provayder][1])
     zanjir.extend(ZAXIRA_MODELLAR.get(provayder, []))
@@ -416,15 +475,17 @@ def javob_ol(xabarlar: list[dict], asboblar: list[dict],
     thought_signature» deb 400 qaytaradi va agent o'rtada yiqiladi.
     Shuning uchun zaxira modelga o'tish faqat BIRINCHI qadamda mumkin.
     """
-    provayder = joriy_provayder()
     tayyor, izoh = tayyormi()
     if not tayyor:
         raise RuntimeError(izoh)
 
     oxirgi = None
-    zanjir = ([qotirilgan_model] if qotirilgan_model
-              else _modellar_zanjiri(provayder))
-    for model in zanjir:
+    if qotirilgan_model:
+        # Suhbat o'rtasi — model ham, provayder ham o'zgarmaydi
+        zanjir = [(joriy_provayder(), qotirilgan_model)]
+    else:
+        zanjir = _zanjir()
+    for provayder, model in zanjir:
         for urinish in range(QAYTA_URINISH):
             try:
                 natija = MOSLASHTIRGICHLAR[provayder](

@@ -237,6 +237,9 @@ async function aiYubor() {
         if (h.tur === 'boshlandi') AI_SUHBAT = h.suhbat_id;
         else if (h.tur === 'asbob') {
           qadamlar.push(AI_ASBOB_MATNI[h.nom] || h.nom);
+        } else if (h.tur === 'qayta_urinish') {
+          // Javob uzilib qolgan — qisqaroq qilib qayta urinilmoqda
+          qadamlar.push('жавобни қисқартириб қайта ёзяпман');
         } else if (h.tur === 'qayta_boshlandi') {
           // Model kvotasi tugab, zaxirasiga o'tildi — foydalanuvchi
           // nega kutayotganini bilsin
@@ -313,6 +316,26 @@ function aiFaoliyatChiz(f) {
     ? `● Уланган: ${holat.provayder} · ${holat.model}`
     : '○ Уланмаган — API калит қўйилмаган';
   quti.appendChild(bayroq);
+
+  // HAMMA provayder holati. Bir nechta kalit qo'yilsa hammasi
+  // ishlatiladi: birinchisining kvotasi tugasa keyingisiga o'tiladi.
+  // Foydalanuvchi qaysi kalit ulangan-u qaysi biri yo'qligini
+  // ko'rib turishi kerak.
+  if ((holat.provayderlar || []).length) {
+    quti.appendChild(el('div', 'ai-kichik', 'API калитлар'));
+    for (const p of holat.provayderlar) {
+      const q = el('div', 'ai-kalit');
+      q.appendChild(el('span', 'ai-kalit-nuqta ' +
+        (p.ishlaydi ? 'ai-t-ok' : 'ai-t-mut'), p.ishlaydi ? '●' : '○'));
+      q.appendChild(el('span', 'ai-kalit-nom', p.nom));
+      q.appendChild(el('span', 'muted ai-kalit-izoh', p.izoh));
+      quti.appendChild(q);
+    }
+    if ((holat.ulangan || []).length > 1) {
+      quti.appendChild(el('div', 'muted ai-bosh-izoh',
+        'Биттасининг квотаси тугаса кейингисига ўтилади.'));
+    }
+  }
 
   // --- AI taklifi bilan bajarilgan o'zgarishlar --------------------
   const sarlavha = document.createElement('div');

@@ -578,6 +578,16 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
 # ishlaydi — har biriga alohida chegara yozish shart emas.
 MAX_ASBOB_JAVOBI = 12_000     # belgi
 
+# Javob uzilib qolganda modelga qo'shiladigan ko'rsatma. Ataylab qisqa
+# va aniq: «kamroq yoz» degani yetarli emas, aniq son kerak.
+QISQARTIR_OGOHI = """
+
+## DIQQAT — OLDINGI URINISH UZILIB QOLDI
+
+Javobing juda uzun bo'ldi va yarmida uzildi. Bu safar QISQA yoz:
+jadvalda ko'pi bilan 10 qator, har qatorda 4 ustun. Qolganini
+matnda bir gap bilan ayt («yana 25 ta mijoz bor»)."""
+
 
 def _javobni_qisqartir(natija: dict) -> dict:
     """Katta ro'yxatlarni kesadi va modelga nima bo'lganini aytadi."""
@@ -637,6 +647,7 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash"):
                 "provayder": provayder, "model": model}
 
     qayta_boshlandi = False
+    qisqartir_ogohi = ""
     qadam = 0
     while qadam < MAX_QADAM:
         qadam += 1
@@ -645,7 +656,22 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash"):
             # Birinchi javobdan keyin model QOTIRILADI — suhbat o'rtasida
             # boshqa modelga o'tish asbob chaqiruvi muhrini buzadi
             # (app/llm.py dagi izohga qarang).
-            javob = llm.javob_ol(tarix, asboblar, korsatma, model or None)
+            javob = llm.javob_ol(tarix, asboblar,
+                                 korsatma + qisqartir_ogohi, model or None)
+        except llm.JavobBuzildi:
+            # Model juda uzun asbob argumenti yozib, yarmida uzildi.
+            # Bir marta QISQAROQ yozishni aytib qayta uramiz — bu
+            # haqiqiy ma'lumotda (50 mijoz, uzun nomlar) tez-tez
+            # uchraydi va aks holda javob butunlay yo'qoladi.
+            if qisqartir_ogohi:
+                yield yakun("Javob juda uzun chiqdi. Savolni toraytiring "
+                            "— masalan «eng katta 5 tasini ko'rsat».")
+                return
+            log.warning("Javob uzilib qoldi — qisqartirish ogohi bilan qayta")
+            qisqartir_ogohi = QISQARTIR_OGOHI
+            qadam -= 1                  # shu qadamni qaytadan
+            yield {"tur": "qayta_urinish"}
+            continue
         except llm.LLMBand:
             # Qotirilgan model o'rtada tugab qoldi (kvota). Zaxira
             # modelga O'TIB BO'LMAYDI — uning muhri boshqa. Shuning
