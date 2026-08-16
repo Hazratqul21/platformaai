@@ -284,7 +284,24 @@ Buyurtma formasi, bosqichlar, retsept va hujjatlar shundan chiziladi.
 
 ---
 
-## 8. Hali qilinmagani
+## 8. Strategiya va reja
+
+Loyihaning qayerga borayotgani, qonuniy talablar, arxitektura qarorlari
+va bosqichma-bosqich reja — `docs/` papkasida:
+
+| Hujjat | Nima haqida |
+|---|---|
+| [00-STRATEGIYA.md](docs/00-STRATEGIYA.md) | biz nima qilyapmiz, kim bilan raqobat, qayerdan boshlash |
+| [01-HOZIRGI-HOLAT.md](docs/01-HOZIRGI-HOLAT.md) | nima bor, nima yo'q — raqamlar bilan |
+| [02-QONUNCHILIK.md](docs/02-QONUNCHILIK.md) | EHF, fiskal kassa, BHMS — majburiy talablar |
+| [03-ARXITEKTURA.md](docs/03-ARXITEKTURA.md) | qobiliyatlar, Bosh kitob, ijarachilik |
+| [04-AI-VA-RAG.md](docs/04-AI-VA-RAG.md) | agent, RAG quvuri, AI sinovi |
+| [05-INTEGRATSIYALAR.md](docs/05-INTEGRATSIYALAR.md) | Payme/Click/Uzum, EHF, telefoniya |
+| [06-YOL-XARITASI.md](docs/06-YOL-XARITASI.md) | bosqichlar, vaqtlar, qaror nuqtalari |
+
+---
+
+## 9. Hali qilinmagani
 
 - Ijarachilik — har mijozga alohida baza (2-bosqich)
 - Valyuta (USD narx, qotirilgan kurs)
