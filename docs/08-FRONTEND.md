@@ -10,9 +10,9 @@
 
 | Ko'rsatkich | Qiymat |
 |---|---|
-| JS fayllar | 22 ta, vanilla (framework yo'q) |
+| JS fayllar | 22 ta, vanilla (framework yo'q) — jami 4 435 qator |
 | Marshrutlash | hash-based (`#/orders`, `#/ai`) |
-| Uslub | bitta `style.css` — «Light Liquid Glass» |
+| Uslub | bitta `style.css`, 402 qator / 24 KB — «Light Liquid Glass» |
 | Til | o'zbek (lotin + kirill), rus |
 | Mobil | Telegram Mini App to'liq, pastki navigatsiya |
 | Multi-firm | foydalanuvchi firmalar orasida almashadi |
@@ -21,7 +21,8 @@
 `fin` · `ai` · `settings` · `zakup`
 
 **Yadro modullari:** `soha.js` (profildan forma chizadi) ·
-`genui.js` (8 primitiv, XSS himoyasi bilan) · `api.js` · `i18n.js`
+`genui.js` (8 primitiv, XSS himoyasi bilan) · `globals.js` (api, til,
+firma) · `router.js` · `ui.js` · `auth.js`
 
 ### Nega vanilla JS yomon qaror emas edi
 
@@ -37,9 +38,9 @@ Endi platforma ko'p mijozli bo'layotgani uchun hisob to'lanadi.
 
 | Muammo | Oqibati |
 |---|---|
-| 18 ta alohida `<script>` tegi | har sahifa yuklanishida 18 so'rov, tartib muhim, xato beriladi |
+| **24 ta** alohida `<script>` tegi | har yuklanishda 24 so'rov, tartib muhim, xato beriladi |
 | Global scope | funksiya nomlari to'qnashadi, kim kimga bog'liq — ko'rinmaydi |
-| Bitta katta `style.css` | o'zgartirish qo'rqinchli — qayerga ta'sir qilishi noma'lum |
+| Bitta `style.css` (402 qator / 24 KB) | o'zgartirish qo'rqinchli — qayerga ta'sir qilishi noma'lum. Katta emas, ajratish yengil |
 | Build yo'q | minifikatsiya, kesh buzish (cache-busting), manba xaritasi yo'q |
 | Ofl ayn yo'q | ishlab chiqarish sexida internet uzilsa — ekran bo'sh |
 | Test yo'q | backend da 9 to'plam bor, frontendda nol |
@@ -52,7 +53,7 @@ Har qadam **alohida qiymat beradi** va oldingisini buzmaydi.
 
 ### F1 — Build tizimi (3–5 kun)
 
-Vite qo'shiladi. 18 ta `<script>` bitta bundlega yig'iladi,
+Vite qo'shiladi. 24 ta `<script>` bitta bundlega yig'iladi,
 minifikatsiya va kesh buzish paydo bo'ladi.
 
 **Muhim:** kod o'zgarmaydi — faqat `import`/`export` qo'shiladi.

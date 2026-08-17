@@ -9,9 +9,9 @@
 
 | Nima | Qancha |
 |---|---|
-| Kod (Python + JS) | 16 613 qator |
-| Baza jadvallari | 32 |
-| HTTP endpointlar | 117 (125/125 himoyalangan) |
+| Kod (Python + JS + CSS + HTML) | 17 151 qator (2026-08-18 o'lchangan) |
+| Baza jadvallari | 33 |
+| HTTP endpointlar | 125 (hammasi himoyalangan) |
 | Soha profillari | 22 |
 | Ish tartibi modullari | 5 |
 | AI asboblari | 12 |
