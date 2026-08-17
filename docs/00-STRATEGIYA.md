@@ -176,3 +176,4 @@ Har bosqich shu savollarga javob berishi kerak:
 | [06-YOL-XARITASI.md](06-YOL-XARITASI.md) | bosqichlar, tartib, qaror nuqtalari |
 | [07-TARQATISH.md](07-TARQATISH.md) | SaaS qarori, ma'lumot ajratish, AI sarfi, tarif |
 | [08-FRONTEND.md](08-FRONTEND.md) | hozirgi holat, modernizatsiya tartibi |
+| [A-IJARACHILIK.md](A-IJARACHILIK.md) | **A bosqichining ish hujjati** — jadval, endpoint, sinov mezoni |
