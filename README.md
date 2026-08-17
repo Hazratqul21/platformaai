@@ -297,7 +297,9 @@ va bosqichma-bosqich reja — `docs/` papkasida:
 | [03-ARXITEKTURA.md](docs/03-ARXITEKTURA.md) | qobiliyatlar, Bosh kitob, ijarachilik |
 | [04-AI-VA-RAG.md](docs/04-AI-VA-RAG.md) | agent, RAG quvuri, AI sinovi |
 | [05-INTEGRATSIYALAR.md](docs/05-INTEGRATSIYALAR.md) | Payme/Click/Uzum, EHF, telefoniya |
-| [06-YOL-XARITASI.md](docs/06-YOL-XARITASI.md) | bosqichlar, vaqtlar, qaror nuqtalari |
+| [06-YOL-XARITASI.md](docs/06-YOL-XARITASI.md) | bosqichlar, vaqtlar, yopilgan qarorlar |
+| [07-TARQATISH.md](docs/07-TARQATISH.md) | SaaS qarori, ma'lumot ajratish, AI sarfi, tarif |
+| [08-FRONTEND.md](docs/08-FRONTEND.md) | frontend holati va modernizatsiya tartibi |
 
 ---
 

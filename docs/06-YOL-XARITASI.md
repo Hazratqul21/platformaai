@@ -23,20 +23,28 @@ A. IJARACHILIK ──┬──> B. BOSH KITOB ──┬──> D. CHAKANA/POS
 
 ---
 
-## BOSQICH A — Ijarachilik (3–4 hafta)
+## BOSQICH A — Ijarachilik / SaaS (4–6 hafta)
 
-**Nima:** har mijozga alohida baza, ustida boshqaruv paneli.
+**Nima:** har mijozga alohida baza, ustida boshqaruv paneli va
+ro'yxatdan o'tish. Bu — [07-TARQATISH.md](07-TARQATISH.md) dagi
+SaaS qarorining amaliy qismi.
 
 **Qadamlar:**
 1. `platforma_boshqaruv` bazasi: mijozlar, tariflar, ulanish
 2. So'rovda mijozni aniqlash (subdomen: `mijoz.innasoft.uz`)
-3. Ulanishlar hovuzi (mijoz bo'yicha)
+3. Ulanishlar hovuzi (mijoz bo'yicha, chegarali)
 4. Migratsiya hamma bazada yurishi
 5. **`domain.py` keshi mijoz bo'yicha kalitlanishi** ← unutilmasin
 6. Mijoz yaratish/o'chirish, zaxira, tiklash
+7. **Ro'yxatdan o'tish oqimi** — telefon/email → firma → AI sehrgari
+8. **Tarif va obuna** — obuna tugasa yozish to'xtaydi, o'qish qoladi
+9. **AI sarfi hisobi** — token, narx qotirilgan holda, limit va ogoh
+10. **Platforma admin paneli** — mijozlar holati, xatolar, sarf
 
 **Tayyor deb hisoblanadi:** ikki mijoz parallel ishlaydi, biri
-ikkinchisining ma'lumotini KO'RA OLMAYDI (test bilan isbotlangan).
+ikkinchisining ma'lumotini KO'RA OLMAYDI —
+`tests/ijarachilik.py` har endpointni chalkash token bilan sinaydi
+va bittasi ham o'tmaydi.
 
 **Xavf:** kesh va global holat. Hozir profil keshi global — bu
 ijarachilikda sirni oshkor qiladi. Kodda ogohlantirish yozib qo'yilgan.
@@ -155,7 +163,7 @@ Soliq ilovasida tekshiriladi.
 
 | Bosqich | Vaqt |
 |---|---|
-| A — Ijarachilik | 3–4 hafta |
+| A — Ijarachilik / SaaS | 4–6 hafta |
 | B — Bosh kitob | 5–7 hafta |
 | C — AI (parallel) | 4–5 hafta |
 | D — POS | 4 hafta + sertifikat |
@@ -170,15 +178,49 @@ to'g'ri va AI konstruktori haqiqiy.
 
 ---
 
-## QAROR NUQTALARI — bularni siz hal qilasiz
+## QAROR NUQTALARI — HAMMASI YOPILDI (2026-08-18)
 
-| # | Savol | Nima uchun muhim |
+| # | Savol | QAROR |
 |---|---|---|
-| 1 | **A yoki B birinchi?** | Ko'p mijoz muhimmi yoki buxgalteriya chuqurligi? Men A ni tavsiya qilaman — keyinroq qo'shish qimmatroq |
-| 2 | **POS qachon?** | Eng katta bozor, lekin sertifikat kerak. Ariza bugun boshlanadimi? |
-| 3 | **Bulut yoki mijoz serverida?** | Bulut = tez o'sish; mijoz serveri = ma'lumot ularniki. Ikkalasi ham mumkin, lekin tanlash arxitekturaga ta'sir qiladi |
-| 4 | **AI xarajatini kim to'laydi?** | Biz (tarifga kiritamiz) yoki mijoz o'z kalitini qo'yadimi? Hozir ikkinchisi |
-| 5 | **Qaysi vertikal keyingi?** | Sizda qaysi biriga mijoz tayyor? U birinchi bo'lsin |
+| 1 | A yoki B birinchi? | ✅ **A birinchi.** Ijarachiliksiz ikkinchi mijoz yo'q |
+| 2 | POS qachon? | ✅ **Ariza bugun, kod A+B dan keyin.** Sertifikat kodni kutmaydi |
+| 3 | Bulut yoki mijoz serverida? | ✅ **BULUT (SaaS).** On-premise 3–5 mijozdan keyin — [07](07-TARQATISH.md) |
+| 4 | AI xarajatini kim to'laydi? | ✅ **Mijoz, alohida qator.** Kalit bizda, sarf serverda loglanadi |
+| 5 | Qaysi vertikal keyingi? | ✅ **Mijoz tayyor bo'lgani.** Bugun — ishlab chiqarish + savdo |
+
+Qonuniylik yo'ldan chiqmaydi: sertifikatlashdan o'tamiz, chetlab
+o'tish yo'q ([02-QONUNCHILIK.md](02-QONUNCHILIK.md)).
+
+---
+
+## Frontend — parallel yo'l
+
+[08-FRONTEND.md](08-FRONTEND.md) da to'liq. Qisqasi:
+
+| Qachon | Nima |
+|---|---|
+| A bilan birga | build tizimi (Vite), CSS ajratish, SaaS ekranlari |
+| B/C bilan parallel | ES modullar, Playwright testlari |
+| Keyinroq | PWA / oflayn |
+| Baholanadi | React/Vue — muammoni yechsagina |
+
+Frontend **hozir qayta yozilmaydi.** Avval backend arxitekturasi.
+
+---
+
+## Sinov — haqiqiy ma'lumot bilan davom etadi
+
+Rustam akaning ma'lumotidan olingan **read-only** nusxa oltita
+jiddiy xatoni ochdi (QQS, qarz yoshi, pul oqimi) — hammasi
+tuzatilgan va `butunlik.py` ularni qaytib chiqishdan qo'riqlaydi.
+
+> ⚠️ **Jonli tizimga TEGILMAYDI.** Server `/var/www/tizim` va lokal
+> `~/Desktop/rustam_aka/` — boshqa chatda boshqariladi. Bu yerda
+> faqat nusxa ishlatiladi.
+
+**Keyingi:** har bosqich yakunida yana shu nusxada sinaladi, so'ng
+boshqa sohalardagi mijozlar ma'lumotida ham. Bitta soha ishlagani —
+yigirma ikkitasi ishlaganini bildirmaydi.
 
 ---
 
@@ -188,5 +230,7 @@ Har bosqich boshlanishidan oldin alohida hujjat yoziladi (masalan
 `docs/A-IJARACHILIK.md`) — u yerda aniq jadvallar, endpointlar,
 migratsiya tartibi va sinov mezonlari bo'ladi.
 
-**Hozir kerak:** yuqoridagi 5 ta qaror. Ularsiz keyingi hujjat
-taxminга asoslanadi.
+Qarorlar yopildi, demak keyingi hujjat taxminga asoslanmaydi.
+
+**Boshlanadigan ish:** `docs/A-IJARACHILIK.md` — aniq jadvallar,
+endpointlar, migratsiya tartibi, `tests/ijarachilik.py` mezonlari.

@@ -52,6 +52,42 @@ da bularning hech biri yo'q, har biri alohida loyiha bo'ladi.
 
 ---
 
+## 0.3b QABUL QILINGAN QARORLAR (2026-08-15)
+
+Bular muhokama qilingan va **o'zgartirilmaydi**. Qolgan hamma reja
+shularga bo'ysunadi.
+
+| # | Qaror | Nimaga ta'sir qiladi |
+|---|---|---|
+| 1 | **Hammasi qonuniy bo'ladi.** Sertifikatlashdan o'tamiz | POS, EHF, fiskal — chetlab o'tilmaydi |
+| 2 | **AI xarajati mijozdan ALOHIDA olinadi** | hisoblash va cheklash mexanizmi kerak |
+| 3 | ~~Mijoz o'z serverida ishlata oladi~~ → **2026-08-18 da o'zgardi**, pastga qarang | — |
+| 4 | **Loyiha umumiy** — Odoo/1C kabi, bitta sohaga xos emas | qobiliyatlar o'lchovi majburiy bo'ladi |
+
+### 3-QAROR O'ZGARDI (2026-08-18): BITTA WEB PLATFORMA (SaaS)
+
+```
+❌ ESKI:  mijoz o'z serveriga o'rnatadi, litsenziya kaliti, AI shlyuzi
+✅ YANGI: hamma narsa bitta web platformada — app.innasoft.uz
+```
+
+Firma ro'yxatdan o'tadi → AI bilan gaplashadi → tizim yig'iladi.
+Serverni, yangilanishni, zaxirani **biz boshqaramiz**.
+
+**Nega:** on-premise ning har bir og'ir muammosi (AI kalitini
+himoyalash, sarfni hisoblash, yangilash, qo'llab-quvvatlash, xato
+topish) SaaS da o'z-o'zidan yo'qoladi. Ular mijozga qiymat emas
+edi — faqat tarqatishning narxi edi.
+
+**2 va 3-qarordagi ziddiyat shu bilan yopildi:** AI kodi bizning
+serverda, demak kalit bizda va har so'rov loglanadi. Shlyuz keraksiz.
+
+**On-premise bekor emas — kechiktirildi.** Platforma 3–5 mijozda
+barqaror ishlagandan keyin qilinadi. Tafsilot:
+[07-TARQATISH.md](07-TARQATISH.md).
+
+---
+
 ## 0.4 ENG MUHIM QAROR: qayerdan boshlash
 
 Odoo+SAP+1C+amoCRM+Bitrix24+call-center — bu **minglab odam-oy**.
@@ -138,3 +174,5 @@ Har bosqich shu savollarga javob berishi kerak:
 | [04-AI-VA-RAG.md](04-AI-VA-RAG.md) | agent, RAG quvuri, sinash |
 | [05-INTEGRATSIYALAR.md](05-INTEGRATSIYALAR.md) | to'lov, soliq, telefoniya |
 | [06-YOL-XARITASI.md](06-YOL-XARITASI.md) | bosqichlar, tartib, qaror nuqtalari |
+| [07-TARQATISH.md](07-TARQATISH.md) | SaaS qarori, ma'lumot ajratish, AI sarfi, tarif |
+| [08-FRONTEND.md](08-FRONTEND.md) | hozirgi holat, modernizatsiya tartibi |
