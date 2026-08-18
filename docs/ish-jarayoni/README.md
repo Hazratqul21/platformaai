@@ -61,7 +61,8 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 
 | # | Yozuv | Holat |
 |---|---|---|
-| 019 | [Bosh kitob poydevori](019-bosh-kitob-poydevori.md) | ✅ dvigatel · ⏳ amallarga ulanmagan |
+| 019 | [Bosh kitob poydevori](019-bosh-kitob-poydevori.md) | ✅ dvigatel, qat'iy qoidalar |
+| 020 | [GL ulash (parallel)](020-gl-ulash-parallel.md) | ✅ topshirish/to'lov → provodka, eski usulga mos |
 
 ---
 

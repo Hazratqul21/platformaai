@@ -663,6 +663,13 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
                 raise HTTPException(409, str(e))
     if yangi_mano == "topshirildi":
         o.delivered_at = date.today()
+        # DIQQAT: bu yerda `delivered_qty` ATAYLAB o'zgartirilmaydi va
+        # GL ga ham yozilmaydi. Sabab: qarz eski usulda ham
+        # `delivered_qty` dan hisoblanadi (`services.client_balance`).
+        # Agar GL bu yerda yozsa, ikkalasi bir-biriga mos kelmay
+        # qolardi — parallel davrning butun ma'nosi shu moslikda.
+        # Mol berish `/topshir` orqali qayd etiladi va GL o'sha yerda
+        # yoziladi.
     o.status = status
     db.add(m.AuditLog(who=user.name, action="Status o'zgardi",
                       detail=f"Buyurtma #{o.id} → {status}"))
@@ -932,6 +939,13 @@ def deliver_to_client(oid: int, data: DeliverIn, db: Session = Depends(get_db),
                                  f"{data.method}".replace(",", " ")))
     # Kechikib kiritilgan bo'lsa — audit yozuviga haqiqiy sana ham qo'shiladi,
     # aks holda tarixda faqat kiritilgan kun ko'rinib chalkashtiradi.
+    # BOSH KITOB — parallel yozuv (eski hisob-kitob tegilmaydi).
+    # Xato bo'lsa amal to'xtamaydi, faqat logga tushadi.
+    from ..hisob import ulash as gl_ulash
+    gl_ulash.buyurtma_topshirildi(db, o, Decimal(str(beriladi)), kun, user.name)
+    if data.paid_amount > 0:
+        gl_ulash.mijoz_tolovi(db, tolov, user.name)
+
     kech = kun != date.today()
     db.add(m.AuditLog(who=user.name, action="Mijozga topshirildi",
                       detail=f"Буюртма #{o.id} · {o.client.company} · {beriladi:,} дона"
@@ -975,10 +989,14 @@ def deliver_batch(data: TopshirIn, db: Session = Depends(get_db),
 
     client_id = orders[0].client_id
     jami = sum(Decimal(str(o.qty)) - Decimal(str(o.delivered_qty or 0)) for o in orders)
+    from ..hisob import ulash as gl_ulash
     for o in orders:
+        qoldi = Decimal(str(o.qty)) - Decimal(str(o.delivered_qty or 0))
         o.delivered_qty = o.qty
         o.status = domain.status_nomi("topshirildi")
         o.delivered_at = date.today()
+        # Bosh kitob — har buyurtma bo'yicha alohida provodka
+        gl_ulash.buyurtma_topshirildi(db, o, qoldi, date.today(), user.name)
     if data.paid_amount > 0:
         tolov = m.Payment(client_id=client_id, order_id=orders[0].id,
                           amount=Decimal(str(data.paid_amount)), method=data.method,

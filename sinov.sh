@@ -78,6 +78,8 @@ yurgiz "PROFIL MUVOFIQLIGI — 22 soha to'liq sikldan o'tadimi" \
        SEED_EMPTY tests/profil_test.py
 yurgiz "CHUQUR SINOV — har sohada raqamlar to'g'rimi" \
        SEED_EMPTY tests/chuqur_sinov.py
+yurgiz "BOSH KITOB ULASH — GL eski usulga mos keladimi (parallel davr)" \
+       SEED_EMPTY tests/gl_ulash_test.py
 yurgiz "KO'CHIRISH — eski tizimdan ma'lumot yo'qolmasdan o'tadimi" \
        SEED_EMPTY tests/kochirish_test.py
 yurgiz "KARTON REGRESSIYASI — eski mijoz mantiqi buzilmadimi" \

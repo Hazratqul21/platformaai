@@ -766,7 +766,7 @@ def cash_flow_forecast(db: Session, days: int = 7, firm: str | None = None) -> d
     # ko'rsatilardi. Eski yozuvlarda `payment_due_date` bo'sh bo'lishi
     # mumkin, shunda `due_date` ga qaytamiz.
     tolov_muddati = func.coalesce(m.Order.payment_due_date, m.Order.due_date)
-    oq = db.query(m.Order.id, m.Order.total).filter(
+    oq = db.query(m.Order.id, m.Order.total, m.Order.client_id).filter(
         tolov_muddati.isnot(None), tolov_muddati <= horizon,
         m.Order.status.in_(domain.statuslar("ishlab_chiqarish", "tayyor", "topshirildi")),
     )
@@ -791,6 +791,20 @@ def cash_flow_forecast(db: Session, days: int = 7, firm: str | None = None) -> d
             m.Payment.order_id.in_(order_ids)
         ).scalar()
         inflow = max(Decimal("0"), kutilgan - Decimal(paid_total))
+
+        # KIRIM QARZDAN OSHMASIN.
+        # Yuqoridagi ayirma faqat SHU BUYURTMALARGA bog'langan to'lovni
+        # ayiradi. Mijoz ko'pincha buyurtmani ko'rsatmasdan umumiy summa
+        # to'laydi (`order_id` bo'sh) — u hisobga olinmay qolardi va
+        # prognoz haqiqiy qarzdan katta chiqardi. `butunlik.py` shu
+        # nomuvofiqlikni ushladi.
+        mijozlar = {o.client_id for o in orders if o.client_id}
+        if mijozlar:
+            balanslar = client_balances_batch(db, firm)
+            jami_qarz = sum(
+                (Decimal(str(balanslar.get(cid, {}).get("debt", 0)))
+                 for cid in mijozlar), Decimal("0"))
+            inflow = min(inflow, max(Decimal("0"), jami_qarz))
     # CHIQIM ikki manbadan. Ilgari faqat `PaymentSchedule` (qo'lda
     # kiritilgan to'lov grafigi) hisoblanardi — natijada panel
     # «yetkazib beruvchilarga 6.8 mlrd qarzimiz bor» deb turib, 7 kunlik

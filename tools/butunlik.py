@@ -173,6 +173,57 @@ def tekshir_hammasi(db) -> Natija:
     n.tekshir("zarariga sotilgan buyurtma yo'q", not zarar,
               f"{len(zarar)} ta: " + ", ".join(zarar[:8]), ogohmi=True)
 
+    # ---- BOSH KITOB (parallel davr tekshiruvi) ---------------------
+    # GL hozircha eski hisob-kitob bilan PARALLEL yoziladi. Bu ikkalasi
+    # bir xil raqam berayotganini tekshiradi — GL ni asosiy manba
+    # qilishdan OLDIN shu toza o'tishi shart.
+    try:
+        from app.hisob import xizmat as gl
+        provodka_bor = db.query(m.Provodka).count() > 0
+    except Exception:                              # noqa: BLE001
+        provodka_bor = False
+
+    if provodka_bor:
+        # 1. Balans: jami debet == jami kredit (Дт—Кт shakli buni
+        #    kafolatlaydi; teng chiqmasa ma'lumot qo'lda buzilgan)
+        b = gl.balans_tekshiruvi(db)
+        n.tekshir("bosh kitob balansi (debet == kredit)",
+                  b["jami_debet"] == b["jami_kredit"],
+                  f"debet {b['jami_debet']} != kredit {b['jami_kredit']}")
+
+        # 2. Mijoz qarzi: GL dagi 4010 saldosi == eski usul bo'yicha jami qarz
+        gl_qarz = gl.saldo(db, "4010")["qoldiq"]
+        eski_qarz = Decimal("0")
+        for c in db.query(m.Client).all():
+            eski_qarz += Decimal(str(s.client_balance(db, c.id)["debt"]))
+        # Faqat GL yozila boshlagandan keyingi buyurtmalar hisobga olinadi,
+        # shuning uchun eski baza bo'lsa farq bo'lishi TABIIY — ogohlantirish.
+        n.tekshir("GL mijoz qarzi (4010) eski usulga mos",
+                  abs(gl_qarz - eski_qarz) <= TIYIN,
+                  f"GL {gl_qarz} != eski usul {eski_qarz} "
+                  f"(farq {gl_qarz - eski_qarz}). Parallel davrda GL faqat "
+                  f"YANGI amallarni yozadi — eski ma'lumotli bazada bu normal.",
+                  ogohmi=True)
+
+        # 3. Kassa: GL dagi 5010 manfiy bo'lmasin (pul manfiy bo'lolmaydi)
+        kassa = gl.saldo(db, "5010")["qoldiq"]
+        n.tekshir("GL kassa saldosi manfiy emas", kassa >= 0,
+                  f"kassa {kassa} — manfiy qoldiq mumkin emas")
+
+        # 4. Storno qilingan provodka ikki marta storno qilinmagan
+        stornolar = [x.storno_id for x in db.query(m.Provodka)
+                     .filter(m.Provodka.storno_id.isnot(None)).all()]
+        n.tekshir("har provodka bir marta storno qilingan",
+                  len(stornolar) == len(set(stornolar)),
+                  "bitta provodka ikki marta bekor qilingan")
+
+        # 5. Yopilgan davrga yozuv tushmagan
+        yopiq = {d.oy for d in db.query(m.YopilganDavr).all()}
+        buzuq = [p.id for p in db.query(m.Provodka).all()
+                 if p.sana.strftime("%Y-%m") in yopiq]
+        n.tekshir("yopilgan davrda yangi yozuv yo'q", not buzuq,
+                  f"{len(buzuq)} provodka yopilgan davrda: {buzuq[:5]}")
+
     return n
 
 

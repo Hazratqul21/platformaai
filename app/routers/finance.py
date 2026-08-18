@@ -43,6 +43,9 @@ def add_payment(data: PayIn, db: Session = Depends(get_db),
     db.add(p)
     db.flush()
     ks.mijoz_tolovi(db, p, user.name)
+    # Bosh kitob — parallel (xatosi to'lovni to'xtatmaydi)
+    from ..hisob import ulash as gl_ulash
+    gl_ulash.mijoz_tolovi(db, p, user.name)
     db.add(m.AuditLog(who=user.name, action="To'lov qabul qilindi",
                       detail=f"{c.company} · {data.amount:,.0f} so'm · {data.method}"))
     db.commit()
