@@ -324,7 +324,16 @@ def profil() -> Profil:
     from .tenancy import kalit as _kesh_kaliti
     p = _KESH.get(_kesh_kaliti())
     if p is None:
-        return qayta_yukla(None)
+        # Kesh bo'sh — JORIY firmaning bazasidan o'qiymiz. Ilgari bu
+        # yerda `qayta_yukla(None)` edi va u bazani ochmasdan `karton`
+        # zaxira profiliga tushardi: ijarachilikda har firma boshqa
+        # sohada bo'lgani uchun bu XATO. Endi firma bazasidan o'qiladi.
+        from .db import sessiya
+        db = sessiya()
+        try:
+            return qayta_yukla(db)
+        finally:
+            db.close()
     return p
 
 

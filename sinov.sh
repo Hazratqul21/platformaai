@@ -46,6 +46,18 @@ echo
 echo "════════ GenUI — komponent tekshiruvi va xavfsizligi"
 "$PY" tests/genui_test.py || XATO=1
 
+echo
+echo "════════ BOSHQARUV BAZASI — firma, obuna, AI sarfi"
+"$PY" tests/platforma_test.py || XATO=1
+
+echo
+echo "════════ IJARACHILIK — ikki mijoz bir jarayonda aralashmaydimi"
+"$PY" tests/ijarachilik_test.py || XATO=1
+
+echo
+echo "════════ RO'YXATDAN O'TISH — firma yaratish -> ERP gacha to'liq oqim"
+"$PY" tests/royxat_test.py || XATO=1
+
 yurgiz "PROFIL MUVOFIQLIGI — 22 soha to'liq sikldan o'tadimi" \
        SEED_EMPTY tests/profil_test.py
 yurgiz "CHUQUR SINOV — har sohada raqamlar to'g'rimi" \

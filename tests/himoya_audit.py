@@ -23,6 +23,12 @@ OCHIQ = {
     "/":                "statik sahifa",
     "/favicon.ico":     "statik",
     "/robots.txt":      "statik",
+    # Ro'yxatdan o'tish — odam hali firmaga ega EMAS, token bo'lishi
+    # mumkin emas. Boshqaruv bazasi bilan ishlaydi, ERP ma'lumotiga
+    # tegmaydi. Parol tekshiruvi endpoint ichida.
+    "/royxat":            "ro'yxatdan o'tish — kirish nuqtasi",
+    "/holat/{firma_kod}": "baza tayyorlanish holati — sir emas",
+    "/kir":               "platforma kabinetiga kirish nuqtasi",
 }
 HIMOYA = {"get_user", "get_user_parolsiz", "require_roles"}
 USULLAR = {"get", "post", "put", "delete", "patch"}

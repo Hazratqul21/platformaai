@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import logging as _logging
+log_boot = _logging.getLogger("gofra.boot")
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -16,6 +18,7 @@ load_dotenv()
 
 from .db import Base, engine, get_db, SessionLocal  # noqa: E402
 from . import auth as auth_mod  # noqa: E402
+from .routers import royxat as royxat_router  # noqa: E402
 from .migrate import (run_migrations, backfill_soha,  # noqa: E402
                       profillarni_yukla, jadvalni_qayta_qur)
 from . import models as m  # noqa: E402
@@ -56,21 +59,31 @@ def prod_tekshiruvi() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     prod_tekshiruvi()
-    Base.metadata.create_all(engine)   # yangi jadvallar
-    run_migrations(engine)             # mavjud jadvallarga yangi ustunlar
-    # `orders.qty` butun sondan kasrga o'tdi (2.5 m³ beton) — SQLite da
-    # ustun turini o'zgartirish uchun jadval qayta quriladi.
-    jadvalni_qayta_qur(engine, "orders", m.Order)
-    db = SessionLocal()
-    try:
-        # Profil seed'dan OLDIN yuklanadi: seed buyurtma yaratganda
-        # soha_yoz() allaqachon to'g'ri profilni bilishi kerak.
-        profillarni_yukla(db)
-        domain.qayta_yukla(db)
-        seed(db)
-        backfill_soha(db)   # eski buyurtmalar attributes'siz qolmasin
-    finally:
-        db.close()
+    from . import tenancy
+    if tenancy.yoqilganmi():
+        # IJARACHILIK: yagona baza ISHLATILMAYDI — har mijozning bazasi
+        # ro'yxatdan o'tishda tayyorlanadi. Startupda faqat boshqaruv
+        # bazasi kerak (firmalar ro'yxati shu yerda).
+        from .platforma.db import jadvallarni_yarat
+        jadvallarni_yarat()
+        log_boot.info("Ijarachilik rejimi — boshqaruv bazasi tayyor")
+    else:
+        # YAGONA rejim (bugungi holat): bitta baza, seed bilan.
+        Base.metadata.create_all(engine)   # yangi jadvallar
+        run_migrations(engine)             # mavjud jadvallarga yangi ustunlar
+        # `orders.qty` butun sondan kasrga o'tdi (2.5 m³ beton) — SQLite da
+        # ustun turini o'zgartirish uchun jadval qayta quriladi.
+        jadvalni_qayta_qur(engine, "orders", m.Order)
+        db = SessionLocal()
+        try:
+            # Profil seed'dan OLDIN yuklanadi: seed buyurtma yaratganda
+            # soha_yoz() allaqachon to'g'ri profilni bilishi kerak.
+            profillarni_yukla(db)
+            domain.qayta_yukla(db)
+            seed(db)
+            backfill_soha(db)   # eski buyurtmalar attributes'siz qolmasin
+        finally:
+            db.close()
     start_bot_bg()
     yield
 
@@ -104,8 +117,11 @@ async def ijarachilik(request, call_next):
         return await call_next(request)
 
     yol = request.url.path
-    # Statik fayllar va salomatlik tekshiruvi firmasiz ham beriladi.
-    if yol == "/" or yol.startswith("/static") or yol == "/api/health":
+    # Firmasiz ochiq yo'llar: statik, salomatlik, ro'yxatdan o'tish.
+    # `/api/platforma/*` — odam hali subdomenga ega emas (app.innasoft.uz
+    # da ro'yxatdan o'tyapti), shuning uchun firma talab qilinmaydi.
+    if (yol == "/" or yol.startswith("/static") or yol == "/api/health"
+            or yol.startswith("/api/platforma/")):
         return await call_next(request)
 
     firma = tenancy.sorovdan_firma(request.headers.get("host", ""),
@@ -188,6 +204,9 @@ def change_password(data: ChangePasswordIn,
 for r in (clients, orders, warehouse, hr, finance, reports, users,
           constructor, catalog, purchase, kassa, soha, agent):
     app.include_router(r.router)
+
+# Ro'yxatdan o'tish — boshqaruv bazasi bilan ishlaydi, firmasiz ochiq.
+app.include_router(royxat_router.router)
 
 
 @app.get("/api/health", tags=["Tizim"])
