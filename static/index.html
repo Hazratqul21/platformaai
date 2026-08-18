@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/static/css/style.css">
 <script defer src="/static/js/core/globals.js"></script>
 <script defer src="/static/js/core/auth.js"></script>
+<script defer src="/static/js/core/lending.js"></script>
 <script defer src="/static/js/core/router.js"></script>
 <script defer src="/static/js/core/ui.js"></script>
 <script defer src="/static/js/core/soha.js"></script>
@@ -88,8 +89,114 @@
   <rect width="1440" height="900" filter="url(#toqima)" opacity=".9"/>
 </svg>
 
+<!-- ============ LENDING ============
+     Kirishda birinchi ko'rinadigan sahifa. Login oynasi shundan keyin
+     ochiladi (`lendingKirish()`). Tokeni bor foydalanuvchi buni umuman
+     ko'rmaydi — to'g'ri tizimga o'tadi (app.js). -->
+<div class="lending" id="lending">
+ <div class="lnd-wrap">
+
+  <div class="lnd-top glass">
+    <div class="logo">◈</div>
+    <div><h1>INNASOFT PLATFORMA</h1><small>AI yig'adigan ERP</small></div>
+    <div class="spacer"></div>
+    <button class="btn" onclick="lendingRoyxat()">Ro'yxatdan o'tish</button>
+    <button class="btn pri" onclick="lendingKirish()">Kirish</button>
+  </div>
+
+  <div class="lnd-hero glass">
+    <div class="kicker">Konstruktor · 22 soha · O'zbekiston uchun</div>
+    <h2>Biznesingizni ayting —<br>tizim o'zi yig'ilsin</h2>
+    <p>Odoo yoki 1C ni joriy qilish uchun mutaxassis oylab sozlaydi.
+       Bu yerda siz ishingizni tushuntirasiz: maydonlar, retsept,
+       bosqichlar va hisob-kitob AI tomonidan yig'iladi.</p>
+    <div class="lnd-cta">
+      <button class="btn pri" onclick="lendingKirish()">Tizimga kirish</button>
+      <button class="btn" onclick="document.getElementById('lndSohalar').scrollIntoView({behavior:'smooth'})">Nimalar bor</button>
+    </div>
+  </div>
+
+  <div class="lnd-grid">
+    <div class="lnd-card glass">
+      <span class="em">◈</span>
+      <h3>AI konstruktor</h3>
+      <p>Sohangiz ro'yxatda bo'lmasa AI yangisini yasaydi va sinov
+         buyurtmasi bilan o'zi tekshiradi. Kod yozilmaydi.</p>
+    </div>
+    <div class="lnd-card glass">
+      <span class="em">▤</span>
+      <h3>Bitta tizim</h3>
+      <p>Buyurtma, ombor (FIFO), tannarx, qarz, kassa, kadrlar va
+         hujjatlar — alohida dasturlarga bo'linmaydi.</p>
+    </div>
+    <div class="lnd-card glass">
+      <span class="em">◷</span>
+      <h3>Mahalliy</h3>
+      <p>So'm, QQS, o'zbek va rus tili, kirill yozuvi. Hujjatlar
+         Excel, PDF va Word da.</p>
+    </div>
+  </div>
+
+  <div class="lnd-sec glass" id="lndSohalar">
+    <h3>Tayyor sohalar</h3>
+    <div class="sub">Har biri to'liq sikldan sinovdan o'tgan — buyurtmadan topshirishgacha</div>
+    <div class="lnd-chips" id="lndChips"></div>
+  </div>
+
+  <!-- HALOLLIK: tayyor bo'lmagan narsa va'da qilinmaydi.
+       docs/00-STRATEGIYA.md §0.6 — bu ro'yxat o'sha qoidaning
+       ekrandagi ko'rinishi. -->
+  <div class="lnd-sec glass">
+    <h3>Ochiq gapiramiz</h3>
+    <div class="sub">Nima bugun ishlaydi va nima ustida ishlanmoqda</div>
+    <div class="lnd-two">
+      <ul class="lnd-list">
+        <li><span class="mk y">✓</span><span><b>Bugun ishlaydi:</b> buyurtma sikli, smeta va tannarx, retsept bo'yicha ombordan yechish, FIFO partiyalar</span></li>
+        <li><span class="mk y">✓</span><span>QQS (stavka buyurtmada qotiriladi), mijoz qarzi va qarz yoshi, pul oqimi prognozi</span></li>
+        <li><span class="mk y">✓</span><span>Kassa, kadrlar va ish haqi, xarid va yetkazib beruvchi qarzi</span></li>
+        <li><span class="mk y">✓</span><span>AI yordamchilari — javobdagi raqam bazadan olinadi, o'ylab topilmaydi</span></li>
+      </ul>
+      <ul class="lnd-list">
+        <li><span class="mk n">○</span><span><b>Hali yo'q:</b> to'liq buxgalteriya (Bosh kitob) — shuning uchun «uchetka» deb aytilmaydi</span></li>
+        <li><span class="mk n">○</span><span>Online to'lov (Payme/Click/Uzum) va elektron hisob-faktura</span></li>
+        <li><span class="mk n">○</span><span>Fiskal kassa — Davlat reyestridan o'tmaguncha «qonuniy POS» deyilmaydi</span></li>
+        <li><span class="mk n">○</span><span>CRM voronkasi, chuqur ombor (WMS), o'quv markazi (LMS)</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="lnd-sec glass">
+    <h3>Tariflar</h3>
+    <div class="sub">AI xarajati alohida hisoblanadi — sarf mijozdan mijozga o'nlab marta farq qiladi</div>
+    <div class="lnd-tarif">
+      <div class="lnd-t">
+        <h4>Boshlang'ich</h4>
+        <div class="who">1–5 foydalanuvchi</div>
+        <ul><li>· asosiy bo'limlar</li><li>· AI cheklangan</li><li>· elektron pochta orqali yordam</li></ul>
+      </div>
+      <div class="lnd-t">
+        <h4>Biznes</h4>
+        <div class="who">5–30 foydalanuvchi</div>
+        <ul><li>· hamma bo'lim</li><li>· AI paketi</li><li>· sozlashda yordam</li></ul>
+      </div>
+      <div class="lnd-t">
+        <h4>Korxona</h4>
+        <div class="who">30+ foydalanuvchi</div>
+        <ul><li>· maxsus sozlash</li><li>· ustuvor yordam</li><li>· ma'lumot ko'chirish</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnd-foot">
+    Obuna tugasa ma'lumot o'chirilmaydi — yozish to'xtaydi, o'qish va eksport ochiq qoladi.<br>
+    © INNASOFT MChJ · 2026
+  </div>
+
+ </div>
+</div>
+
 <!-- ============ LOGIN ============ -->
-<div class="login-screen" id="loginScreen">
+<div class="login-screen" id="loginScreen" style="display:none">
   <div class="login-card glass">
     <div class="logo-xl" id="loginLogo"></div>
     <h1>TIZIM</h1>
@@ -101,6 +208,8 @@
       <input class="fld" id="pw" type="password" placeholder="••••" autocomplete="current-password"/>
     </div>
     <button class="btn pri" style="width:100%;justify-content:center;margin-top:16px;padding:12px" onclick="doLogin()">Кириш</button>
+
+    <button class="btn ghost" style="width:100%;justify-content:center;margin-top:8px" onclick="lendingOrqaga()">← Orqaga</button>
 
     <div class="muted" style="font-size:10.5px;margin-top:12px">© INNASOFT MChJ · v1.0 · 2026</div>
   </div>

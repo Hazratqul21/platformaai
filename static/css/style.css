@@ -400,3 +400,62 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 .ai-kalit-nuqta{font-size:9px;line-height:1}
 .ai-kalit-nom{font-weight:600}
 .ai-kalit-izoh{font-size:10.5px;margin-left:auto;text-align:right}
+
+/* =====================================================
+   LENDING — kirishdagi tanishtiruv sahifasi
+   Login oynasi shu sahifadan keyin ochiladi. Maqsad: birinchi
+   marta kirgan odam «bu nima?» degan savolga javob topsin.
+   ===================================================== */
+.lending{position:fixed;inset:0;z-index:140;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
+.lending.on{display:block}
+.lnd-wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px}
+.lnd-top{display:flex;align-items:center;gap:12px;padding:14px 18px;margin-bottom:26px}
+.lnd-top .logo{width:38px;height:38px;border-radius:12px}
+.lnd-top h1{font-family:var(--serif);font-size:15px;letter-spacing:1.2px}
+.lnd-top small{display:block;color:var(--ink-3);font-size:10px;letter-spacing:.4px;text-transform:uppercase;margin-top:1px}
+
+.lnd-hero{text-align:center;padding:46px 24px 40px;margin-bottom:16px}
+.lnd-hero .kicker{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--primary-deep);font-weight:600;margin-bottom:14px}
+.lnd-hero h2{font-family:var(--serif);font-size:clamp(26px,4.4vw,44px);line-height:1.18;letter-spacing:.5px;margin-bottom:14px}
+.lnd-hero p{max-width:600px;margin:0 auto;color:var(--ink-2);font-size:14.5px;line-height:1.65}
+.lnd-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+.lnd-cta .btn{padding:12px 22px;font-size:13.5px}
+
+.lnd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:16px}
+.lnd-card{padding:22px 20px}
+.lnd-card .em{font-size:22px;margin-bottom:10px;display:block}
+.lnd-card h3{font-family:var(--serif);font-size:16px;margin-bottom:7px}
+.lnd-card p{color:var(--ink-2);font-size:12.8px;line-height:1.6}
+
+.lnd-sec{padding:26px 22px;margin-bottom:16px}
+.lnd-sec h3{font-family:var(--serif);font-size:18px;margin-bottom:5px}
+.lnd-sec .sub{color:var(--ink-3);font-size:12px;margin-bottom:16px}
+.lnd-chips{display:flex;flex-wrap:wrap;gap:7px}
+.lnd-chip{background:linear-gradient(160deg,rgba(255,255,255,.6),rgba(255,255,255,.3));border:1px solid rgba(124,127,240,.2);
+  padding:6px 12px;border-radius:30px;font-size:12px;font-weight:500;color:var(--ink-2)}
+.lnd-chip.ai{background:linear-gradient(120deg,rgba(160,163,255,.32),rgba(124,127,240,.14));border-color:rgba(124,127,240,.36);color:var(--primary-deep);font-weight:600}
+
+.lnd-two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:720px){.lnd-two{grid-template-columns:1fr}}
+.lnd-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.lnd-list li{display:flex;gap:9px;font-size:13px;color:var(--ink-2);line-height:1.5}
+.lnd-list li b{color:var(--ink);font-weight:600}
+.lnd-list .mk{flex:none;font-weight:700}
+.lnd-list .mk.y{color:var(--ok)}
+.lnd-list .mk.n{color:var(--ink-3)}
+
+.lnd-tarif{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.lnd-t{padding:18px 16px;border-radius:16px;border:1px solid rgba(124,127,240,.18);background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,.26))}
+.lnd-t h4{font-size:13.5px;font-weight:700;margin-bottom:4px}
+.lnd-t .who{font-size:11.5px;color:var(--ink-3);margin-bottom:10px}
+.lnd-t ul{list-style:none;display:flex;flex-direction:column;gap:5px;font-size:12.3px;color:var(--ink-2)}
+
+.lnd-foot{text-align:center;color:var(--ink-3);font-size:11px;padding:24px 0 6px;line-height:1.7}
+/* Telefonda yuqori panel ikki qatorga tushadi — tugmalar kesilmasin */
+@media(max-width:520px){
+  .lnd-top{flex-wrap:wrap;justify-content:center;text-align:center;padding:14px}
+  .lnd-top .spacer{display:none}
+  .lnd-top .btn{flex:1;justify-content:center}
+  .lnd-hero{padding:34px 18px 30px}
+  .lnd-wrap{padding:14px 12px 40px}
+}
