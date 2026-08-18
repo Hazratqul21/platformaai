@@ -50,8 +50,28 @@ class Base(DeclarativeBase):
 
 
 def get_db():
-    db = SessionLocal()
+    """So'rov uchun sessiya.
+
+    IJARACHILIK yoqilgan bo'lsa — so'rovga bog'langan MIJOZNING bazasi
+    (`tenancy` contextvar dan). Aks holda — yagona baza, avvalgidek.
+
+    125 endpointning hech biriga tegilmagani shu tufayli: hammasi
+    `Depends(get_db)` ishlatadi, almashtirish faqat shu yerda.
+    """
+    from . import tenancy
+    firma = tenancy.joriy() if tenancy.yoqilganmi() else None
+    db = tenancy.firma_sessiya(firma.baza_nomi) if firma else SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+
+def sessiya():
+    """`Depends` siz kerak bo'lganda (fon vazifasi, vosita, test).
+
+    Diqqat: fon vazifasi o'zi firmani `tenancy.ornat()` bilan
+    belgilashi SHART — aks holda yagona bazaga yozadi."""
+    from . import tenancy
+    firma = tenancy.joriy() if tenancy.yoqilganmi() else None
+    return tenancy.firma_sessiya(firma.baza_nomi) if firma else SessionLocal()

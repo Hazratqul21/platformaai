@@ -10,12 +10,12 @@ ko'chiriladi, keyin haqiqat bazada bo'ladi. Shuning uchun yangi soha
 qo'shish uchun **kod yozish kerak emas**: yozuv qo'shiladi, xolos.
 AI agent (4-bosqich) aynan shu yozuvni to'ldiradi.
 
-KESHLASH HAQIDA — 2-BOSQICH UCHUN OGOHLANTIRISH:
-Faol profil modul darajasida keshlanadi (`_KESH`), chunki har so'rovda
-JSON qayta tahlil qilish isrof. Bu **bitta jarayon = bitta baza** deb
-faraz qiladi. 2-bosqichda («har mijozga alohida baza») agar bitta jarayon
-bir nechta mijozga xizmat qilsa, kesh mijoz bo'yicha kalitlanishi SHART —
-aks holda bir mijozning profili boshqasiga ko'rinadi.
+KESHLASH — MIJOZ BO'YICHA AJRATILGAN (2026-08-18 da bajarildi):
+Faol profil keshlanadi (`_KESH`), chunki har so'rovda JSON qayta tahlil
+qilish isrof. Kesh MIJOZ BO'YICHA kalitlanadi (`tenancy.kalit()`) —
+aks holda bir mijozning profili boshqasiga ko'rinardi va bu xato
+BERMASDAN, jimgina noto'g'ri ishlardi. Ijarachiliksiz rejimda kalit
+doim "_yagona" bo'ladi, ya'ni eski xatti-harakat aynan saqlanadi.
 """
 import json
 import logging
@@ -281,13 +281,19 @@ def retsept_ziddiyatlari(hamma: dict[str, dict] | None = None) -> list[str]:
 
 ZAXIRA_KALIT = "karton"   # baza bo'sh bo'lsa ishlatiladigan profil
 
-_KESH: Profil | None = None
+# KESH MIJOZ BO'YICHA AJRATILADI.
+# Ilgari bu bitta `Profil` edi va «bitta jarayon = bitta baza» deb
+# faraz qilardi. Ikki mijoz bo'lganda mebel sexining profili non
+# zavodiga ko'rinib ketardi — xatosiz, jimgina. Endi kalit
+# `tenancy.kalit()` dan olinadi (ijarachiliksiz rejimda u doim
+# "_yagona", ya'ni eski xatti-harakat aynan saqlanadi).
+_KESH: dict[str, Profil] = {}
 
 
 def qayta_yukla(db=None) -> Profil:
     """Faol profilni bazadan o'qib keshga qo'yadi. Baza bo'sh bo'lsa —
     shablondan (`ZAXIRA_KALIT`)."""
-    global _KESH
+    from .tenancy import kalit as _kesh_kaliti
     tarif = None
     if db is not None:
         from . import models as m
@@ -306,17 +312,30 @@ def qayta_yukla(db=None) -> Profil:
         raise RuntimeError(f"'{p.modul_kaliti}' moduli ham, zaxira "
                            f"'{ZAXIRA_MODUL}' ham topilmadi")
     p.modul = Modul(modul_tarif)
-    _KESH = p
-    log.info("Soha profili: %s (%s) · ish tartibi: %s",
-             p.nom, p.kalit, p.modul.nom)
-    return _KESH
+    k = _kesh_kaliti()
+    _KESH[k] = p
+    log.info("Soha profili: %s (%s) · ish tartibi: %s · [%s]",
+             p.nom, p.kalit, p.modul.nom, k)
+    return p
 
 
 def profil() -> Profil:
-    """Hozirgi faol profil."""
-    if _KESH is None:
+    """Hozirgi faol profil — JORIY firmaniki."""
+    from .tenancy import kalit as _kesh_kaliti
+    p = _KESH.get(_kesh_kaliti())
+    if p is None:
         return qayta_yukla(None)
-    return _KESH
+    return p
+
+
+def keshni_tozala(hammasi: bool = False) -> None:
+    """Profil o'zgartirilganda chaqiriladi. Standart holda faqat JORIY
+    firmaning keshi tozalanadi — boshqa mijozlarniki tegilmaydi."""
+    from .tenancy import kalit as _kesh_kaliti
+    if hammasi:
+        _KESH.clear()
+    else:
+        _KESH.pop(_kesh_kaliti(), None)
 
 
 def modul() -> Modul:

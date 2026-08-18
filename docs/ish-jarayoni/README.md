@@ -48,6 +48,7 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 |---|---|---|
 | 009 | [Boshqaruv bazasi](009-boshqaruv-bazasi.md) | ✅ tugallandi — 6 jadval, sinov toza |
 | 010 | [Lending sahifasi](010-lending-sahifasi.md) | ✅ kirishdagi tanishtiruv sahifasi |
+| 011 | [Ijarachilik yadrosi](011-ijarachilik-yadrosi.md) | ✅ contextvars, firma bo'yicha baza va kesh |
 
 ---
 

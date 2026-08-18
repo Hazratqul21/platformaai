@@ -6,6 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -85,6 +86,46 @@ ALLOWED_ORIGINS = [x.strip() for x in os.getenv("CORS_ORIGINS", "").split(",") i
 if ALLOWED_ORIGINS:
     app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS,
                        allow_methods=["*"], allow_headers=["*"])
+
+
+@app.middleware("http")
+async def ijarachilik(request, call_next):
+    """So'rovni MIJOZGA bog'laydi.
+
+    Ijarachilik o'chiq bo'lsa hech nima qilmaydi — bitta baza rejimi
+    aynan avvalgidek ishlaydi.
+
+    Firma topilmasa 404 emas, 400: «bunday firma yo'q» degani manzil
+    xato ekanini bildiradi, mavjud emasligini emas — mijoz kodlarini
+    tashqaridan sanab chiqishga yo'l bermaslik uchun javob bir xil.
+    """
+    from . import tenancy
+    if not tenancy.yoqilganmi():
+        return await call_next(request)
+
+    yol = request.url.path
+    # Statik fayllar va salomatlik tekshiruvi firmasiz ham beriladi.
+    if yol == "/" or yol.startswith("/static") or yol == "/api/health":
+        return await call_next(request)
+
+    firma = tenancy.sorovdan_firma(request.headers.get("host", ""),
+                                   request.headers.get("x-firma", ""))
+    if firma is None:
+        return JSONResponse({"detail": "Firma aniqlanmadi"}, status_code=400)
+
+    # Obuna tugagan firma O'QIY oladi, lekin YOZA olmaydi.
+    # Ma'lumot garovga olinmaydi (docs/07-TARQATISH.md §7.7).
+    if (not firma.yozish_mumkinmi
+            and request.method not in ("GET", "HEAD", "OPTIONS")):
+        return JSONResponse(
+            {"detail": "Obuna muddati tugagan — ma'lumot o'qish uchun "
+                       "ochiq, yangi yozuv kiritilmaydi"}, status_code=402)
+
+    token = tenancy.ornat(firma)
+    try:
+        return await call_next(request)
+    finally:
+        tenancy.tozala(token)
 
 
 @app.middleware("http")
