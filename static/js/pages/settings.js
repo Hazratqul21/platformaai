@@ -21,6 +21,8 @@ PAGES.set = async () => {
             html = await sysAdmin();
         } else if (tabName === 'rekvizit') {
             html = await rekvizitAdmin();
+        } else if (tabName === 'ai') {
+            html = await aiKorsatmaAdmin();
         } else if (tabName === 'lang') {
             const curLang = localStorage.getItem('tizim_lang') || 'uz_lat';
             html = `
@@ -67,6 +69,7 @@ PAGES.set = async () => {
             <button class="btn set-tab" id="tab_constructor" onclick="openSetTab('constructor')">${icon('box',14)} Конструктор</button>
             <button class="btn set-tab" id="tab_sys" onclick="openSetTab('sys')">${icon('settings',14)} Тизим созламалари</button>
             <button class="btn set-tab" id="tab_rekvizit" onclick="openSetTab('rekvizit')">${icon('doc',14)} Ҳужжат реквизитлари</button>
+            <button class="btn set-tab" id="tab_ai" onclick="openSetTab('ai')">${icon('bot',14)} AI кўрсатмаси</button>
             <button class="btn set-tab" id="tab_lang" onclick="openSetTab('lang')">${icon('globe',14)} Тил (Language)</button>
         </div>
         <div id="setContent"></div>
@@ -485,4 +488,105 @@ async function usersAdmin(){
     </div>
     <button class="btn pri" style="margin-top:12px" onclick="userForm()">+ Янги фойдаланувчи</button>
   </div>`;
+}
+
+/* ================= AI KO'RSATMASI (agent prompti) ==================
+   Mijoz AI ning xatti-harakatini o'zi moslaydi — kod qayta joylanmaydi.
+
+   Uch daraja ko'rsatiladi: kod (zaxira) -> platforma (biz) -> akkaunt
+   (mijoz). Xavfsizlik qismi alohida ko'rsatiladi va TAHRIRLANMAYDI —
+   AI raqam o'ylab topmasligi uchun.
+   ==================================================================== */
+async function aiKorsatmaAdmin(){
+  let d;
+  try{ d = await api('/api/agent/korsatma'); }
+  catch(e){ return `<div class="glass card"><div class="muted">Ko'rsatmalar yuklanmadi: ${esc(e.message)}</div></div>`; }
+
+  const manbaTag = m => ({
+    kod:       '<span class="lnd-chip">Standart</span>',
+    platforma: '<span class="lnd-chip ai">Platforma yangilagan</span>',
+    akkaunt:   '<span class="lnd-chip ai">Siz o\'zgartirgansiz</span>',
+  }[m] || '');
+
+  const kartalar = d.agentlar.map(a => `
+    <div class="glass card mb">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <h3 class="sec" style="margin-bottom:2px">${esc(a.nom)}</h3>
+          <div class="muted" style="font-size:12px">${esc(a.izoh)}</div>
+          <div class="muted" style="font-size:11px;margin-top:4px">
+            Rollar: ${a.rollar.map(esc).join(', ')} ·
+            Asboblar: ${a.asboblar.length} ta</div>
+        </div>
+        <div style="text-align:right">${manbaTag(a.manba)}</div>
+      </div>
+
+      <textarea class="fld" id="kors_${a.kalit}" rows="9"
+        style="margin-top:12px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55"
+        oninput="korsUzunlik('${a.kalit}', ${a.chegara})">${esc(a.korsatma)}</textarea>
+
+      <div class="row" style="justify-content:space-between;align-items:center;margin-top:8px">
+        <div class="muted" style="font-size:11px" id="kors_len_${a.kalit}">
+          ${a.uzunlik} / ${a.chegara} belgi</div>
+        <div class="row" style="gap:6px">
+          ${a.manba === 'kod' ? '' :
+            `<button class="btn sm ghost" onclick="korsTikla('${a.kalit}')">Standartga qaytarish</button>`}
+          <button class="btn sm pri" onclick="korsSaqla('${a.kalit}')">Saqlash</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  return `
+  <div class="glass card mb">
+    <h2 class="sec mb">AI yordamchilarining ko'rsatmasi</h2>
+    <div class="muted" style="font-size:13px;line-height:1.6">
+      Har yordamchi nima qilishini shu yerdan o'zgartirasiz — dastur
+      qayta o'rnatilmaydi. Masalan atamalarni o'zingiznikiga moslashingiz
+      mumkin («sklad mudiri» → «omborchi»).
+    </div>
+    <div style="margin-top:12px;padding:12px;border-radius:12px;
+      background:linear-gradient(120deg,rgba(183,121,31,.1),rgba(183,121,31,.03));
+      border:1px solid rgba(183,121,31,.25);font-size:12px;line-height:1.6">
+      <b>Ko'rsatma har so'rovda AI ga yuboriladi</b> — u qancha uzun bo'lsa,
+      AI shuncha qimmatga tushadi. Qisqa va aniq yozing.
+    </div>
+  </div>
+
+  ${kartalar}
+
+  <div class="glass card">
+    <h3 class="sec" style="margin-bottom:6px">O'zgartirib bo'lmaydigan qism</h3>
+    <div class="muted" style="font-size:12px;margin-bottom:10px">
+      ${esc(d.izoh)}
+    </div>
+    <pre style="white-space:pre-wrap;font-size:11.5px;line-height:1.55;
+      background:rgba(255,255,255,.4);padding:12px;border-radius:12px;
+      border:1px solid var(--hair);margin:0">${esc(d.xavfsizlik_qismi)}</pre>
+  </div>`;
+}
+
+function korsUzunlik(kalit, chegara){
+  const el = document.getElementById('kors_' + kalit);
+  const out = document.getElementById('kors_len_' + kalit);
+  if(!el || !out) return;
+  const n = el.value.length;
+  out.textContent = `${n} / ${chegara} belgi`;
+  out.style.color = n > chegara ? 'var(--danger)' : '';
+}
+
+async function korsSaqla(kalit){
+  const el = document.getElementById('kors_' + kalit);
+  try{
+    await api('/api/agent/korsatma/' + kalit, 'PUT', {korsatma: el.value});
+    toast('o','check','Saqlandi','AI yangi ko\'rsatma bilan ishlaydi');
+    openSetTab('ai');
+  }catch(e){ toast('d','alertic','Saqlanmadi', e.message); }
+}
+
+async function korsTikla(kalit){
+  try{
+    await api('/api/agent/korsatma/' + kalit, 'DELETE');
+    toast('o','check','Qaytarildi','Standart ko\'rsatma tiklandi');
+    openSetTab('ai');
+  }catch(e){ toast('d','alertic','Bajarilmadi', e.message); }
 }

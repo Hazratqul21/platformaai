@@ -143,3 +143,19 @@ class PlatformaAudit(BoshqaruvBase):
     amal: Mapped[str] = mapped_column(String(60))
     kim: Mapped[str] = mapped_column(String(120), default="")
     tafsilot: Mapped[str] = mapped_column(Text, default="")
+
+
+class AgentShablon(BoshqaruvBase):
+    """Platforma darajasidagi agent ko'rsatmasi — HAMMA akkauntga.
+
+    Biz AI ni yaxshilaganda kod qayta joylanmasin: shu jadvalga yozamiz
+    va hamma akkaunt yangi ko'rsatmani oladi. Akkauntning o'z sozlamasi
+    bo'lsa — u ustun turadi (`app/korsatma.py`).
+    """
+    __tablename__ = "agent_shablon"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kalit: Mapped[str] = mapped_column(String(30), unique=True, index=True)
+    korsatma: Mapped[str] = mapped_column(Text)
+    kim: Mapped[str] = mapped_column(String(120), default="")
+    ozgartirilgan: Mapped[datetime] = mapped_column(DateTime,
+                                                    default=datetime.utcnow)

@@ -66,6 +66,10 @@ echo
 echo "════════ ADMIN PANELI — akkauntlarni ko'rish, muzlatish"
 "$PY" tests/admin_test.py || XATO=1
 
+echo
+echo "════════ AI KO'RSATMASI — kod/platforma/akkaunt, xavfsizlik saqlanadi"
+"$PY" tests/korsatma_test.py || XATO=1
+
 yurgiz "PROFIL MUVOFIQLIGI — 22 soha to'liq sikldan o'tadimi" \
        SEED_EMPTY tests/profil_test.py
 yurgiz "CHUQUR SINOV — har sohada raqamlar to'g'rimi" \

@@ -559,3 +559,18 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column(String(200))
     detail: Mapped[str] = mapped_column(Text, default="")
     at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AgentSozlama(Base):
+    """Mijoz o'zgartirgan AI ko'rsatmasi (agent prompti).
+
+    Yozuv bo'lmasa — platforma shabloni yoki koddagi zaxira ishlatiladi
+    (`app/korsatma.py`). Ya'ni bu jadval BO'SH bo'lishi normal holat.
+    """
+    __tablename__ = "agent_sozlama"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kalit: Mapped[str] = mapped_column(String(30), unique=True, index=True)
+    korsatma: Mapped[str] = mapped_column(Text)
+    kim: Mapped[str] = mapped_column(String(100), default="")
+    ozgartirilgan: Mapped[datetime] = mapped_column(DateTime,
+                                                    default=datetime.utcnow)

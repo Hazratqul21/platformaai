@@ -55,6 +55,7 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 015 | [Akkaunt nomlash tuzatishi](015-akkaunt-nomlash-tuzatishi.md) | ✅ tenant «firma»→«akkaunt» (nom to'qnashuvi) |
 | 016 | [Akkaunt kabineti](016-akkaunt-kabineti.md) | ✅ AI sarfi shaffof, limit; platforma tokeni |
 | 017 | [Admin paneli](017-admin-paneli.md) | ✅ akkauntlarni ko'rish, muzlatish, platforma sarfi |
+| 018 | [AI ko'rsatmasi bazadan](018-ai-korsatmasi-bazadan.md) | ✅ prompt koddan chiqdi, xavfsizlik qismi qulflangan |
 
 ---
 

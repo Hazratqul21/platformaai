@@ -130,3 +130,70 @@ def audit(limit: int = 50, _: pm.PlatformaUser = Depends(pa.joriy_admin),
         {"vaqt": x.vaqt.isoformat() if x.vaqt else None, "amal": x.amal,
          "akkaunt_id": x.akkaunt_id, "kim": x.kim, "tafsilot": x.tafsilot}
         for x in q.all()]}
+
+
+# =====================================================================
+# AGENT SHABLONI — biz HAMMA akkauntga ko'rsatma beramiz
+#
+# Nega: AI ni yaxshilash uchun kod qayta joylanmasin. Prompt tuzatildi ->
+# shu yerga yozamiz -> hamma akkaunt darhol yangisini oladi. Akkauntning
+# o'z sozlamasi bo'lsa, u ustun turadi (mijoz tanlovi buzilmaydi).
+# =====================================================================
+
+class ShablonIn(BaseModel):
+    korsatma: str
+
+
+@router.get("/agent-shablon")
+def agent_shablon(_: pm.PlatformaUser = Depends(pa.joriy_admin),
+                  db: Session = Depends(boshqaruv_db)):
+    from ..agent import AGENTLAR
+    from .. import korsatma as kors
+    bor = {x.kalit: x for x in db.query(pm.AgentShablon).all()}
+    return {"agentlar": [{
+        "kalit": k, "nom": a["nom"],
+        "kod_korsatmasi": a["korsatma"],
+        "platforma_korsatmasi": bor[k].korsatma if k in bor else None,
+        "ozgartirilgan": bor[k].ozgartirilgan.isoformat() if k in bor else None,
+        "kim": bor[k].kim if k in bor else None,
+        "chegara": kors.MAX_UZUNLIK,
+    } for k, a in AGENTLAR.items()]}
+
+
+@router.put("/agent-shablon/{kalit}")
+def agent_shablon_saqla(kalit: str, data: ShablonIn,
+                        admin: pm.PlatformaUser = Depends(pa.joriy_admin),
+                        db: Session = Depends(boshqaruv_db)):
+    from ..agent import AGENTLAR
+    from .. import korsatma as kors
+    if kalit not in AGENTLAR:
+        raise HTTPException(404, "Bunday agent yo'q")
+    try:
+        matn = kors.tekshir(data.korsatma)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    y = db.query(pm.AgentShablon).filter(pm.AgentShablon.kalit == kalit).first()
+    if y:
+        y.korsatma, y.kim = matn, admin.login
+        y.ozgartirilgan = datetime.utcnow()
+    else:
+        db.add(pm.AgentShablon(kalit=kalit, korsatma=matn, kim=admin.login))
+    px.audit(db, "agent_shabloni_ozgardi", kim=admin.login,
+             tafsilot=f"{kalit} · {len(matn)} belgi")
+    db.commit()
+    # HAMMA akkauntning keshi tozalanadi — o'zgarish darhol kuchga kirsin.
+    kors.keshni_tozala(hammasi=True)
+    return {"ok": True, "kalit": kalit, "uzunlik": len(matn)}
+
+
+@router.delete("/agent-shablon/{kalit}")
+def agent_shablon_ochir(kalit: str,
+                        admin: pm.PlatformaUser = Depends(pa.joriy_admin),
+                        db: Session = Depends(boshqaruv_db)):
+    """Platforma shablonini olib tashlaydi — koddagi zaxiraga qaytadi."""
+    from .. import korsatma as kors
+    db.query(pm.AgentShablon).filter(pm.AgentShablon.kalit == kalit).delete()
+    px.audit(db, "agent_shabloni_ochirildi", kim=admin.login, tafsilot=kalit)
+    db.commit()
+    kors.keshni_tozala(hammasi=True)
+    return {"ok": True, "kalit": kalit}

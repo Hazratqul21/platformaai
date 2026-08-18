@@ -635,7 +635,11 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash"):
     # emas, hammasiga kerak.
     asboblar = [x for x in HAMMA_ASBOBLAR if x["nom"] in a["asboblar"]]
     asboblar.append(KORSAT_ASBOBI)
-    korsatma = a["korsatma"] + genui.korsatma_matni()
+    # Ko'rsatma KODDAN emas, `korsatma.ol()` dan — mijoz yoki biz
+    # uni bazadan o'zgartirgan bo'lishimiz mumkin. Xavfsizlik
+    # qismi (`_UMUMIY_USLUB`) ichida majburan qo'shiladi.
+    from . import korsatma as _kors
+    korsatma = _kors.ol(agent_kalit) + genui.korsatma_matni()
     tarix = list(xabarlar)
     izlar = []
     komponentlar = []
@@ -803,7 +807,7 @@ Ish tartibing:
    ustiga zaxira qo'shishni MASLAHAT ber, lekin o'zing qaror qilma.
 
 Ombordan hech narsa yechmaysan va kirim qilmaysan — bu sklad mudirining
-ishi. Sen faqat ko'rsatasan va hisoblaysan.""" + _UMUMIY_USLUB,
+ishi. Sen faqat ko'rsatasan va hisoblaysan.""",
     },
     "moliya": {
         "nom": "Moliya yordamchisi",
@@ -823,7 +827,7 @@ Ish tartibing:
 
 Pul yozmaysan va to'lov o'chirmaysan — bu buxgalterning ishi.
 Qarz undirish bo'yicha maslahat berishing mumkin, lekin mijozga
-o'zing xabar yubormaysan.""" + _UMUMIY_USLUB,
+o'zing xabar yubormaysan.""",
     },
     "buyurtma": {
         "nom": "Buyurtma yordamchisi",
@@ -844,7 +848,7 @@ Ish tartibing:
    hisoblab ber — bazaga hech narsa yozilmaydi.
 
 Buyurtma yaratmaysan va statusini o'zgartirmaysan — bu menejerning
-ishi. Sen hisoblaysan va ko'rsatasan.""" + _UMUMIY_USLUB,
+ishi. Sen hisoblaysan va ko'rsatasan.""",
     },
 }
 

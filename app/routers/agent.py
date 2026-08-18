@@ -269,3 +269,83 @@ def amallar(user=Depends(get_user)):
              "xavfli": bool(t.get("xavfli"))}
             for k, t in genui.AMALLAR.items()
             if user.role in t["rollar"] or user.role == "Rahbar"]
+
+
+# =====================================================================
+# AGENT KO'RSATMASI (prompt) — mijoz o'zi tahrirlaydi
+#
+# Nega kerak: har biznesning o'z atamasi, o'z qoidasi bor. «Sklad
+# mudiri» birida «omborchi», ikkinchisida «zaveduyushiy». Kod qayta
+# joylanmasdan moslash imkoni bo'lishi kerak.
+#
+# XAVFSIZLIK: tahrirlanadigan qism faqat ROL ta'rifi. «Raqamni o'ylab
+# topma», «asbob chaqir», GenUI shartnomasi — bular har doim qo'shiladi
+# va o'chirib bo'lmaydi (`app/korsatma.py`).
+# =====================================================================
+
+class KorsatmaIn(BaseModel):
+    korsatma: str
+
+
+@router.get("/korsatma")
+def korsatma_royxati(user=Depends(require_roles("Rahbar"))):
+    """Hamma agentning joriy ko'rsatmasi va u qayerdan kelayotgani."""
+    from .. import korsatma as kors
+    natija = []
+    for kalit, a in ai.AGENTLAR.items():
+        joriy = (kors._akkaunt_sozlamasi(kalit)
+                 or kors._platforma_shabloni(kalit)
+                 or kors.kod_korsatmasi(kalit))
+        natija.append({
+            "kalit": kalit, "nom": a["nom"], "izoh": a["izoh"],
+            "rollar": a["rollar"], "asboblar": a["asboblar"],
+            "korsatma": joriy,
+            "kod_korsatmasi": kors.kod_korsatmasi(kalit),
+            "manba": kors.manba(kalit),
+            "uzunlik": len(joriy), "chegara": kors.MAX_UZUNLIK,
+        })
+    return {"agentlar": natija,
+            "xavfsizlik_qismi": ai._UMUMIY_USLUB.strip(),
+            "izoh": ("Xavfsizlik qismi har doim qo'shiladi va tahrirlanmaydi — "
+                     "AI raqam o'ylab topmasligi uchun.")}
+
+
+@router.put("/korsatma/{kalit}")
+def korsatma_saqla(kalit: str, data: KorsatmaIn,
+                   db: Session = Depends(get_db),
+                   user=Depends(require_roles("Rahbar"))):
+    """Agent ko'rsatmasini o'zgartiradi (shu akkaunt uchun)."""
+    from .. import korsatma as kors
+    if kalit not in ai.AGENTLAR:
+        raise HTTPException(404, "Bunday agent yo'q")
+    try:
+        matn = kors.tekshir(data.korsatma)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+    yozuv = db.query(m.AgentSozlama).filter(m.AgentSozlama.kalit == kalit).first()
+    if yozuv:
+        yozuv.korsatma = matn
+        yozuv.kim = user.name
+        yozuv.ozgartirilgan = datetime.utcnow()
+    else:
+        db.add(m.AgentSozlama(kalit=kalit, korsatma=matn, kim=user.name))
+    # AI o'zgarishi ham auditga tushadi — kim, qachon.
+    db.add(m.AuditLog(who=user.name, action="AI ko'rsatmasi o'zgardi",
+                      detail=f"{kalit} · {len(matn)} belgi"))
+    db.commit()
+    kors.keshni_tozala()
+    return {"ok": True, "kalit": kalit, "uzunlik": len(matn), "manba": "akkaunt"}
+
+
+@router.delete("/korsatma/{kalit}")
+def korsatma_tikla(kalit: str, db: Session = Depends(get_db),
+                   user=Depends(require_roles("Rahbar"))):
+    """Standart ko'rsatmani qaytaradi (o'z o'zgarishini o'chiradi)."""
+    from .. import korsatma as kors
+    db.query(m.AgentSozlama).filter(m.AgentSozlama.kalit == kalit).delete()
+    db.add(m.AuditLog(who=user.name, action="AI ko'rsatmasi tiklandi",
+                      detail=kalit))
+    db.commit()
+    kors.keshni_tozala()
+    return {"ok": True, "kalit": kalit, "manba": kors.manba(kalit)}
