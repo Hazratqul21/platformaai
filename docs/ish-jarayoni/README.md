@@ -1,0 +1,57 @@
+# ISH JARAYONI — ish daftari
+
+> Har yozilgan qism shu yerda qayd etiladi: **nima yozildi, qayerga,
+> nima uchun aynan shunday, nimaga tegdi, qanday tekshirildi.**
+>
+> Maqsad: olti oydan keyin «bu nega shunday yozilgan?» degan savolga
+> javob kodni qayta o'qimasdan topilsin.
+
+---
+
+## Yozuv qoidasi
+
+Har yozuv shu bo'limlardan iborat:
+
+| Bo'lim | Nima yoziladi |
+|---|---|
+| **Nima qilindi** | bir-ikki jumla, aniq |
+| **Fayllar** | qaysi fayl, necha qator, yangi/o'zgargan |
+| **Nega aynan shunday** | qaralgan muqobillar va nega rad etilgani |
+| **Nimaga tegdi** | qaysi mavjud qism ta'sirlandi |
+| **Xavf** | nima buzilishi mumkin, qanday qo'riqlanadi |
+| **Tekshiruv** | qanday sinaldi, natija |
+| **Qoldi** | tugallanmagan qism bo'lsa |
+
+**Halollik qoidasi:** ishlamagan narsa «ishladi» deb yozilmaydi.
+Sinalmagan qism «sinalmadi» deb yoziladi.
+
+---
+
+## Yozuvlar
+
+### Retrospektiv — 2026-08-18 gacha yozilganlar
+
+| # | Yozuv | Nima haqida |
+|---|---|---|
+| 001 | [Yadro va baza](001-yadro-va-baza.md) | `db.py`, `models.py`, `auth.py`, `main.py`, `migrate.py` |
+| 002 | [Soha qatlami](002-soha-qatlami.md) | `domain.py`, 22 profil, 5 modul — loyihaning asosiy g'oyasi |
+| 003 | [Hisob-kitob](003-hisob-kitob.md) | `services.py`, `kassa_sync.py`, topilgan oltita xato |
+| 004 | [Routerlar va eksport](004-routerlar-va-eksport.md) | 13 router, 125 endpoint, hujjat eksporti |
+| 005 | [AI qatlami](005-ai-qatlami.md) | `llm.py`, `agent.py`, `genui.py` |
+| 006 | [Frontend](006-frontend.md) | `static/` — SPA, GenUI chizuvchi, soha formasi |
+| 007 | [Sinov va vositalar](007-sinov-va-vositalar.md) | `tests/`, `tools/` |
+| 008 | [Hujjatlar](008-hujjatlar.md) | `docs/` — strategiya va reja |
+
+### Joriy ish — A bosqichi (ijarachilik / SaaS)
+
+| # | Yozuv | Holat |
+|---|---|---|
+| 009 | [Boshqaruv bazasi](009-boshqaruv-bazasi.md) | ✅ tugallandi — 6 jadval, sinov toza |
+
+---
+
+## Bog'liq hujjatlar
+
+- [../README.md](../README.md) — hamma reja bir sahifada
+- [../KOD-XARITASI.md](../KOD-XARITASI.md) — har faylda nima bor
+- [../A-IJARACHILIK.md](../A-IJARACHILIK.md) — joriy bosqichning TZ si
