@@ -1,4 +1,4 @@
-"""Boshqaruv bazasi ustidagi amallar: firma yaratish, AI sarfini yozish, limit.
+"""Boshqaruv bazasi ustidagi amallar: akkaunt yaratish, AI sarfini yozish, limit.
 
 Bu yerda HISOB-KITOB bor, shuning uchun `services.py` dagi qoidalar
 shu yerda ham amal qiladi: pul `Decimal` da, float aralashtirilmaydi.
@@ -56,7 +56,7 @@ def narx_mln_som(model: str) -> tuple[Decimal, Decimal]:
     return _som(Decimal(kirish) * k), _som(Decimal(chiqish) * k)
 
 
-def sarf_yoz(db: Session, firma_id: int, provayder: str, model: str,
+def sarf_yoz(db: Session, akkaunt_id: int, provayder: str, model: str,
              kirish_token: int, chiqish_token: int, agent: str = "",
              user_login: str = "", muvaffaqiyat: bool = True) -> pm.AiSarf:
     """Bitta AI so'rovini yozadi va narxini O'SHA PAYTDAGI stavkada qotiradi."""
@@ -65,7 +65,7 @@ def sarf_yoz(db: Session, firma_id: int, provayder: str, model: str,
     summa = _som(Decimal(kirish_token) / mln * kirish_narx
                  + Decimal(chiqish_token) / mln * chiqish_narx)
     yozuv = pm.AiSarf(
-        firma_id=firma_id, provayder=provayder, model=model,
+        akkaunt_id=akkaunt_id, provayder=provayder, model=model,
         kirish_token=kirish_token, chiqish_token=chiqish_token,
         kirish_narx_mln=kirish_narx, chiqish_narx_mln=chiqish_narx,
         narx_som=summa, agent=agent, user_login=user_login,
@@ -79,7 +79,7 @@ def joriy_oy(vaqt: datetime | None = None) -> str:
     return (vaqt or datetime.utcnow()).strftime("%Y-%m")
 
 
-def oylik_sarf(db: Session, firma_id: int, oy: str | None = None) -> dict:
+def oylik_sarf(db: Session, akkaunt_id: int, oy: str | None = None) -> dict:
     """Oy bo'yicha jami: so'rov soni, token, so'm."""
     oy = oy or joriy_oy()
     boshi = datetime.strptime(oy + "-01", "%Y-%m-%d")
@@ -89,14 +89,14 @@ def oylik_sarf(db: Session, firma_id: int, oy: str | None = None) -> dict:
                   func.coalesce(func.sum(pm.AiSarf.kirish_token), 0),
                   func.coalesce(func.sum(pm.AiSarf.chiqish_token), 0),
                   func.coalesce(func.sum(pm.AiSarf.narx_som), 0))
-         .filter(pm.AiSarf.firma_id == firma_id,
+         .filter(pm.AiSarf.akkaunt_id == akkaunt_id,
                  pm.AiSarf.vaqt >= boshi, pm.AiSarf.vaqt < keyingi).one())
     return {"oy": oy, "sorov": int(q[0]),
             "kirish_token": int(q[1]), "chiqish_token": int(q[2]),
             "token": int(q[1]) + int(q[2]), "som": Decimal(str(q[3]))}
 
 
-def limit_holati(db: Session, firma_id: int, oy: str | None = None) -> dict:
+def limit_holati(db: Session, akkaunt_id: int, oy: str | None = None) -> dict:
     """AI limiti holati.
 
     QOIDA: limit tugasa AI to'xtaydi, ERP ISHLAYVERADI. Shuning uchun
@@ -104,9 +104,9 @@ def limit_holati(db: Session, firma_id: int, oy: str | None = None) -> dict:
     joyda emas.
     """
     oy = oy or joriy_oy()
-    sarf = oylik_sarf(db, firma_id, oy)
+    sarf = oylik_sarf(db, akkaunt_id, oy)
     limit = (db.query(pm.AiLimit)
-             .filter(pm.AiLimit.firma_id == firma_id, pm.AiLimit.oy == oy)
+             .filter(pm.AiLimit.akkaunt_id == akkaunt_id, pm.AiLimit.oy == oy)
              .first())
     limit_som = Decimal(str(limit.limit_som)) if limit else Decimal("0")
     if limit_som <= 0:                      # 0 = cheklovsiz
@@ -118,7 +118,7 @@ def limit_holati(db: Session, firma_id: int, oy: str | None = None) -> dict:
 
 
 # ---------------------------------------------------------------------
-# FIRMA
+# AKKAUNT
 # ---------------------------------------------------------------------
 KOD_QOLIP = re.compile(r"^[a-z][a-z0-9-]{2,39}$")
 # Subdomen sifatida ishlatib bo'lmaydigan yoki chalkashtiradigan nomlar.
@@ -143,27 +143,27 @@ def baza_nomi_yasa(kod: str) -> str:
     return "inna_" + kod.replace("-", "_")
 
 
-def firma_yarat(db: Session, kod: str, nom: str, inn: str = "",
-                qqs_tolovchi: bool = False, kim: str = "") -> pm.Firma:
-    """Firma YOZUVINI yaratadi. BAZANI yaratmaydi — u fon vazifasi.
+def akkaunt_yarat(db: Session, kod: str, nom: str, inn: str = "",
+                qqs_tolovchi: bool = False, kim: str = "") -> pm.Akkaunt:
+    """Akkaunt YOZUVINI yaratadi. BAZANI yaratmaydi — u fon vazifasi.
 
     Ajratilgan, chunki `CREATE DATABASE` + migratsiya + profil yuklash
     bir necha soniya oladi va so'rov ichida qilinmaydi.
     """
     kod = kod_tekshir(kod)
-    if db.query(pm.Firma).filter(pm.Firma.kod == kod).first():
+    if db.query(pm.Akkaunt).filter(pm.Akkaunt.kod == kod).first():
         raise ValueError(f"'{kod}' allaqachon band")
-    firma = pm.Firma(kod=kod, nom=(nom or "").strip() or kod,
+    akkaunt = pm.Akkaunt(kod=kod, nom=(nom or "").strip() or kod,
                      inn=(inn or "").strip(), qqs_tolovchi=qqs_tolovchi,
                      baza_nomi=baza_nomi_yasa(kod))
-    db.add(firma)
+    db.add(akkaunt)
     db.flush()
-    audit(db, "firma_yaratildi", firma_id=firma.id, kim=kim, tafsilot=kod)
+    audit(db, "akkaunt_yaratildi", akkaunt_id=akkaunt.id, kim=kim, tafsilot=kod)
     db.commit()
-    return firma
+    return akkaunt
 
 
-def audit(db: Session, amal: str, firma_id: int | None = None,
+def audit(db: Session, amal: str, akkaunt_id: int | None = None,
           kim: str = "", tafsilot: str = "") -> None:
-    db.add(pm.PlatformaAudit(amal=amal, firma_id=firma_id, kim=kim,
+    db.add(pm.PlatformaAudit(amal=amal, akkaunt_id=akkaunt_id, kim=kim,
                              tafsilot=tafsilot))

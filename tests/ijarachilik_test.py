@@ -46,20 +46,20 @@ print("=" * 62 + "\n")
 
 jadvallarni_yarat()
 bdb = BoshqaruvSession()
-f_mebel = px.firma_yarat(bdb, "mebelsex", "Mebel Sex")
-f_non = px.firma_yarat(bdb, "nonzavod", "Non Zavodi")
+f_mebel = px.akkaunt_yarat(bdb, "mebelsex", "Mebel Sex")
+f_non = px.akkaunt_yarat(bdb, "nonzavod", "Non Zavodi")
 bdb.close()
 
 
-def firma(f):
-    return tenancy.Firma(id=f.id, kod=f.kod, baza_nomi=f.baza_nomi)
+def akkaunt(f):
+    return tenancy.Akkaunt(id=f.id, kod=f.kod, baza_nomi=f.baza_nomi)
 
 
-# Har firmaning bazasini tayyorlaymiz va HAR XIL profil faollashtiramiz.
+# Har akkauntning bazasini tayyorlaymiz va HAR XIL profil faollashtiramiz.
 def baza_tayyorla(f, profil_kaliti):
-    eng = tenancy.firma_engine(f.baza_nomi)
+    eng = tenancy.akkaunt_engine(f.baza_nomi)
     Base.metadata.create_all(eng)
-    sess = tenancy.firma_sessiya(f.baza_nomi)
+    sess = tenancy.akkaunt_sessiya(f.baza_nomi)
     tarif = domain.shablonlar()[profil_kaliti]
     import json
     sess.add(m.SohaProfil(kalit=profil_kaliti, nom=tarif["nom"],
@@ -68,43 +68,43 @@ def baza_tayyorla(f, profil_kaliti):
     return sess
 
 
-print("1. SO'ROVDAN FIRMANI ANIQLASH")
+print("1. SO'ROVDAN AKKAUNTNI ANIQLASH")
 ok(tenancy.kod_ajrat("mebelsex.innasoft.uz") == "mebelsex", "subdomen ajratildi")
-ok(tenancy.kod_ajrat("innasoft.uz") is None, "asosiy domen firma emas")
-ok(tenancy.kod_ajrat("www.innasoft.uz") is None, "`www` firma emas")
+ok(tenancy.kod_ajrat("innasoft.uz") is None, "asosiy domen akkaunt emas")
+ok(tenancy.kod_ajrat("www.innasoft.uz") is None, "`www` akkaunt emas")
 ok(tenancy.kod_ajrat("a.b.innasoft.uz") is None, "ichma-ich subdomen rad etildi")
 ok(tenancy.kod_ajrat("mebelsex.boshqasayt.uz") is None, "begona domen rad etildi")
-ok(tenancy.sorovdan_firma("mebelsex.innasoft.uz").baza_nomi == "inna_mebelsex",
-   "firma boshqaruv bazasidan topildi")
-ok(tenancy.sorovdan_firma("", "nonzavod").kod == "nonzavod",
-   "`X-Firma` sarlavhasi ham ishlaydi (Telegram Mini App uchun)")
-ok(tenancy.sorovdan_firma("yoqfirma.innasoft.uz") is None, "yo'q firma — None")
+ok(tenancy.sorovdan_akkaunt("mebelsex.innasoft.uz").baza_nomi == "inna_mebelsex",
+   "akkaunt boshqaruv bazasidan topildi")
+ok(tenancy.sorovdan_akkaunt("", "nonzavod").kod == "nonzavod",
+   "`X-Akkaunt` sarlavhasi ham ishlaydi (Telegram Mini App uchun)")
+ok(tenancy.sorovdan_akkaunt("yoqakkaunt.innasoft.uz") is None, "yo'q akkaunt — None")
 
 print("\n2. PROFIL KESHI ARALASHMAYDIMI  ← eng muhimi")
-s_mebel = baza_tayyorla(firma(f_mebel), "mebel")
-s_non = baza_tayyorla(firma(f_non), "non")
+s_mebel = baza_tayyorla(akkaunt(f_mebel), "mebel")
+s_non = baza_tayyorla(akkaunt(f_non), "non")
 
-t = tenancy.ornat(firma(f_mebel))
+t = tenancy.ornat(akkaunt(f_mebel))
 domain.qayta_yukla(s_mebel)
 mebel_nomi = domain.profil().nom
 tenancy.tozala(t)
 
-t = tenancy.ornat(firma(f_non))
+t = tenancy.ornat(akkaunt(f_non))
 domain.qayta_yukla(s_non)
 non_nomi = domain.profil().nom
 tenancy.tozala(t)
 
-# Endi ORQAGA qaytamiz: mebel firmasi hali ham O'Z profilini ko'rishi kerak.
-t = tenancy.ornat(firma(f_mebel))
+# Endi ORQAGA qaytamiz: mebel akkaunti hali ham O'Z profilini ko'rishi kerak.
+t = tenancy.ornat(akkaunt(f_mebel))
 mebel_qayta = domain.profil().nom
 mebel_maydonlar = {x.kalit for x in domain.profil().maydonlar}
 tenancy.tozala(t)
 
-t = tenancy.ornat(firma(f_non))
+t = tenancy.ornat(akkaunt(f_non))
 non_maydonlar = {x.kalit for x in domain.profil().maydonlar}
 tenancy.tozala(t)
 
-ok(mebel_nomi != non_nomi, f"ikki firma ikki xil profil: «{mebel_nomi}» / «{non_nomi}»")
+ok(mebel_nomi != non_nomi, f"ikki akkaunt ikki xil profil: «{mebel_nomi}» / «{non_nomi}»")
 ok(mebel_qayta == mebel_nomi,
    "non zavodi so'rovidan KEYIN ham mebel o'z profilini ko'rdi")
 ok(not (mebel_maydonlar & non_maydonlar) or mebel_maydonlar != non_maydonlar,
@@ -123,7 +123,7 @@ ok(mebel_mijozlar == ["Mebel mijozi"] and non_mijozlar == ["Non mijozi"],
 
 # `get_db` ham to'g'ri bazaga borsinmi
 from app.db import get_db                              # noqa: E402
-t = tenancy.ornat(firma(f_non))
+t = tenancy.ornat(akkaunt(f_non))
 gen = get_db()
 db_non = next(gen)
 nomlar = [c.company for c in db_non.query(m.Client).all()]
@@ -133,11 +133,11 @@ except StopIteration:
     pass
 tenancy.tozala(t)
 ok(nomlar == ["Non mijozi"],
-   "`get_db()` joriy firmaning bazasiga bordi (125 endpoint shu orqali ishlaydi)")
+   "`get_db()` joriy akkauntning bazasiga bordi (125 endpoint shu orqali ishlaydi)")
 
 print("\n4. ULANISHLAR CHEGARASI (LRU)")
 for i in range(6):
-    tenancy.firma_engine(f"sinov_baza_{i}")
+    tenancy.akkaunt_engine(f"sinov_baza_{i}")
 ok(tenancy.ochiq_enginelar() <= 3,
    f"MAX_ENGINE=3 — ochiq engine: {tenancy.ochiq_enginelar()} "
    f"(50 mijoz × 30 ulanish = 1500 bo'lib ketmaydi)")
@@ -148,11 +148,11 @@ ok(not tenancy.yoqilganmi(), "o'chirilganda ijarachilik yoqilmagan deb ko'rsatil
 ok(tenancy.kalit() == "_yagona", "kesh kaliti yagona rejimda o'zgarmas")
 os.environ["IJARACHILIK"] = "1"
 
-print("\n6. KESHNI TOZALASH FAQAT O'Z FIRMASIGA TEGADI")
-t = tenancy.ornat(firma(f_mebel))
+print("\n6. KESHNI TOZALASH FAQAT O'Z AKKAUNTSIGA TEGADI")
+t = tenancy.ornat(akkaunt(f_mebel))
 domain.keshni_tozala()
 tenancy.tozala(t)
-t = tenancy.ornat(firma(f_non))
+t = tenancy.ornat(akkaunt(f_non))
 hali_bor = domain._KESH.get("inna_nonzavod") is not None
 tenancy.tozala(t)
 ok(hali_bor, "mebel keshi tozalandi, non keshi tegilmadi")

@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI):
     if tenancy.yoqilganmi():
         # IJARACHILIK: yagona baza ISHLATILMAYDI — har mijozning bazasi
         # ro'yxatdan o'tishda tayyorlanadi. Startupda faqat boshqaruv
-        # bazasi kerak (firmalar ro'yxati shu yerda).
+        # bazasi kerak (akkauntlar ro'yxati shu yerda).
         from .platforma.db import jadvallarni_yarat
         jadvallarni_yarat()
         log_boot.info("Ijarachilik rejimi — boshqaruv bazasi tayyor")
@@ -108,7 +108,7 @@ async def ijarachilik(request, call_next):
     Ijarachilik o'chiq bo'lsa hech nima qilmaydi — bitta baza rejimi
     aynan avvalgidek ishlaydi.
 
-    Firma topilmasa 404 emas, 400: «bunday firma yo'q» degani manzil
+    Akkaunt topilmasa 404 emas, 400: «bunday akkaunt yo'q» degani manzil
     xato ekanini bildiradi, mavjud emasligini emas — mijoz kodlarini
     tashqaridan sanab chiqishga yo'l bermaslik uchun javob bir xil.
     """
@@ -117,27 +117,27 @@ async def ijarachilik(request, call_next):
         return await call_next(request)
 
     yol = request.url.path
-    # Firmasiz ochiq yo'llar: statik, salomatlik, ro'yxatdan o'tish.
+    # Akkauntsiz ochiq yo'llar: statik, salomatlik, ro'yxatdan o'tish.
     # `/api/platforma/*` — odam hali subdomenga ega emas (app.innasoft.uz
-    # da ro'yxatdan o'tyapti), shuning uchun firma talab qilinmaydi.
+    # da ro'yxatdan o'tyapti), shuning uchun akkaunt talab qilinmaydi.
     if (yol == "/" or yol.startswith("/static") or yol == "/api/health"
             or yol.startswith("/api/platforma/")):
         return await call_next(request)
 
-    firma = tenancy.sorovdan_firma(request.headers.get("host", ""),
-                                   request.headers.get("x-firma", ""))
-    if firma is None:
-        return JSONResponse({"detail": "Firma aniqlanmadi"}, status_code=400)
+    akkaunt = tenancy.sorovdan_akkaunt(request.headers.get("host", ""),
+                                   request.headers.get("x-akkaunt", ""))
+    if akkaunt is None:
+        return JSONResponse({"detail": "Akkaunt aniqlanmadi"}, status_code=400)
 
-    # Obuna tugagan firma O'QIY oladi, lekin YOZA olmaydi.
+    # Obuna tugagan akkaunt O'QIY oladi, lekin YOZA olmaydi.
     # Ma'lumot garovga olinmaydi (docs/07-TARQATISH.md §7.7).
-    if (not firma.yozish_mumkinmi
+    if (not akkaunt.yozish_mumkinmi
             and request.method not in ("GET", "HEAD", "OPTIONS")):
         return JSONResponse(
             {"detail": "Obuna muddati tugagan — ma'lumot o'qish uchun "
                        "ochiq, yangi yozuv kiritilmaydi"}, status_code=402)
 
-    token = tenancy.ornat(firma)
+    token = tenancy.ornat(akkaunt)
     try:
         return await call_next(request)
     finally:
@@ -205,7 +205,7 @@ for r in (clients, orders, warehouse, hr, finance, reports, users,
           constructor, catalog, purchase, kassa, soha, agent):
     app.include_router(r.router)
 
-# Ro'yxatdan o'tish — boshqaruv bazasi bilan ishlaydi, firmasiz ochiq.
+# Ro'yxatdan o'tish — boshqaruv bazasi bilan ishlaydi, akkauntiz ochiq.
 app.include_router(royxat_router.router)
 
 

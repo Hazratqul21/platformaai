@@ -1,4 +1,4 @@
-"""BOSHQARUV BAZASI SINOVI — firma, AI sarfi, limit.
+"""BOSHQARUV BAZASI SINOVI — akkaunt, AI sarfi, limit.
 
 Server kerak emas, toza SQLite bazada ishlaydi.
 
@@ -58,8 +58,8 @@ print("1. BAZALAR AJRATILGANMI")
 ok(not (mijoz_jadvallar & boshqaruv_jadvallar),
    f"mijoz ({len(mijoz_jadvallar)}) va boshqaruv ({len(boshqaruv_jadvallar)}) "
    f"jadvallari kesishmaydi")
-ok("firmalar" not in mijoz_jadvallar,
-   "`firmalar` MIJOZ bazasida YO'Q — boshqa mijozlar ro'yxati sizmaydi")
+ok("akkauntlar" not in mijoz_jadvallar,
+   "`akkauntlar` MIJOZ bazasida YO'Q — boshqa mijozlar ro'yxati sizmaydi")
 ok("orders" not in boshqaruv_jadvallar,
    "`orders` boshqaruv bazasida yo'q")
 
@@ -84,24 +84,24 @@ ok(px.kod_tekshir("  MebelSex  ") == "mebelsex",
 ok(px.baza_nomi_yasa("mebel-sex") == "inna_mebel_sex",
    "baza nomi: tire -> pastki chiziq")
 
-# --- 3. Firma ----------------------------------------------------------
-print("\n3. FIRMA")
-f1 = px.firma_yarat(db, "mebelsex", "Mebel Sex MCHJ", inn="123456789")
-f2 = px.firma_yarat(db, "nonzavod", "Non Zavodi")
-ok(f1.id and f2.id, "ikki firma yaratildi")
+# --- 3. Akkaunt ----------------------------------------------------------
+print("\n3. AKKAUNT")
+f1 = px.akkaunt_yarat(db, "mebelsex", "Mebel Sex MCHJ", inn="123456789")
+f2 = px.akkaunt_yarat(db, "nonzavod", "Non Zavodi")
+ok(f1.id and f2.id, "ikki akkaunt yaratildi")
 ok(f1.holat == "sinov" and f1.tayyorlik == "tayyorlanmoqda",
-   "yangi firma: holat=sinov, tayyorlik=tayyorlanmoqda")
+   "yangi akkaunt: holat=sinov, tayyorlik=tayyorlanmoqda")
 ok(f1.yozish_mumkinmi, "sinov holatida yozish mumkin")
 f2.holat = "muzlatilgan"
 ok(not f2.yozish_mumkinmi,
-   "muzlatilgan firma YOZA olmaydi (lekin o'qish bloklanmaydi)")
+   "muzlatilgan akkaunt YOZA olmaydi (lekin o'qish bloklanmaydi)")
 try:
-    px.firma_yarat(db, "mebelsex", "Boshqa")
+    px.akkaunt_yarat(db, "mebelsex", "Boshqa")
     ok(False, "takroriy kod o'tib ketdi")
 except ValueError:
     ok(True, "takroriy kod rad etildi")
 ok(db.query(pm.PlatformaAudit).filter(
-    pm.PlatformaAudit.amal == "firma_yaratildi").count() == 2,
+    pm.PlatformaAudit.amal == "akkaunt_yaratildi").count() == 2,
    "auditga ikki yozuv tushdi")
 
 # --- 4. AI sarfi -------------------------------------------------------
@@ -149,7 +149,7 @@ h = px.limit_holati(db, f1.id)
 ok(h["limit_som"] == 0 and not h["toxtatilsin"],
    "limit qo'yilmagan = cheklovsiz")
 
-db.add(pm.AiLimit(firma_id=f1.id, oy=px.joriy_oy(),
+db.add(pm.AiLimit(akkaunt_id=f1.id, oy=px.joriy_oy(),
                   limit_som=sarf["som"] * 2))
 db.commit()
 h = px.limit_holati(db, f1.id)
@@ -157,22 +157,22 @@ ok(h["foiz"] == 50 and not h["ogoh"] and not h["toxtatilsin"],
    f"50% — ogoh yo'q")
 
 db.query(pm.AiLimit).delete()
-db.add(pm.AiLimit(firma_id=f1.id, oy=px.joriy_oy(),
+db.add(pm.AiLimit(akkaunt_id=f1.id, oy=px.joriy_oy(),
                   limit_som=sarf["som"] * Decimal("1.1")))
 db.commit()
 h = px.limit_holati(db, f1.id)
 ok(h["ogoh"] and not h["toxtatilsin"], f"{h['foiz']}% — ogoh bor, to'xtamaydi")
 
 db.query(pm.AiLimit).delete()
-db.add(pm.AiLimit(firma_id=f1.id, oy=px.joriy_oy(), limit_som=sarf["som"]))
+db.add(pm.AiLimit(akkaunt_id=f1.id, oy=px.joriy_oy(), limit_som=sarf["som"]))
 db.commit()
 h = px.limit_holati(db, f1.id)
 ok(h["toxtatilsin"], "100% — AI to'xtaydi")
 
-# --- 7. Firmalar ajralganmi -------------------------------------------
-print("\n7. FIRMALAR SARFI ARALASHMAYDI")
+# --- 7. Akkauntlar ajralganmi -------------------------------------------
+print("\n7. AKKAUNTLAR SARFI ARALASHMAYDI")
 ok(px.oylik_sarf(db, f2.id)["sorov"] == 0,
-   "ikkinchi firmaning sarfi nol — birinchisiniki unga o'tmadi")
+   "ikkinchi akkauntning sarfi nol — birinchisiniki unga o'tmadi")
 
 db.close()
 print("\n" + "=" * 62)

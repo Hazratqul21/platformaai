@@ -1,9 +1,9 @@
-"""RO'YXATDAN O'TISH — yangi firma platformaga qo'shiladi.
+"""RO'YXATDAN O'TISH — yangi akkaunt platformaga qo'shiladi.
 
 Oqim (docs/A-IJARACHILIK.md §A.6):
-  1. odam login/parol/firma beradi
-  2. PlatformaUser + Firma yoziladi (boshqaruv bazasida)
-  3. FON VAZIFASI firma bazasini tayyorlaydi (bir necha soniya)
+  1. odam login/parol/akkaunt beradi
+  2. PlatformaUser + Akkaunt yoziladi (boshqaruv bazasida)
+  3. FON VAZIFASI akkaunt bazasini tayyorlaydi (bir necha soniya)
   4. odam `/holat` ni kuzatadi: tayyorlanmoqda -> tayyor
   5. tayyor bo'lgach o'z subdomeniga kirib ishlaydi
 
@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from ..auth import hash_pw, verify_pw
 from ..platforma import models as pm, xizmat as px
 from ..platforma.db import boshqaruv_db
-from ..platforma.tayyorlash import firma_tayyorla
+from ..platforma.tayyorlash import akkaunt_tayyorla
 
 log = logging.getLogger("platforma.royxat")
 router = APIRouter(prefix="/api/platforma", tags=["Ro'yxatdan o'tish"])
@@ -28,33 +28,33 @@ router = APIRouter(prefix="/api/platforma", tags=["Ro'yxatdan o'tish"])
 class RoyxatIn(BaseModel):
     login: str            # telefon yoki email
     parol: str
-    firma_kod: str        # subdomen: mebelsex
-    firma_nom: str
+    akkaunt_kod: str        # subdomen: mebelsex
+    akkaunt_nom: str
     inn: str = ""
     qqs_tolovchi: bool = False
     soha: str | None = None    # tanlangan profil kaliti (ixtiyoriy)
 
 
-def _fon_tayyorla(firma_id: int, baza_nomi: str, parol: str,
+def _fon_tayyorla(akkaunt_id: int, baza_nomi: str, parol: str,
                   ism: str, soha: str | None):
     """Fon vazifasi: baza yaratiladi va holat yangilanadi.
 
-    Xato bo'lsa `Firma.tayyorlik = "xato"` — foydalanuvchi ko'radi va
+    Xato bo'lsa `Akkaunt.tayyorlik = "xato"` — foydalanuvchi ko'radi va
     biz loglardan bilamiz. Yarim tayyor holat qolib ketmasin."""
     from ..platforma.db import BoshqaruvSession
     db = BoshqaruvSession()
     try:
-        firma = db.get(pm.Firma, firma_id)
+        akkaunt = db.get(pm.Akkaunt, akkaunt_id)
         try:
-            firma_tayyorla(baza_nomi, admin_parol=parol, admin_ism=ism,
+            akkaunt_tayyorla(baza_nomi, admin_parol=parol, admin_ism=ism,
                            profil_kaliti=soha)
-            firma.tayyorlik = "tayyor"
-            firma.tayyorlik_izohi = ""
-            px.audit(db, "baza_tayyorlandi", firma_id=firma_id)
+            akkaunt.tayyorlik = "tayyor"
+            akkaunt.tayyorlik_izohi = ""
+            px.audit(db, "baza_tayyorlandi", akkaunt_id=akkaunt_id)
         except Exception as e:            # noqa: BLE001 — holatni yozib qo'yamiz
             log.exception("Baza tayyorlanmadi: %s", baza_nomi)
-            firma.tayyorlik = "xato"
-            firma.tayyorlik_izohi = str(e)[:400]
+            akkaunt.tayyorlik = "xato"
+            akkaunt.tayyorlik_izohi = str(e)[:400]
         db.commit()
     finally:
         db.close()
@@ -72,25 +72,25 @@ def royxat(data: RoyxatIn, fon: BackgroundTasks,
         raise HTTPException(400, "Bu login allaqachon ro'yxatdan o'tgan")
 
     try:
-        firma = px.firma_yarat(db, data.firma_kod, data.firma_nom,
+        akkaunt = px.akkaunt_yarat(db, data.akkaunt_kod, data.akkaunt_nom,
                                inn=data.inn, qqs_tolovchi=data.qqs_tolovchi,
                                kim=login)
     except ValueError as e:
         raise HTTPException(400, str(e))
 
     user = pm.PlatformaUser(login=login, parol_hash=hash_pw(data.parol),
-                            ism=data.firma_nom, firma_id=firma.id,
+                            ism=data.akkaunt_nom, akkaunt_id=akkaunt.id,
                             platforma_roli="egasi", tasdiqlangan=True)
     db.add(user)
     db.commit()
 
     # Baza tayyorlash — FON vazifasi. So'rov ichida qilinsa foydalanuvchi
     # bir necha soniya «osilib qolgan» ekranni ko'radi.
-    fon.add_task(_fon_tayyorla, firma.id, firma.baza_nomi, data.parol,
-                 data.firma_nom, data.soha)
+    fon.add_task(_fon_tayyorla, akkaunt.id, akkaunt.baza_nomi, data.parol,
+                 data.akkaunt_nom, data.soha)
 
-    return {"firma_kod": firma.kod, "holat": firma.tayyorlik,
-            "manzil": f"https://{firma.kod}.{_domen()}"}
+    return {"akkaunt_kod": akkaunt.kod, "holat": akkaunt.tayyorlik,
+            "manzil": f"https://{akkaunt.kod}.{_domen()}"}
 
 
 def _domen() -> str:
@@ -98,14 +98,14 @@ def _domen() -> str:
     return os.getenv("ASOSIY_DOMEN", "innasoft.uz")
 
 
-@router.get("/holat/{firma_kod}")
-def holat(firma_kod: str, db: Session = Depends(boshqaruv_db)):
-    firma = db.query(pm.Firma).filter(pm.Firma.kod == firma_kod.lower()).first()
-    if not firma:
-        raise HTTPException(404, "Firma topilmadi")
-    return {"firma_kod": firma.kod, "nom": firma.nom,
-            "tayyorlik": firma.tayyorlik, "izoh": firma.tayyorlik_izohi,
-            "manzil": f"https://{firma.kod}.{_domen()}"}
+@router.get("/holat/{akkaunt_kod}")
+def holat(akkaunt_kod: str, db: Session = Depends(boshqaruv_db)):
+    akkaunt = db.query(pm.Akkaunt).filter(pm.Akkaunt.kod == akkaunt_kod.lower()).first()
+    if not akkaunt:
+        raise HTTPException(404, "Akkaunt topilmadi")
+    return {"akkaunt_kod": akkaunt.kod, "nom": akkaunt.nom,
+            "tayyorlik": akkaunt.tayyorlik, "izoh": akkaunt.tayyorlik_izohi,
+            "manzil": f"https://{akkaunt.kod}.{_domen()}"}
 
 
 class KirIn(BaseModel):
@@ -118,14 +118,14 @@ def kir(data: KirIn, db: Session = Depends(boshqaruv_db)):
     """Platforma kabinetiga kirish (ERP kirishidan alohida).
 
     Bu — hisob-kitob, tarif, AI sarfi kabineti uchun. ERP ga kirish
-    firma subdomenidagi mavjud `/api/auth/login` orqali."""
+    akkaunt subdomenidagi mavjud `/api/auth/login` orqali."""
     login = (data.login or "").strip().lower()
     user = db.query(pm.PlatformaUser).filter(
         pm.PlatformaUser.login == login).first()
     if not user or not verify_pw(data.parol, user.parol_hash):
         raise HTTPException(400, "Login yoki parol xato")
-    firma = db.get(pm.Firma, user.firma_id) if user.firma_id else None
+    akkaunt = db.get(pm.Akkaunt, user.akkaunt_id) if user.akkaunt_id else None
     return {"login": user.login, "ism": user.ism,
-            "firma_kod": firma.kod if firma else None,
-            "tayyorlik": firma.tayyorlik if firma else None,
-            "manzil": f"https://{firma.kod}.{_domen()}" if firma else None}
+            "akkaunt_kod": akkaunt.kod if akkaunt else None,
+            "tayyorlik": akkaunt.tayyorlik if akkaunt else None,
+            "manzil": f"https://{akkaunt.kod}.{_domen()}" if akkaunt else None}

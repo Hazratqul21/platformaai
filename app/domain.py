@@ -320,14 +320,14 @@ def qayta_yukla(db=None) -> Profil:
 
 
 def profil() -> Profil:
-    """Hozirgi faol profil — JORIY firmaniki."""
+    """Hozirgi faol profil — JORIY akkauntniki."""
     from .tenancy import kalit as _kesh_kaliti
     p = _KESH.get(_kesh_kaliti())
     if p is None:
-        # Kesh bo'sh — JORIY firmaning bazasidan o'qiymiz. Ilgari bu
+        # Kesh bo'sh — JORIY akkauntning bazasidan o'qiymiz. Ilgari bu
         # yerda `qayta_yukla(None)` edi va u bazani ochmasdan `karton`
-        # zaxira profiliga tushardi: ijarachilikda har firma boshqa
-        # sohada bo'lgani uchun bu XATO. Endi firma bazasidan o'qiladi.
+        # zaxira profiliga tushardi: ijarachilikda har akkaunt boshqa
+        # sohada bo'lgani uchun bu XATO. Endi akkaunt bazasidan o'qiladi.
         from .db import sessiya
         db = sessiya()
         try:
@@ -339,7 +339,7 @@ def profil() -> Profil:
 
 def keshni_tozala(hammasi: bool = False) -> None:
     """Profil o'zgartirilganda chaqiriladi. Standart holda faqat JORIY
-    firmaning keshi tozalanadi — boshqa mijozlarniki tegilmaydi."""
+    akkauntning keshi tozalanadi — boshqa mijozlarniki tegilmaydi."""
     from .tenancy import kalit as _kesh_kaliti
     if hammasi:
         _KESH.clear()

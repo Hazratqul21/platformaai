@@ -85,8 +85,8 @@ Baza ulanishi. `DATABASE_URL` dan `engine` + `SessionLocal` +
 - **Kimga kerak:** hamma router, hamma test, `main.py`
 - **Nimaga bog'liq:** hech nimaga (eng past qatlam)
 - **Hozirgi faraz:** *bitta jarayon = bitta baza*
-- **Ijarachilikda:** `get_db` so'rovdan firmani aniqlab, o'sha
-  firmaning `Engine` ini qaytaradi. Hovuz hozir `pool_size=10,
+- **Ijarachilikda:** `get_db` so'rovdan akkauntni aniqlab, o'sha
+  akkauntning `Engine` ini qaytaradi. Hovuz hozir `pool_size=10,
   max_overflow=20` — 50 mijozda 1500 ulanish, PostgreSQL standarti
   100. Mijoz bo'yicha kichraytirish + LRU shart.
 - Faylning o'zida PostgreSQL tanlash sababi yozilgan va «har mijozga
@@ -181,7 +181,7 @@ Parol (`bcrypt`), token, rol tekshiruvi, brute-force cheklovi
 bularsiz endpoint yozilsa `tests/himoya_audit.py` ushlaydi.
 
 - **Ijarachilikda:** token boshqaruv bazasiga ko'chadi, `get_user`
-  firmani ham qaytaradi. **Ikkinchi eng muhim o'zgarish.**
+  akkauntni ham qaytaradi. **Ikkinchi eng muhim o'zgarish.**
 
 ### `app/main.py` — 200 qator
 
@@ -192,7 +192,7 @@ FastAPI ilovasi, CORS, `/api/auth/*`, statik fayllar, `lifespan`.
 `seed` → `backfill_soha` → `start_bot_bg`.
 
 - ⚠️ Bularning **hammasi bitta bazaga**. Ijarachilikda ular
-  startupdan chiqib, **firma yaratilganda** va **migratsiya
+  startupdan chiqib, **akkaunt yaratilganda** va **migratsiya
   buyrug'ida** bajariladi.
 
 ### `app/migrate.py` — 236 qator
@@ -206,7 +206,7 @@ o'zgartirish) · `profillarni_yukla` · `backfill_soha`
 **Qoida:** migratsiya faqat **qo'shadi**, o'chirish alohida.
 
 - **Ijarachilikda:** `tools/migratsiya.py --hammasi` — har bazada
-  zaxira → migratsiya → `butunlik.py`, xatoda o'sha firma
+  zaxira → migratsiya → `butunlik.py`, xatoda o'sha akkaunt
   qaytariladi, qolganlari davom etadi.
 
 ---
@@ -296,7 +296,7 @@ mantiqini yozmaydi — **ombor yechish qoidasi ikki joyda bo'lmasin**.
 | `agent.py` | 8 | AI chat, oqim (NDJSON), amal, faoliyat | agent, genui, llm, services |
 | `constructor.py` | 7 | no-code jadval quruvchi | models |
 | `purchase.py` | 6 | xarid, yetkazib beruvchi qarzi | kassa_sync |
-| `kassa.py` | 5 | kassa jurnali, ko'p firma/valyuta | models |
+| `kassa.py` | 5 | kassa jurnali, ko'p akkaunt/valyuta | models |
 | `clients.py` | 5 | mijoz CRUD, detalizatsiya | domain, services |
 | `users.py` | 4 | RBAC, parol | models |
 | `soha.py` | 4 | profil boshqaruvi, faollashtirish | domain |
@@ -319,7 +319,7 @@ tugmasi. `main.py` startupda `threading.Thread(name="gofra-bot")`
 bilan ishga tushadi.
 
 - ⚠️ **Bitta bot → bitta baza.** Ijarachilikda bot boshqaruv
-  bazasidan tokeni bor firmalarni o'qib, har biriga alohida ishlashi
+  bazasidan tokeni bor akkauntlarni o'qib, har biriga alohida ishlashi
   kerak.
 
 ### `app/seed.py` — 456 qator
@@ -363,7 +363,7 @@ Bitta HTML, hamma sahifa shu yerda. 24 ta alohida so'rov —
 
 | Fayl | Qator | Nima |
 |---|---|---|
-| `globals.js` | 241 | `api()`, til (`DICT`, `t()`), firma almashtirish, Telegram aniqlash |
+| `globals.js` | 241 | `api()`, til (`DICT`, `t()`), akkaunt almashtirish, Telegram aniqlash |
 | `router.js` | 141 | hash marshrutlash, navigatsiya (`NAV`), tez amallar |
 | `genui.js` | 241 | 8 primitivni chizadi — **hamma matn `textContent`, `innerHTML` yo'q** |
 | `soha.js` | 143 | `/api/soha/joriy` dan **formani chizadi** — yangi soha qo'shilganda JS ga tegilmaydi |
@@ -407,7 +407,7 @@ o'qiydi**. Yangi endpoint qo'shilib himoya unutilsa shu yerda
 ushlanadi.
 
 **Ijarachilikda `tests/ijarachilik.py` qo'shiladi** — o'sha naqshning
-davomi: u yerda tokensiz sinalgan, bu yerda **boshqa firmaning
+davomi: u yerda tokensiz sinalgan, bu yerda **boshqa akkauntning
 tokeni bilan** ([A-IJARACHILIK.md](A-IJARACHILIK.md) §A.8).
 
 ---
@@ -434,11 +434,11 @@ Shu jadval — kod yozishning boshlanish nuqtasi.
 
 | Fayl | O'zgarish | Xavf |
 |---|---|---|
-| `app/db.py` | `get_db` firma bo'yicha, `Engine` hovuzi + LRU | 🔴 yuqori — hamma shundan o'tadi |
-| `app/auth.py` | token boshqaruv bazasida, `get_user` firmani qaytaradi | 🔴 yuqori |
+| `app/db.py` | `get_db` akkaunt bo'yicha, `Engine` hovuzi + LRU | 🔴 yuqori — hamma shundan o'tadi |
+| `app/auth.py` | token boshqaruv bazasida, `get_user` akkauntni qaytaradi | 🔴 yuqori |
 | `app/domain.py` | `_KESH` → `contextvars`, 26 chaqiruv | 🔴 yuqori — **jimgina buzadi** |
 | `app/main.py` | `lifespan` dan startup ishlari chiqadi | 🟡 o'rta |
-| `app/bot.py` | firma bo'yicha ko'p bot | 🟡 o'rta |
+| `app/bot.py` | akkaunt bo'yicha ko'p bot | 🟡 o'rta |
 | `app/llm.py` | sarf yozish (`ai_sarf`) | 🟢 past — qo'shimcha |
 | `app/models.py` | boshqaruv bazasi modellari **alohida faylda** | 🟢 past |
 | **`routers/*` (13 fayl)** | **o'zgarmaydi** | 🟢 — `Depends` tufayli |
@@ -465,10 +465,10 @@ Ro'yxat to'liq, kod bo'yicha tekshirilgan:
 | 1 | `domain.py:290` | `_KESH: Profil` — faol profil |
 | 2 | `db.py` | `engine`, `SessionLocal` — modul darajasida |
 | 3 | `bot.py:183` | bot threadi — bitta bazaga yozadi |
-| 4 | `auth.py` | brute-force urinishlari IP bo'yicha (**bu global qolishi to'g'ri** — hujum firmadan qat'i nazar) |
+| 4 | `auth.py` | brute-force urinishlari IP bo'yicha (**bu global qolishi to'g'ri** — hujum akkauntdan qat'i nazar) |
 | 5 | `main.py` `lifespan` | startupdagi bir martalik ishlar |
 
-4-band ataylab qoldiriladi: brute-force hujumi firma chegarasini
+4-band ataylab qoldiriladi: brute-force hujumi akkaunt chegarasini
 tan olmaydi.
 
 ---

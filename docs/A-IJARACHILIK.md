@@ -1,5 +1,13 @@
 # A — IJARACHILIK (multi-tenancy) va SaaS
 
+> ⚠️ **ATAMA (2026-08-18 aniqlandi):** tenant = **AKKAUNT**, «firma» EMAS.
+> Loyihada `firm` allaqachon boshqa narsa: bitta ERP ichida bir nechta
+> kichik firma (yuridik shaxs/sex) o'rtasida almashish
+> (`Employee.firm`, `setFirm`). Shuning uchun tenant — **akkaunt**:
+> bitta ro'yxatdan o'tish = bitta akkaunt = bitta baza = bitta korxona.
+> Akkaunt ICHIDA eski ko'p-firma xususiyati o'z holicha qoladi.
+
+
 > Bosqich A ning ish hujjati. [06-YOL-XARITASI.md](06-YOL-XARITASI.md)
 > da bosqich e'lon qilingan, [07-TARQATISH.md](07-TARQATISH.md) da
 > SaaS qarori. Bu yerda — **aniq jadvallar, endpointlar, tartib va
@@ -45,7 +53,7 @@ kodi ko'radi, mijoz hech qachon ko'rmaydi.
 
 ### Jadvallar
 
-**`firmalar`** — kim ro'yxatdan o'tgan
+**`akkauntlar`** — kim ro'yxatdan o'tgan
 
 | Ustun | Tur | Izoh |
 |---|---|---|
@@ -66,14 +74,14 @@ kodi ko'radi, mijoz hech qachon ko'rmaydi.
 |---|---|
 | `telefon` / `email`, unik | kirish |
 | `parol_hash` | `auth.hash_pw` — bir xil funksiya |
-| `firma_id` | qaysi firmaga tegishli |
+| `akkaunt_id` | qaysi akkauntga tegishli |
 | `platforma_roli` | `egasi` · `xodim` |
 
 **`ai_sarf`** — har AI so'rovi ([07](07-TARQATISH.md) §7.6)
 
 | Ustun | Izoh |
 |---|---|
-| `firma_id`, `vaqt` | kimga hisob |
+| `akkaunt_id`, `vaqt` | kimga hisob |
 | `provayder`, `model` | narx shundan |
 | `kirish_token`, `chiqish_token` | asosiy o'lchov |
 | `narx_som` | **o'sha paytdagi narx bo'yicha, QOTIRILADI** |
@@ -84,9 +92,9 @@ kodi ko'radi, mijoz hech qachon ko'rmaydi.
 > naqsh**. U yerda ishlagan: davlat stavkani o'zgartirganda eski
 > hujjatlar buzilmadi.
 
-**`ai_limit`** — firma bo'yicha oylik limit, ogohlantirish holati
+**`ai_limit`** — akkaunt bo'yicha oylik limit, ogohlantirish holati
 
-**`platforma_audit`** — firma yaratildi/muzlatildi/o'chirildi, tarif
+**`platforma_audit`** — akkaunt yaratildi/muzlatildi/o'chirildi, tarif
 o'zgardi, limit oshirildi. Kim qildi, qachon.
 
 ---
@@ -94,18 +102,18 @@ o'zgardi, limit oshirildi. Kim qildi, qachon.
 ## A.3 So'rovdan mijozni aniqlash
 
 ```
-So'rov  →  subdomen  →  firma  →  o'sha firmaning Engine i  →  Session
+So'rov  →  subdomen  →  akkaunt  →  o'sha akkauntning Engine i  →  Session
            mebelsex.innasoft.uz
 ```
 
 ### Tartib (ustuvorlik bo'yicha)
 
 1. **Subdomen** — asosiy yo'l
-2. **`X-Firma` sarlavhasi** — Telegram Mini App va mobil uchun
+2. **`X-Akkaunt` sarlavhasi** — Telegram Mini App va mobil uchun
    (subdomen qulay emas)
 3. **Token ichidan** — `auth_tokens` mijoz bazasida bo'lgani uchun
    bu yo'l ishlamaydi; token **boshqaruv bazasida** saqlanadi va
-   firma id ni o'zi olib yuradi
+   akkaunt id ni o'zi olib yuradi
 
 **Qaror:** token boshqaruv bazasiga ko'chadi. Sabab — tokenni
 tekshirish uchun avval qaysi bazaga borishni bilish kerak, ya'ni
@@ -119,8 +127,8 @@ Yangi shakl:
 ```python
 _ENGINELAR: dict[str, Engine] = {}          # baza_nomi -> Engine
 
-def firma_engine(baza_nomi: str) -> Engine
-def get_db(request) -> Session               # firmani aniqlab, o'sha Session
+def akkaunt_engine(baza_nomi: str) -> Engine
+def get_db(request) -> Session               # akkauntni aniqlab, o'sha Session
 ```
 
 **117 endpoint o'zgarmaydi** — hammasi `Depends(get_db)` ishlatadi,
@@ -156,24 +164,24 @@ izohi) — endi bajariladi:
 
 ```python
 _KESH: dict[str, Profil] = {}    # baza_nomi -> Profil
-def profil(firma) -> Profil
+def profil(akkaunt) -> Profil
 ```
 
 `profil()` ni chaqiradigan joylar: `agent.py`, `routers/soha.py`,
 `routers/warehouse.py`, `routers/orders.py`, `main.py` — **26 ta
-chaqiruv**. Hammasiga firma kontekstini uzatish kerak.
+chaqiruv**. Hammasiga akkaunt kontekstini uzatish kerak.
 
-**Eng xavfsiz yo'l:** `contextvars` — so'rov boshida joriy firma
+**Eng xavfsiz yo'l:** `contextvars` — so'rov boshida joriy akkaunt
 o'rnatiladi, `profil()` imzosi o'zgarmaydi. Aks holda 26 joyni
 qo'lda tuzatishda bittasi unutiladi.
 
 ### 2. Fon vazifalari
 
 `app/bot.py:183` — `threading.Thread(..., name="gofra-bot")`.
-Bitta bot bitta bazaga yozadi. Ko'p mijozda bot **qaysi firma
+Bitta bot bitta bazaga yozadi. Ko'p mijozda bot **qaysi akkaunt
 uchun** ishlayotganini bilishi shart.
 
-**Qaror:** bot boshqaruv bazasidan Telegram tokeni bor firmalarni
+**Qaror:** bot boshqaruv bazasidan Telegram tokeni bor akkauntlarni
 o'qiydi va har biriga alohida ishlaydi. `contextvars` shu yerda ham.
 
 ### 3. `lifespan` — startupdagi ishlar
@@ -182,7 +190,7 @@ Bugun `main.py` startupda: `create_all` → `run_migrations` →
 `profillarni_yukla` → `qayta_yukla` → `seed` → `backfill_soha`.
 Hammasi **bitta bazaga**.
 
-Ko'p mijozda bular startupda emas, **firma yaratilganda** va
+Ko'p mijozda bular startupda emas, **akkaunt yaratilganda** va
 **migratsiya buyrug'ida** bajariladi. Startupda faqat boshqaruv
 bazasi tayyorlanadi.
 
@@ -196,10 +204,10 @@ tools/migratsiya.py --hammasi
 
 Tartib:
 
-1. Boshqaruv bazasidan faol firmalar ro'yxati
+1. Boshqaruv bazasidan faol akkauntlar ro'yxati
 2. Har biriga: **zaxira** → `create_all` → `run_migrations` →
    `butunlik.py`
-3. Bittasi xato bersa: **o'sha firma qaytariladi**, qolganlari
+3. Bittasi xato bersa: **o'sha akkaunt qaytariladi**, qolganlari
    davom etadi, oxirida hisobot
 4. Natija `platforma_audit` ga yoziladi
 
@@ -216,7 +224,7 @@ tushmaydi** (orqaga qaytarilgan kod yangi bazani buzmasin).
 
 ```
 1. telefon/email → tasdiqlash kodi
-2. firma: nom, INN, QQS to'lovchimi
+2. akkaunt: nom, INN, QQS to'lovchimi
 3. baza yaratiladi (CREATE DATABASE) + migratsiya + profillar
 4. AI SEHRGARI: «biznesingizni ayting»
 5. AI profil yig'adi → sinov buyurtmasi bilan O'ZI tekshiradi
@@ -230,7 +238,7 @@ tushmaydi** (orqaga qaytarilgan kod yangi bazani buzmasin).
 |---|---|---|
 | POST | `/api/platforma/royxat` | telefon/email yuborish |
 | POST | `/api/platforma/tasdiq` | kodni tekshirish |
-| POST | `/api/platforma/firma` | firma yaratish → baza |
+| POST | `/api/platforma/akkaunt` | akkaunt yaratish → baza |
 | GET | `/api/platforma/holat` | tayyorlanish jarayoni |
 | POST | `/api/platforma/taklif` | xodim chaqirish |
 | GET/POST | `/api/platforma/tarif` | joriy tarif, o'zgartirish |
@@ -241,10 +249,10 @@ tushmaydi** (orqaga qaytarilgan kod yangi bazani buzmasin).
 
 | Metod | Yo'l | Nima |
 |---|---|---|
-| GET | `/api/admin/firmalar` | ro'yxat, holat, oxirgi faollik |
-| POST | `/api/admin/firma/{id}/holat` | muzlatish, ochish |
+| GET | `/api/admin/akkauntlar` | ro'yxat, holat, oxirgi faollik |
+| POST | `/api/admin/akkaunt/{id}/holat` | muzlatish, ochish |
 | GET | `/api/admin/sarf` | hamma bo'yicha AI sarfi |
-| GET | `/api/admin/xatolar` | oxirgi xatolar, firma bo'yicha |
+| GET | `/api/admin/xatolar` | oxirgi xatolar, akkaunt bo'yicha |
 
 ### Baza yaratish — sekin ish
 
@@ -278,18 +286,18 @@ tugallanmagan hisoblanadi.
 
 | # | Tekshiruv |
 |---|---|
-| 1 | Ikki firma yaratiladi, ikkalasiga ma'lumot yoziladi |
-| 2 | **Har endpoint** A firma tokeni bilan B ning ID lariga urinadi — bittasi ham o'tmaydi (404/403, 200 EMAS) |
+| 1 | Ikki akkaunt yaratiladi, ikkalasiga ma'lumot yoziladi |
+| 2 | **Har endpoint** A akkaunt tokeni bilan B ning ID lariga urinadi — bittasi ham o'tmaydi (404/403, 200 EMAS) |
 | 3 | A ning profili mebel, B niki non — ikkalasi **parallel** so'rov yuboradi, har biri o'z maydonlarini oladi (kesh sinovi) |
 | 4 | Migratsiya ikkala bazada yuradi, `butunlik.py` ikkalasida toza |
-| 5 | Bir firma o'chirilsa, ikkinchisi shikastlanmaydi |
-| 6 | 20 firma bir vaqtda so'rov yuborganda ulanishlar tugamaydi |
+| 5 | Bir akkaunt o'chirilsa, ikkinchisi shikastlanmaydi |
+| 6 | 20 akkaunt bir vaqtda so'rov yuborganda ulanishlar tugamaydi |
 | 7 | AI so'rovi `ai_sarf` ga yoziladi, narx qotirilgan |
 | 8 | Limit tugaganda AI to'xtaydi, buyurtma yaratish ISHLAYDI |
 
 **2-tekshiruv eng muhimi.** U `tests/himoya_audit.py` dagi
 «124/124 endpoint himoyalangan» naqshining davomi — o'sha yerda
-har endpoint tokensiz sinalgan edi, bu yerda **boshqa firmaning
+har endpoint tokensiz sinalgan edi, bu yerda **boshqa akkauntning
 tokeni bilan** sinaladi.
 
 ---
@@ -298,7 +306,7 @@ tokeni bilan** sinaladi.
 
 | Hafta | Ish |
 |---|---|
-| 1 | Boshqaruv bazasi, modellari, firma yaratish/o'chirish |
+| 1 | Boshqaruv bazasi, modellari, akkaunt yaratish/o'chirish |
 | 1–2 | `get_db` mijoz bo'yicha, `Engine` hovuzi + LRU |
 | 2 | `contextvars`, `domain._KESH` mijoz bo'yicha, bot |
 | 2–3 | `tools/migratsiya.py --hammasi`, sxema versiyasi |

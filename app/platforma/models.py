@@ -1,6 +1,6 @@
 """Boshqaruv bazasining jadvallari — kim ro'yxatdan o'tgan, qancha sarfladi.
 
-MIJOZNING ma'lumoti bu yerda YO'Q. Bu yerda faqat: qaysi firma bor,
+MIJOZNING ma'lumoti bu yerda YO'Q. Bu yerda faqat: qaysi akkaunt bor,
 qaysi bazada, qaysi tarifda, AI ga qancha sarfladi.
 
 Savol matni va AI javobi BU YERGA YOZILMAYDI — faqat metama'lumot
@@ -17,15 +17,15 @@ from .db import BoshqaruvBase
 
 D = Numeric(18, 2)      # pul — float ishlatilmaydi (mijoz bazasidagi bilan bir xil)
 
-# Firma holati. `sinov` — ro'yxatdan o'tdi, hali to'lamadi.
+# Akkaunt holati. `sinov` — ro'yxatdan o'tdi, hali to'lamadi.
 # `muzlatilgan` — obuna tugadi: YOZISH to'xtaydi, O'QISH ochiq qoladi.
 HOLATLAR = ["sinov", "faol", "muzlatilgan", "ochirilgan"]
 TARIFLAR = ["boshlangich", "biznes", "korxona"]
 
 
-class Firma(BoshqaruvBase):
-    """Bitta mijoz = bitta firma = bitta ALOHIDA baza."""
-    __tablename__ = "firmalar"
+class Akkaunt(BoshqaruvBase):
+    """Bitta mijoz = bitta akkaunt = bitta ALOHIDA baza."""
+    __tablename__ = "akkauntlar"
     id: Mapped[int] = mapped_column(primary_key=True)
     # Subdomen: `mebelsex` -> mebelsex.innasoft.uz. Kichik harf, raqam, tire.
     kod: Mapped[str] = mapped_column(String(40), unique=True, index=True)
@@ -46,7 +46,7 @@ class Firma(BoshqaruvBase):
 
     @property
     def yozish_mumkinmi(self) -> bool:
-        """Obuna tugagan firma O'QIY oladi, lekin YOZA olmaydi.
+        """Obuna tugagan akkaunt O'QIY oladi, lekin YOZA olmaydi.
 
         Ma'lumot garovga olinmaydi — bu qoida hujjatda ham yozilgan
         (docs/07-TARQATISH.md §7.7)."""
@@ -66,7 +66,7 @@ class PlatformaUser(BoshqaruvBase):
     login: Mapped[str] = mapped_column(String(120), unique=True, index=True)
     parol_hash: Mapped[str] = mapped_column(String(128))
     ism: Mapped[str] = mapped_column(String(120), default="")
-    firma_id: Mapped[int | None] = mapped_column(ForeignKey("firmalar.id"),
+    akkaunt_id: Mapped[int | None] = mapped_column(ForeignKey("akkauntlar.id"),
                                                  nullable=True, index=True)
     platforma_roli: Mapped[str] = mapped_column(String(20), default="egasi")
     tasdiqlangan: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -78,13 +78,13 @@ class PlatformaToken(BoshqaruvBase):
 
     NEGA: tokenni tekshirish uchun avval QAYSI bazaga borishni bilish
     kerak, lekin buni tokendan bilamiz. Tovuq-tuxum. Token markaziy
-    bazada bo'lsa, tugun yechiladi: token -> firma -> firma bazasi.
+    bazada bo'lsa, tugun yechiladi: token -> akkaunt -> akkaunt bazasi.
     """
     __tablename__ = "platforma_tokenlar"
     token: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("platforma_userlar.id"),
                                          index=True)
-    firma_id: Mapped[int | None] = mapped_column(ForeignKey("firmalar.id"),
+    akkaunt_id: Mapped[int | None] = mapped_column(ForeignKey("akkauntlar.id"),
                                                  nullable=True, index=True)
     tugaydi: Mapped[datetime] = mapped_column(DateTime)
 
@@ -100,7 +100,7 @@ class AiSarf(BoshqaruvBase):
     """
     __tablename__ = "ai_sarf"
     id: Mapped[int] = mapped_column(primary_key=True)
-    firma_id: Mapped[int] = mapped_column(ForeignKey("firmalar.id"), index=True)
+    akkaunt_id: Mapped[int] = mapped_column(ForeignKey("akkauntlar.id"), index=True)
     vaqt: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow,
                                            index=True)
     provayder: Mapped[str] = mapped_column(String(20))
@@ -119,26 +119,26 @@ class AiSarf(BoshqaruvBase):
 
 
 class AiLimit(BoshqaruvBase):
-    """Firma o'zi qo'yadigan oylik chegara.
+    """Akkaunt o'zi qo'yadigan oylik chegara.
 
     Limit tugasa AI to'xtaydi, ERP ISHLAYVERADI — bu qat'iy qoida.
     """
     __tablename__ = "ai_limitlar"
     id: Mapped[int] = mapped_column(primary_key=True)
-    firma_id: Mapped[int] = mapped_column(ForeignKey("firmalar.id"), index=True)
+    akkaunt_id: Mapped[int] = mapped_column(ForeignKey("akkauntlar.id"), index=True)
     oy: Mapped[str] = mapped_column(String(7))          # "2026-08"
     limit_som: Mapped[float] = mapped_column(D, default=0)   # 0 = cheklovsiz
     ogoh_yuborildi: Mapped[bool] = mapped_column(Boolean, default=False)
-    __table_args__ = (UniqueConstraint("firma_id", "oy", name="uq_limit_oy"),)
+    __table_args__ = (UniqueConstraint("akkaunt_id", "oy", name="uq_limit_oy"),)
 
 
 class PlatformaAudit(BoshqaruvBase):
-    """Firma yaratildi/muzlatildi, tarif o'zgardi, limit oshirildi — kim qildi."""
+    """Akkaunt yaratildi/muzlatildi, tarif o'zgardi, limit oshirildi — kim qildi."""
     __tablename__ = "platforma_audit"
     id: Mapped[int] = mapped_column(primary_key=True)
     vaqt: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow,
                                            index=True)
-    firma_id: Mapped[int | None] = mapped_column(ForeignKey("firmalar.id"),
+    akkaunt_id: Mapped[int | None] = mapped_column(ForeignKey("akkauntlar.id"),
                                                  nullable=True, index=True)
     amal: Mapped[str] = mapped_column(String(60))
     kim: Mapped[str] = mapped_column(String(120), default="")

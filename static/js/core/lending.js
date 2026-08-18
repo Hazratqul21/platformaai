@@ -105,11 +105,11 @@ function royxatKodTozala(v){
 function lendingRoyxat(){
   modal(`<h2 class="sec">Ro'yxatdan o'tish</h2>
   <div class="muted" style="font-size:12px;margin:2px 0 14px;line-height:1.5">
-    Firma yaratasiz va o'z manzilingizga (masalan
+    Akkaunt yaratasiz va o'z manzilingizga (masalan
     <b>mebelsex.innasoft.uz</b>) ega bo'lasiz. Tizim bir necha soniyada
     tayyorlanadi.</div>
 
-  <label class="fl">Firma nomi</label>
+  <label class="fl">Korxona nomi</label>
   <input class="fld" id="rx_nom" placeholder="Mebel Sex MCHJ"
     oninput="if(!document.getElementById('rx_kod').dataset.qol){document.getElementById('rx_kod').value=royxatKodTozala(this.value)}"/>
 
@@ -153,7 +153,7 @@ async function royxatYubor(){
   try{
     const r=await fetch(API+'/api/platforma/royxat',{method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({login,parol,firma_kod:kod,firma_nom:nom,soha:soha||null})});
+      body:JSON.stringify({login,parol,akkaunt_kod:kod,akkaunt_nom:nom,soha:soha||null})});
     if(!r.ok){const e=await r.json();throw new Error(e.detail||'Xatolik');}
     const d=await r.json();
     // Baza fon vazifasida tayyorlanadi — holatni kuzatamiz.

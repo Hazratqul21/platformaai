@@ -1,8 +1,8 @@
-"""FIRMA BAZASINI TAYYORLASH — noldan ishlaydigan bo'sh ERP bazasi.
+"""AKKAUNT BAZASINI TAYYORLASH — noldan ishlaydigan bo'sh ERP bazasi.
 
 Bir necha soniya oladigan ish: PostgreSQL da `CREATE DATABASE`, jadvallar,
 migratsiya, 22 profil, admin foydalanuvchi. So'rov ICHIDA qilinmaydi —
-fon vazifasi sifatida chaqiriladi, foydalanuvchi `Firma.tayyorlik` ni
+fon vazifasi sifatida chaqiriladi, foydalanuvchi `Akkaunt.tayyorlik` ni
 kuzatadi.
 
 MUHIM FARQ — bu YANGI mijoz uchun BO'SH baza. `app/seed.py` dagi `seed()`
@@ -59,7 +59,7 @@ def baza_yarat(baza_nomi: str) -> bool:
 
 
 def sxema_tayyorla(engine: Engine) -> None:
-    """Jadvallar + migratsiya. Startup va yangi firma uchun BIR XIL yo'l.
+    """Jadvallar + migratsiya. Startup va yangi akkaunt uchun BIR XIL yo'l.
 
     `main.py` lifespan ham shu funksiyani chaqiradi — tayyorlash mantiqi
     ikki joyda takrorlanmasin (biri eskirmasin)."""
@@ -108,7 +108,7 @@ def bazani_toldir(sess, admin_parol: str = "", admin_ism: str = "Boshqaruvchi",
         sess.commit()
 
 
-def firma_tayyorla(baza_nomi: str, admin_parol: str = "",
+def akkaunt_tayyorla(baza_nomi: str, admin_parol: str = "",
                    admin_ism: str = "Boshqaruvchi",
                    profil_kaliti: str | None = None) -> None:
     """To'liq zanjir: baza + sxema + to'ldirish. Fon vazifasi chaqiradi.
@@ -116,9 +116,9 @@ def firma_tayyorla(baza_nomi: str, admin_parol: str = "",
     Idempotent: qayta chaqirilsa mavjud narsani buzmaydi (baza bor bo'lsa
     o'tkazadi, admin bor bo'lsa qo'shmaydi)."""
     baza_yarat(baza_nomi)
-    engine = tenancy.firma_engine(baza_nomi)
+    engine = tenancy.akkaunt_engine(baza_nomi)
     sxema_tayyorla(engine)
-    sess = tenancy.firma_sessiya(baza_nomi)
+    sess = tenancy.akkaunt_sessiya(baza_nomi)
     try:
         bazani_toldir(sess, admin_parol, admin_ism, profil_kaliti)
     finally:

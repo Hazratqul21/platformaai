@@ -52,6 +52,7 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 012 | [Infratuzilma hisobi](012-infratuzilma-hisobi.md) | ✅ VDS konfiguratsiyasi, AI sarfi — o'lchangan |
 | 013 | [Firma tayyorlash va ro'yxat](013-firma-tayyorlash-va-royxat.md) | ✅ ro'yxatdan o'tish → baza → ERP to'liq oqim |
 | 014 | [Ro'yxat frontend](014-royxat-frontend.md) | ✅ lending → forma → baza (brauzerda sinaldi) |
+| 015 | [Akkaunt nomlash tuzatishi](015-akkaunt-nomlash-tuzatishi.md) | ✅ tenant «firma»→«akkaunt» (nom to'qnashuvi) |
 
 ---
 

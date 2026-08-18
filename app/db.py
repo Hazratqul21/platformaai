@@ -59,8 +59,8 @@ def get_db():
     `Depends(get_db)` ishlatadi, almashtirish faqat shu yerda.
     """
     from . import tenancy
-    firma = tenancy.joriy() if tenancy.yoqilganmi() else None
-    db = tenancy.firma_sessiya(firma.baza_nomi) if firma else SessionLocal()
+    akkaunt = tenancy.joriy() if tenancy.yoqilganmi() else None
+    db = tenancy.akkaunt_sessiya(akkaunt.baza_nomi) if akkaunt else SessionLocal()
     try:
         yield db
     finally:
@@ -70,8 +70,8 @@ def get_db():
 def sessiya():
     """`Depends` siz kerak bo'lganda (fon vazifasi, vosita, test).
 
-    Diqqat: fon vazifasi o'zi firmani `tenancy.ornat()` bilan
+    Diqqat: fon vazifasi o'zi akkauntni `tenancy.ornat()` bilan
     belgilashi SHART — aks holda yagona bazaga yozadi."""
     from . import tenancy
-    firma = tenancy.joriy() if tenancy.yoqilganmi() else None
-    return tenancy.firma_sessiya(firma.baza_nomi) if firma else SessionLocal()
+    akkaunt = tenancy.joriy() if tenancy.yoqilganmi() else None
+    return tenancy.akkaunt_sessiya(akkaunt.baza_nomi) if akkaunt else SessionLocal()
