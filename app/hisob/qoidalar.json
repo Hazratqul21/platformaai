@@ -1,0 +1,79 @@
+{
+  "izoh": "Har hodisa qaysi provodkani yozishi. Mijoz o'zgartira oladi — masalan savdo korxonasi 2810 (tayyor mahsulot) o'rniga 2910 (tovarlar) ishlatadi.",
+  "summa_nomlari": {
+    "qqssiz": "QQSsiz sotuv summasi",
+    "qqs": "QQS summasi",
+    "jami": "Mijoz to'laydigan jami summa",
+    "tannarx": "Sotilgan mahsulot tannarxi",
+    "summa": "Amal summasi (to'lov, xarid, xarajat)"
+  },
+  "qoidalar": {
+    "buyurtma_topshirildi": {
+      "nom": "Buyurtma topshirildi (sotuv)",
+      "izoh": "Mahsulot mijozga berildi — daromad tan olinadi, qarz paydo bo'ladi",
+      "qatorlar": [
+        {"debet": "4010", "kredit": "9010", "summa": "qqssiz", "izoh": "Sotuvdan daromad"},
+        {"debet": "4010", "kredit": "6410", "summa": "qqs", "izoh": "QQS majburiyati", "shart": "qqs_bor"},
+        {"debet": "9110", "kredit": "2810", "summa": "tannarx", "izoh": "Sotilgan mahsulot tannarxi", "shart": "tannarx_bor"}
+      ]
+    },
+    "mijoz_tolovi": {
+      "nom": "Mijozdan to'lov",
+      "izoh": "Qarz kamayadi, pul kiradi",
+      "qatorlar": [
+        {"debet": "5010", "kredit": "4010", "summa": "summa", "izoh": "Mijoz to'lovi"}
+      ]
+    },
+    "material_kirim": {
+      "nom": "Material kirimi (xarid)",
+      "izoh": "Ombor to'ladi, yetkazib beruvchiga qarz paydo bo'ladi",
+      "qatorlar": [
+        {"debet": "1010", "kredit": "6010", "summa": "qqssiz", "izoh": "Material qiymati"},
+        {"debet": "4410", "kredit": "6010", "summa": "qqs", "izoh": "Hisobga olinadigan QQS", "shart": "qqs_bor"}
+      ]
+    },
+    "yetkazuvchiga_tolov": {
+      "nom": "Yetkazib beruvchiga to'lov",
+      "qatorlar": [
+        {"debet": "6010", "kredit": "5010", "summa": "summa", "izoh": "Yetkazib beruvchiga to'lov"}
+      ]
+    },
+    "material_ishlab_chiqarishga": {
+      "nom": "Material ishlab chiqarishga berildi",
+      "izoh": "Ombordan yechildi, tannarxga qo'shildi",
+      "qatorlar": [
+        {"debet": "2010", "kredit": "1010", "summa": "summa", "izoh": "Materialni hisobdan chiqarish"}
+      ]
+    },
+    "mahsulot_tayyor": {
+      "nom": "Tayyor mahsulot omborga kirdi",
+      "qatorlar": [
+        {"debet": "2810", "kredit": "2010", "summa": "summa", "izoh": "Ishlab chiqarishdan omborga"}
+      ]
+    },
+    "ish_haqi_hisoblandi": {
+      "nom": "Ish haqi hisoblandi",
+      "qatorlar": [
+        {"debet": "2010", "kredit": "6710", "summa": "summa", "izoh": "Ishlab chiqarish xodimlariga"}
+      ]
+    },
+    "ish_haqi_tolandi": {
+      "nom": "Ish haqi to'landi",
+      "qatorlar": [
+        {"debet": "6710", "kredit": "5010", "summa": "summa", "izoh": "Xodimga to'lov"}
+      ]
+    },
+    "sex_xarajati": {
+      "nom": "Sex xarajati",
+      "qatorlar": [
+        {"debet": "2010", "kredit": "5010", "summa": "summa", "izoh": "Ishlab chiqarish xarajati"}
+      ]
+    },
+    "mamuriy_xarajat": {
+      "nom": "Ma'muriy xarajat",
+      "qatorlar": [
+        {"debet": "9420", "kredit": "5010", "summa": "summa", "izoh": "Ma'muriy xarajat"}
+      ]
+    }
+  }
+}

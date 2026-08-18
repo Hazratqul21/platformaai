@@ -1,0 +1,42 @@
+{
+  "nom": "O'zbekiston Respublikasi hisoblar rejasi (ishchi to'plam)",
+  "asos": "21-son BHMS — Xo'jalik yurituvchi subyektlar moliya-xo'jalik faoliyatining schetlar rejasi",
+  "ogohlantirish": "Bu ISHCHI to'plam — tizim qo'llab-quvvatlaydigan amallar uchun kerak bo'lgan schetlar. To'liq reja kengroq. Prodga chiqishdan oldin buxgalter tasdiqlashi SHART.",
+  "schetlar": [
+    {"kod": "0100", "nom": "Asosiy vositalar", "tur": "aktiv", "sinf": "0"},
+    {"kod": "0200", "nom": "Asosiy vositalar eskirishi", "tur": "passiv", "sinf": "0"},
+
+    {"kod": "1010", "nom": "Xom ashyo va materiallar", "tur": "aktiv", "sinf": "1"},
+    {"kod": "1090", "nom": "Boshqa materiallar", "tur": "aktiv", "sinf": "1"},
+
+    {"kod": "2010", "nom": "Asosiy ishlab chiqarish", "tur": "aktiv", "sinf": "2"},
+    {"kod": "2310", "nom": "Yordamchi ishlab chiqarish", "tur": "aktiv", "sinf": "2"},
+    {"kod": "2810", "nom": "Omordagi tayyor mahsulot", "tur": "aktiv", "sinf": "2"},
+    {"kod": "2910", "nom": "Omordagi tovarlar", "tur": "aktiv", "sinf": "2"},
+
+    {"kod": "4010", "nom": "Xaridor va buyurtmachilardan olinadigan schetlar", "tur": "aktiv", "sinf": "4"},
+    {"kod": "4410", "nom": "Byudjetga to'langan avanslar (QQS hisobga olish)", "tur": "aktiv", "sinf": "4"},
+    {"kod": "4310", "nom": "Yetkazib beruvchilarga berilgan avanslar", "tur": "aktiv", "sinf": "4"},
+
+    {"kod": "5010", "nom": "Kassa (milliy valyutada)", "tur": "aktiv", "sinf": "5"},
+    {"kod": "5110", "nom": "Hisob-kitob schoti", "tur": "aktiv", "sinf": "5"},
+    {"kod": "5210", "nom": "Valyuta schoti", "tur": "aktiv", "sinf": "5"},
+
+    {"kod": "6010", "nom": "Mol yetkazib beruvchilarga to'lanadigan schetlar", "tur": "passiv", "sinf": "6"},
+    {"kod": "6310", "nom": "Xaridorlardan olingan avanslar", "tur": "passiv", "sinf": "6"},
+    {"kod": "6410", "nom": "Byudjetga to'lovlar bo'yicha qarz (QQS)", "tur": "passiv", "sinf": "6"},
+    {"kod": "6710", "nom": "Mehnat haqi bo'yicha xodimlar bilan hisob-kitob", "tur": "passiv", "sinf": "6"},
+
+    {"kod": "8330", "nom": "Hisobot davrining taqsimlanmagan foydasi", "tur": "passiv", "sinf": "8"},
+    {"kod": "8710", "nom": "Ustav kapitali", "tur": "passiv", "sinf": "8"},
+
+    {"kod": "9010", "nom": "Tayyor mahsulot sotishdan daromad", "tur": "daromad", "sinf": "9"},
+    {"kod": "9020", "nom": "Tovarlar sotishdan daromad", "tur": "daromad", "sinf": "9"},
+    {"kod": "9030", "nom": "Xizmat ko'rsatishdan daromad", "tur": "daromad", "sinf": "9"},
+    {"kod": "9110", "nom": "Sotilgan tayyor mahsulot tannarxi", "tur": "xarajat", "sinf": "9"},
+    {"kod": "9120", "nom": "Sotilgan tovarlar tannarxi", "tur": "xarajat", "sinf": "9"},
+    {"kod": "9410", "nom": "Sotish xarajatlari", "tur": "xarajat", "sinf": "9"},
+    {"kod": "9420", "nom": "Ma'muriy xarajatlar", "tur": "xarajat", "sinf": "9"},
+    {"kod": "9430", "nom": "Boshqa operatsion xarajatlar", "tur": "xarajat", "sinf": "9"}
+  ]
+}

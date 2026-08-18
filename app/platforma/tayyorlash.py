@@ -86,6 +86,10 @@ def bazani_toldir(sess, admin_parol: str = "", admin_ism: str = "Boshqaruvchi",
 
     profillarni_yukla(sess)
 
+    # Bosh kitob: hisoblar rejasi va provodka qoidalari (BHMS №21)
+    from ..hisob import xizmat as gl
+    gl.yukla(sess)
+
     # Agar ro'yxatdan o'tishda soha tanlangan bo'lsa — o'shani faollashtir.
     if profil_kaliti:
         sess.query(m.SohaProfil).update({m.SohaProfil.faol: False})

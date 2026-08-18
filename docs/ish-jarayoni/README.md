@@ -57,6 +57,12 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 017 | [Admin paneli](017-admin-paneli.md) | ✅ akkauntlarni ko'rish, muzlatish, platforma sarfi |
 | 018 | [AI ko'rsatmasi bazadan](018-ai-korsatmasi-bazadan.md) | ✅ prompt koddan chiqdi, xavfsizlik qismi qulflangan |
 
+### B bosqichi — Bosh kitob (buxgalteriya)
+
+| # | Yozuv | Holat |
+|---|---|---|
+| 019 | [Bosh kitob poydevori](019-bosh-kitob-poydevori.md) | ✅ dvigatel · ⏳ amallarga ulanmagan |
+
 ---
 
 ## Bog'liq hujjatlar

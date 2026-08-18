@@ -70,6 +70,10 @@ echo
 echo "════════ AI KO'RSATMASI — kod/platforma/akkaunt, xavfsizlik saqlanadi"
 "$PY" tests/korsatma_test.py || XATO=1
 
+echo
+echo "════════ BOSH KITOB — ikki yoqlama yozuv qoidalari"
+"$PY" tests/hisob_test.py || XATO=1
+
 yurgiz "PROFIL MUVOFIQLIGI — 22 soha to'liq sikldan o'tadimi" \
        SEED_EMPTY tests/profil_test.py
 yurgiz "CHUQUR SINOV — har sohada raqamlar to'g'rimi" \

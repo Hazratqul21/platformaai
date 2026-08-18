@@ -574,3 +574,97 @@ class AgentSozlama(Base):
     kim: Mapped[str] = mapped_column(String(100), default="")
     ozgartirilgan: Mapped[datetime] = mapped_column(DateTime,
                                                     default=datetime.utcnow)
+
+
+# =====================================================================
+# BOSH KITOB (bosqich B) — ikki yoqlama yozuv
+#
+# NEGA KERAK: hozir har bo'lim o'z hisobini yuritadi (qarz moliyada,
+# ombor omborda, kassa kassada). Ular bir-biriga to'g'ri kelmasligi
+# mumkin — oltita xato aynan shundan chiqqan edi. Bosh kitob hammasini
+# bitta manbaga bog'laydi.
+# =====================================================================
+
+class Schet(Base):
+    """Hisoblar rejasi (BHMS №21). Mijoz o'zgartira oladi.
+
+    `app/hisob/reja.json` — boshlang'ich shablon, haqiqat bazada
+    (profillar bilan bir xil naqsh)."""
+    __tablename__ = "schetlar"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kod: Mapped[str] = mapped_column(String(10), unique=True, index=True)
+    nom: Mapped[str] = mapped_column(String(200))
+    # aktiv / passiv / daromad / xarajat — balansdagi o'rnini belgilaydi
+    tur: Mapped[str] = mapped_column(String(20))
+    sinf: Mapped[str] = mapped_column(String(2), default="")
+    faol: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class Provodka(Base):
+    """Buxgalteriya yozuvi (hujjat darajasi).
+
+    ⚠️ PROVODKA O'CHIRILMAYDI. Xato bo'lsa STORNO yoziladi (teskari
+    yozuv). Buxgalteriyada yozuvni o'chirish — audit izini yo'q qilish
+    degani va soliq tekshiruvida javob berib bo'lmaydi.
+    """
+    __tablename__ = "provodkalar"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sana: Mapped[date] = mapped_column(Date, index=True)
+    hodisa: Mapped[str] = mapped_column(String(40))       # qoida kaliti
+    hujjat_turi: Mapped[str] = mapped_column(String(30), default="")
+    hujjat_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    izoh: Mapped[str] = mapped_column(String(300), default="")
+    kim: Mapped[str] = mapped_column(String(100), default="")
+    yaratilgan: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # Bu provodka boshqasini bekor qilyaptimi (storno)
+    storno_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    qatorlar: Mapped[list["ProvodkaQatori"]] = relationship(
+        back_populates="provodka", cascade="all, delete-orphan")
+
+
+class ProvodkaQatori(Base):
+    """Bitta korrespondensiya: Дт X — Кт Y, summa Z.
+
+    NEGA SHU SHAKL (jurnal uslubi emas): mahalliy amaliyotda provodka
+    aynan shunday yoziladi va buxgalter shuni tanidi. Bundan tashqari
+    BALANS STRUKTURA BILAN KAFOLATLANADI — har qator o'zi tenglashadi,
+    ya'ni «debet kreditga teng emas» holati umuman paydo bo'lmaydi.
+    """
+    __tablename__ = "provodka_qatorlari"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    provodka_id: Mapped[int] = mapped_column(ForeignKey("provodkalar.id"),
+                                             index=True)
+    debet: Mapped[str] = mapped_column(String(10), index=True)
+    kredit: Mapped[str] = mapped_column(String(10), index=True)
+    summa: Mapped[Decimal] = mapped_column(D)
+    izoh: Mapped[str] = mapped_column(String(200), default="")
+
+    provodka: Mapped["Provodka"] = relationship(back_populates="qatorlar")
+
+
+class ProvodkaQoida(Base):
+    """Hodisa -> provodka shabloni. Mijoz o'zgartira oladi.
+
+    `app/hisob/qoidalar.json` — shablon. Savdo korxonasi 2810 o'rniga
+    2910 ishlatishi mumkin va buning uchun kod yozilmaydi."""
+    __tablename__ = "provodka_qoidalar"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    hodisa: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    nom: Mapped[str] = mapped_column(String(150), default="")
+    tarif_json: Mapped[str] = mapped_column(Text)
+    kim: Mapped[str] = mapped_column(String(100), default="")
+    ozgartirilgan: Mapped[datetime] = mapped_column(DateTime,
+                                                    default=datetime.utcnow)
+
+
+class YopilganDavr(Base):
+    """Yopilgan buxgalteriya davri — unga yangi yozuv tushmaydi.
+
+    Buxgalter oyni yopib hisobot topshirgandan keyin o'sha oyga yozuv
+    qo'shilsa, topshirilgan hisobot bilan baza mos kelmay qoladi."""
+    __tablename__ = "yopilgan_davrlar"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    oy: Mapped[str] = mapped_column(String(7), unique=True)   # "2026-08"
+    yopilgan: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    kim: Mapped[str] = mapped_column(String(100), default="")

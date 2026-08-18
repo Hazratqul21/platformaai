@@ -29,7 +29,7 @@ from .seed import seed  # noqa: E402
 from .bot import start_bot_bg  # noqa: E402
 from .routers import (clients, orders, warehouse, hr, finance, reports,  # noqa: E402
                       users, constructor, catalog, purchase, kassa, soha,
-                      agent)
+                      agent, hisob)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -84,6 +84,8 @@ async def lifespan(app: FastAPI):
             domain.qayta_yukla(db)
             seed(db)
             backfill_soha(db)   # eski buyurtmalar attributes'siz qolmasin
+            from .hisob import xizmat as _gl
+            _gl.yukla(db)       # Bosh kitob: schetlar va provodka qoidalari
         finally:
             db.close()
     start_bot_bg()
@@ -211,7 +213,7 @@ def change_password(data: ChangePasswordIn,
 
 
 for r in (clients, orders, warehouse, hr, finance, reports, users,
-          constructor, catalog, purchase, kassa, soha, agent):
+          constructor, catalog, purchase, kassa, soha, agent, hisob):
     app.include_router(r.router)
 
 # Ro'yxatdan o'tish — boshqaruv bazasi bilan ishlaydi, akkauntiz ochiq.
