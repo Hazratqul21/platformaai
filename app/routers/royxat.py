@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import hash_pw, verify_pw
 from ..platforma import models as pm, xizmat as px
+from ..platforma import auth as pa
 from ..platforma.db import boshqaruv_db
 from ..platforma.tayyorlash import akkaunt_tayyorla
 
@@ -125,7 +126,9 @@ def kir(data: KirIn, db: Session = Depends(boshqaruv_db)):
     if not user or not verify_pw(data.parol, user.parol_hash):
         raise HTTPException(400, "Login yoki parol xato")
     akkaunt = db.get(pm.Akkaunt, user.akkaunt_id) if user.akkaunt_id else None
-    return {"login": user.login, "ism": user.ism,
+    token = pa.token_yarat(db, user)
+    return {"token": token, "login": user.login, "ism": user.ism,
+            "roli": user.platforma_roli,
             "akkaunt_kod": akkaunt.kod if akkaunt else None,
             "tayyorlik": akkaunt.tayyorlik if akkaunt else None,
             "manzil": f"https://{akkaunt.kod}.{_domen()}" if akkaunt else None}

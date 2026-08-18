@@ -55,8 +55,12 @@ echo "════════ IJARACHILIK — ikki mijoz bir jarayonda aralashm
 "$PY" tests/ijarachilik_test.py || XATO=1
 
 echo
-echo "════════ RO'YXATDAN O'TISH — firma yaratish -> ERP gacha to'liq oqim"
+echo "════════ RO'YXATDAN O'TISH — akkaunt yaratish -> ERP gacha to'liq oqim"
 "$PY" tests/royxat_test.py || XATO=1
+
+echo
+echo "════════ AKKAUNT KABINETI — AI sarfi shaffof, limit ishlaydi"
+"$PY" tests/kabinet_test.py || XATO=1
 
 yurgiz "PROFIL MUVOFIQLIGI — 22 soha to'liq sikldan o'tadimi" \
        SEED_EMPTY tests/profil_test.py

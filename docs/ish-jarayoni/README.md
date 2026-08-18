@@ -53,6 +53,7 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 013 | [Firma tayyorlash va ro'yxat](013-firma-tayyorlash-va-royxat.md) | ✅ ro'yxatdan o'tish → baza → ERP to'liq oqim |
 | 014 | [Ro'yxat frontend](014-royxat-frontend.md) | ✅ lending → forma → baza (brauzerda sinaldi) |
 | 015 | [Akkaunt nomlash tuzatishi](015-akkaunt-nomlash-tuzatishi.md) | ✅ tenant «firma»→«akkaunt» (nom to'qnashuvi) |
+| 016 | [Akkaunt kabineti](016-akkaunt-kabineti.md) | ✅ AI sarfi shaffof, limit; platforma tokeni |
 
 ---
 

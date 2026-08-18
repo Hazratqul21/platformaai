@@ -30,7 +30,8 @@ OCHIQ = {
     "/holat/{akkaunt_kod}": "baza tayyorlanish holati — sir emas",
     "/kir":               "platforma kabinetiga kirish nuqtasi",
 }
-HIMOYA = {"get_user", "get_user_parolsiz", "require_roles"}
+HIMOYA = {"get_user", "get_user_parolsiz", "require_roles",
+          "joriy_user", "joriy_admin"}   # platforma kabineti/admin
 USULLAR = {"get", "post", "put", "delete", "patch"}
 
 
