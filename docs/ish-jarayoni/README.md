@@ -51,6 +51,7 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 011 | [Ijarachilik yadrosi](011-ijarachilik-yadrosi.md) | ✅ contextvars, firma bo'yicha baza va kesh |
 | 012 | [Infratuzilma hisobi](012-infratuzilma-hisobi.md) | ✅ VDS konfiguratsiyasi, AI sarfi — o'lchangan |
 | 013 | [Firma tayyorlash va ro'yxat](013-firma-tayyorlash-va-royxat.md) | ✅ ro'yxatdan o'tish → baza → ERP to'liq oqim |
+| 014 | [Ro'yxat frontend](014-royxat-frontend.md) | ✅ lending → forma → baza (brauzerda sinaldi) |
 
 ---
 
