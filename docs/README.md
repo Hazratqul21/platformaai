@@ -52,6 +52,7 @@ qilindi — sababi [07-TARQATISH.md](07-TARQATISH.md) §7.2 da.
 | 05 | [INTEGRATSIYALAR](05-INTEGRATSIYALAR.md) | Payme/Click/Uzum → EHF → fiskal → telefoniya → marketpleys |
 | 07 | [TARQATISH](07-TARQATISH.md) | SaaS qarori, ma'lumot ajratish, AI sarfi, tarif, on-premise arxivi |
 | 08 | [FRONTEND](08-FRONTEND.md) | hozirgi holat, F1–F6 modernizatsiya, SaaS ekranlari |
+| 09 | [INFRATUZILMA](09-INFRATUZILMA.md) | **VDS konfiguratsiyasi va AI xarajati — o'lchangan raqamlar** |
 
 ### Ish hujjatlari (kod yozishda ochiladi)
 
@@ -102,15 +103,18 @@ to'lov · EHF · POS · CRM voronkasi · WMS · LMS · telefoniya
 tartibda:
 
 ```
-1. app/db.py        get_db firma bo'yicha, Engine hovuzi + LRU
-2. app/auth.py      token boshqaruv bazasida, get_user firmani qaytaradi
-3. app/domain.py    _KESH → contextvars (26 ta profil() chaqiruvi)
-   + tests/ijarachilik.py — shusiz «tayyor» deyilmaydi
+✅ app/platforma/     boshqaruv bazasi — firma, obuna, AI sarfi
+✅ app/tenancy.py     contextvars, Engine registri + LRU, subdomen
+✅ app/db.py          get_db firma bo'yicha (125 endpointga tegilmadi)
+✅ app/domain.py      _KESH mijoz bo'yicha ajratildi
+✅ tests/ijarachilik_test.py — ikki mijoz aralashmadi
+
+⏳ keyingisi: baza yaratish fon vazifasi · tools/migratsiya.py
+   --hammasi · ro'yxatdan o'tish · bot.py firma bo'yicha
 ```
 
-**17 151 qatordan jiddiy o'zgaradigani ~1 000 qator.** 125 endpoint,
-`services.py` va `genui.py` **tegilmaydi** — `Depends(get_db)` naqshi
-tufayli.
+Bashorat to'g'ri chiqdi: 125 endpoint, `services.py` va `genui.py`
+**tegilmadi** — `Depends(get_db)` naqshi tufayli.
 
 ---
 

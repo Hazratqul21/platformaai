@@ -300,6 +300,7 @@ va bosqichma-bosqich reja — `docs/` papkasida:
 | [06-YOL-XARITASI.md](docs/06-YOL-XARITASI.md) | bosqichlar, vaqtlar, yopilgan qarorlar |
 | [07-TARQATISH.md](docs/07-TARQATISH.md) | SaaS qarori, ma'lumot ajratish, AI sarfi, tarif |
 | [08-FRONTEND.md](docs/08-FRONTEND.md) | frontend holati va modernizatsiya tartibi |
+| [09-INFRATUZILMA.md](docs/09-INFRATUZILMA.md) | VDS konfiguratsiyasi, PostgreSQL sozlamasi, AI xarajati |
 | [KOD-XARITASI.md](docs/KOD-XARITASI.md) | har faylda nima bor, nimaga bog'liq, tegilganda nima buziladi |
 | [A-IJARACHILIK.md](docs/A-IJARACHILIK.md) | A bosqichi ish hujjati — jadval, endpoint, sinov mezoni |
 
