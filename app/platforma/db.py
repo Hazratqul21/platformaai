@@ -54,3 +54,35 @@ def boshqaruv_db():
 def jadvallarni_yarat() -> None:
     from . import models  # noqa: F401 — modellar ro'yxatga tushsin
     BoshqaruvBase.metadata.create_all(boshqaruv_engine)
+    _admin_boshlangich()
+
+
+def _admin_boshlangich() -> None:
+    """Birinchi platforma admini muhit o'zgaruvchisidan yaratiladi.
+
+    `PLATFORMA_ADMIN_LOGIN` + `PLATFORMA_ADMIN_PAROL` berilgan bo'lsa va
+    hali admin yo'q bo'lsa — yaratiladi. Admin akkauntga TEGISHLI EMAS
+    (u bizning xodim, tenant emas), shuning uchun `akkaunt_id=None`.
+
+    Nega env: admin — biz, kod ichida parol yozib qo'yilmasin. Berilmasa
+    admin yaratilmaydi (masalan sinovda kerak emas).
+    """
+    import os
+    login = (os.getenv("PLATFORMA_ADMIN_LOGIN") or "").strip().lower()
+    parol = os.getenv("PLATFORMA_ADMIN_PAROL") or ""
+    if not login or len(parol) < 8:
+        return
+    from . import models as pm
+    from ..auth import hash_pw
+    db = BoshqaruvSession()
+    try:
+        bor = db.query(pm.PlatformaUser).filter(
+            pm.PlatformaUser.platforma_roli == "admin").first()
+        if bor:
+            return
+        db.add(pm.PlatformaUser(login=login, parol_hash=hash_pw(parol),
+                                ism="Platforma admini", akkaunt_id=None,
+                                platforma_roli="admin", tasdiqlangan=True))
+        db.commit()
+    finally:
+        db.close()

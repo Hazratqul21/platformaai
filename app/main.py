@@ -20,6 +20,7 @@ from .db import Base, engine, get_db, SessionLocal  # noqa: E402
 from . import auth as auth_mod  # noqa: E402
 from .routers import royxat as royxat_router  # noqa: E402
 from .routers import kabinet as kabinet_router  # noqa: E402
+from .routers import admin as admin_router  # noqa: E402
 from .migrate import (run_migrations, backfill_soha,  # noqa: E402
                       profillarni_yukla, jadvalni_qayta_qur)
 from . import models as m  # noqa: E402
@@ -123,7 +124,8 @@ async def ijarachilik(request, call_next):
     # da ro'yxatdan o'tyapti), shuning uchun akkaunt talab qilinmaydi.
     if (yol == "/" or yol.startswith("/static") or yol == "/api/health"
             or yol.startswith("/api/platforma/")
-            or yol.startswith("/api/kabinet/")):
+            or yol.startswith("/api/kabinet/")
+            or yol.startswith("/api/admin/")):
         return await call_next(request)
 
     akkaunt = tenancy.sorovdan_akkaunt(request.headers.get("host", ""),
@@ -133,8 +135,13 @@ async def ijarachilik(request, call_next):
 
     # Obuna tugagan akkaunt O'QIY oladi, lekin YOZA olmaydi.
     # Ma'lumot garovga olinmaydi (docs/07-TARQATISH.md §7.7).
+    # DIQQAT: `/api/auth/*` (login, logout, parol) HAR DOIM ochiq —
+    # aks holda muzlatilgan akkaunt egasi tizimga KIRA olmaydi va
+    # o'qish/eksport ham imkonsiz bo'lardi. Login POST bo'lsa ham
+    # ma'lumotni o'zgartirmaydi.
     if (not akkaunt.yozish_mumkinmi
-            and request.method not in ("GET", "HEAD", "OPTIONS")):
+            and request.method not in ("GET", "HEAD", "OPTIONS")
+            and not yol.startswith("/api/auth/")):
         return JSONResponse(
             {"detail": "Obuna muddati tugagan — ma'lumot o'qish uchun "
                        "ochiq, yangi yozuv kiritilmaydi"}, status_code=402)
@@ -210,6 +217,7 @@ for r in (clients, orders, warehouse, hr, finance, reports, users,
 # Ro'yxatdan o'tish — boshqaruv bazasi bilan ishlaydi, akkauntiz ochiq.
 app.include_router(royxat_router.router)
 app.include_router(kabinet_router.router)
+app.include_router(admin_router.router)
 
 
 @app.get("/api/health", tags=["Tizim"])

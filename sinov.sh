@@ -62,6 +62,10 @@ echo
 echo "════════ AKKAUNT KABINETI — AI sarfi shaffof, limit ishlaydi"
 "$PY" tests/kabinet_test.py || XATO=1
 
+echo
+echo "════════ ADMIN PANELI — akkauntlarni ko'rish, muzlatish"
+"$PY" tests/admin_test.py || XATO=1
+
 yurgiz "PROFIL MUVOFIQLIGI — 22 soha to'liq sikldan o'tadimi" \
        SEED_EMPTY tests/profil_test.py
 yurgiz "CHUQUR SINOV — har sohada raqamlar to'g'rimi" \

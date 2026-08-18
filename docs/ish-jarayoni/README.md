@@ -54,6 +54,7 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 014 | [Ro'yxat frontend](014-royxat-frontend.md) | ✅ lending → forma → baza (brauzerda sinaldi) |
 | 015 | [Akkaunt nomlash tuzatishi](015-akkaunt-nomlash-tuzatishi.md) | ✅ tenant «firma»→«akkaunt» (nom to'qnashuvi) |
 | 016 | [Akkaunt kabineti](016-akkaunt-kabineti.md) | ✅ AI sarfi shaffof, limit; platforma tokeni |
+| 017 | [Admin paneli](017-admin-paneli.md) | ✅ akkauntlarni ko'rish, muzlatish, platforma sarfi |
 
 ---
 
