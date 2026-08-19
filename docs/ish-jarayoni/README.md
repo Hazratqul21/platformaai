@@ -66,6 +66,12 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 021 | [GL to'liq ulash + balans](021-gl-toliq-ulash-balans.md) | ✅ xarid/xarajat/avans, balans yig'ilyapti |
 | 022 | [Buxgalteriya ekrani](022-buxgalteriya-frontend.md) | ✅ 7 tab; ishlab chiqarish zanjiri ulandi |
 
+### Deploy
+
+| # | Yozuv | Holat |
+|---|---|---|
+| 023 | [Deploy: test.innasoft.uz](023-deploy-test-innasoft-uz.md) | ✅ ishlayapti, Rustam aka tizimidan ajratilgan |
+
 ---
 
 ## Bog'liq hujjatlar
