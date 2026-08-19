@@ -134,3 +134,33 @@ def sex_xarajati(db: Session, summa, sana: date, hujjat_id: int | None = None,
     return gl.qoida_boyicha(db, "sex_xarajati", sana or date.today(),
                             {"summa": summa}, hujjat_turi="xarajat",
                             hujjat_id=hujjat_id, izoh=izoh, kim=kim)
+
+
+@_xavfsiz("material_ishlab_chiqarishga")
+def material_ishlab_chiqarishga(db: Session, summa, sana: date,
+                                hujjat_id: int | None = None,
+                                kim: str = "") -> m.Provodka | None:
+    """Ombordan material yechildi va tannarxga qo'shildi: Дт2010 Кт1010."""
+    summa = _d(summa)
+    if summa <= NOL:
+        return None
+    return gl.qoida_boyicha(db, "material_ishlab_chiqarishga", sana or date.today(),
+                            {"summa": summa}, hujjat_turi="buyurtma",
+                            hujjat_id=hujjat_id, kim=kim)
+
+
+@_xavfsiz("mahsulot_tayyor")
+def mahsulot_tayyor(db: Session, summa, sana: date,
+                    hujjat_id: int | None = None,
+                    kim: str = "") -> m.Provodka | None:
+    """Tayyor mahsulot omborga kirdi: Дт2810 Кт2010.
+
+    BUSIZ sotuvda 2810 manfiy bo'lib ketadi — omborga kirmagan mahsulot
+    sotilgan bo'lib ko'rinadi. Balansda manfiy aktiv ko'rinsa, birinchi
+    navbatda shu zanjir tekshiriladi."""
+    summa = _d(summa)
+    if summa <= NOL:
+        return None
+    return gl.qoida_boyicha(db, "mahsulot_tayyor", sana or date.today(),
+                            {"summa": summa}, hujjat_turi="buyurtma",
+                            hujjat_id=hujjat_id, kim=kim)

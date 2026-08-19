@@ -646,10 +646,11 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
         # Retsept bo'lsa u ustun: umumiy dvigatel puxtaroq (qisman
         # yechmaydi, yetmasa umuman tegmaydi).
         qatorlar = domain.retsept_qatorlari(o)
+        material_qiymati = Decimal("0")
         if qatorlar:
             try:
-                s.retsept_yechish(db, o, qatorlar,
-                                  note=f"Buyurtma #{o.id} retsept bo'yicha")
+                material_qiymati = s.retsept_yechish(
+                    db, o, qatorlar, note=f"Buyurtma #{o.id} retsept bo'yicha")
             except ValueError as e:
                 raise HTTPException(409, str(e))
         xom, marka = domain.xomashyo_kerak(o)
@@ -657,10 +658,28 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
             brak = Decimal("1") + s.dset(db, "brak_percent") / 100
             need = (xom * brak).quantize(Decimal("0.0001"))
             try:
-                s.fifo_writeoff(db, marka, need, order_id=o.id,
-                                note=f"Buyurtma #{o.id} spisaniya (5% brak bilan)")
+                material_qiymati = s.fifo_writeoff(
+                    db, marka, need, order_id=o.id,
+                    note=f"Buyurtma #{o.id} spisaniya (5% brak bilan)") or Decimal("0")
             except ValueError as e:
                 raise HTTPException(409, str(e))
+
+        # BOSH KITOB — material ishlab chiqarishga berildi: Дт2010 Кт1010.
+        # Busiz 2810 (tayyor mahsulot) sotilganda MANFIY bo'lib ketardi —
+        # omborga kirmagan mahsulot sotilgan bo'lib ko'rinardi.
+        from ..hisob import ulash as gl_ulash
+        if material_qiymati and material_qiymati > 0:
+            gl_ulash.material_ishlab_chiqarishga(db, material_qiymati,
+                                                 date.today(), o.id, user.name)
+    if yangi_mano == "tayyor":
+        # Tayyor mahsulot omborga kirdi: Дт2810 Кт2010.
+        # Tannarx `unit_cost` dan olinadi — sotilganda ham shu summa
+        # 2810 dan chiqadi, ya'ni schet nolga qaytadi.
+        from ..hisob import ulash as gl_ulash
+        tannarx = Decimal(str(o.unit_cost or 0)) * Decimal(str(o.qty or 0))
+        if tannarx > 0:
+            gl_ulash.mahsulot_tayyor(db, tannarx, date.today(), o.id, user.name)
+
     if yangi_mano == "topshirildi":
         o.delivered_at = date.today()
         # DIQQAT: bu yerda `delivered_qty` ATAYLAB o'zgartirilmaydi va

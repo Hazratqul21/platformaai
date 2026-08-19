@@ -17,6 +17,9 @@ const NAV=[
   {p:'hr',t:t('hr'),i:'hr',roles:['Rahbar',"Sex boshlig'i",'Buxgalter']},
   {p:'fin',t:t('fin'),i:'wallet',roles:['Rahbar','Buxgalter','Menejer']},
   {p:'kassa',t:t('kassa'),i:'wallet',roles:['Rahbar','Buxgalter']},
+  // Buxgalteriya — Bosh kitob (bosqich B). Faqat Rahbar va Buxgalter:
+  // bu yerda korxonaning butun moliyaviy manzarasi turadi.
+  {p:'hisob',t:'Бухгалтерия',i:'doc',roles:['Rahbar','Buxgalter']},
   {p:'exp',t:t('exp'),i:'doc',roles:['Rahbar','Buxgalter',"Sex boshlig'i"]},
   {p:'set',t:t('set'),i:'gear',roles:['Rahbar']},
   {p:'help',t:'Йўриқнома',i:'doc',roles:['Rahbar','Menejer',"Sex boshlig'i",'Sklad mudiri','Buxgalter']}
@@ -32,6 +35,7 @@ const META={
   mat:[t('mats'), t('mats_sub')],
   zakup:[t('zakup'), t('zakup_sub')],
   kassa:[t('kassa'), t('kassa_sub')],
+  hisob:['Бухгалтерия','Бош китоб — икки ёқлама ёзув'],
   exp:[t('exp'), t('exp_sub')],
   set:[t('set'), t('set_sub')],
   ai:['AI ёрдамчи', 'Савол беринг, ҳисоблатинг, тизимни созланг'],
@@ -115,6 +119,12 @@ window.addEventListener('hashchange', () => {
 
 function enterApp(){
   document.getElementById('loginScreen').style.display='none';
+  // Lending ham yashirilishi SHART. Ilgari faqat login oynasi
+  // yashirilardi va lending (z-index 140) ilova ustida qolib ketardi —
+  // foydalanuvchi tizimga kirgan, lekin tanishtiruv sahifasini ko'rib
+  // turardi. Brauzerda sinovda ushlandi.
+  const lnd=document.getElementById('lending');
+  if(lnd) lnd.classList.remove('on');
   document.getElementById('app').classList.add('on');
   document.getElementById('uname').textContent=ME.name;
   document.getElementById('urole').textContent='· '+kir(ME.role);

@@ -131,9 +131,13 @@ print("\n3. DAROMAD QQSSIZ YOZILDIMI")
 # Shu buyurtmaning provodkasini topib, uning qatorlarini tekshiramiz —
 # saldo umumiy bo'lgani uchun (boshqa buyurtmalar ham bor) aynan shu
 # hujjatga qaraymiz.
+# Bitta hujjatga bir NECHTA provodka bo'lishi normal: material
+# ishlab chiqarishga (Дт2010 Кт1010), tayyor mahsulot (Дт2810 Кт2010),
+# SOTUV (Дт4010 Кт9010). Bizga sotuv provodkasi kerak.
 pr = [p for p in so("/api/hisob/provodkalar")["provodkalar"]
-      if p["hujjat"] == f"buyurtma#{oid}"]
-ok(len(pr) == 1, f"buyurtma provodkasi yozildi ({len(pr)})")
+      if p["hujjat"] == f"buyurtma#{oid}"
+      and p["hodisa"] == "buyurtma_topshirildi"]
+ok(len(pr) == 1, f"sotuv provodkasi yozildi ({len(pr)})")
 qatorlar = {(q["debet"], q["kredit"]): Decimal(str(q["summa"]))
             for q in pr[0]["qatorlar"]}
 ok(abs(qatorlar.get(("4010", "9010"), Decimal("0")) - (jami - qqs)) <= 1,

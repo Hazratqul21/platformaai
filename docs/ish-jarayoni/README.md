@@ -64,6 +64,7 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 019 | [Bosh kitob poydevori](019-bosh-kitob-poydevori.md) | ✅ dvigatel, qat'iy qoidalar |
 | 020 | [GL ulash (parallel)](020-gl-ulash-parallel.md) | ✅ topshirish/to'lov → provodka, eski usulga mos |
 | 021 | [GL to'liq ulash + balans](021-gl-toliq-ulash-balans.md) | ✅ xarid/xarajat/avans, balans yig'ilyapti |
+| 022 | [Buxgalteriya ekrani](022-buxgalteriya-frontend.md) | ✅ 7 tab; ishlab chiqarish zanjiri ulandi |
 
 ---
 
