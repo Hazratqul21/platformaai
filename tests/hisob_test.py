@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app import models as m                       # noqa: E402
 from app.db import Base, engine, SessionLocal     # noqa: E402
 from app.hisob import xizmat as gl                # noqa: E402
+NOL = Decimal("0")
 
 Base.metadata.create_all(engine)
 db = SessionLocal()
@@ -160,6 +161,41 @@ p4 = gl.qoida_boyicha(db, "buyurtma_topshirildi", date(2026, 9, 6),
 kreditlar = {x.kredit for x in p4.qatorlar}
 ok("2910" in kreditlar and "2810" not in kreditlar,
    f"o'zgartirilgan qoida ishladi: {kreditlar} (kod yozilmadi)")
+
+print("\n11. BALANS — aktiv == passiv")
+# Toza baza: ustav kapitali -> material xaridi -> sotuv -> to'lov
+db.query(m.ProvodkaQatori).delete()
+db.query(m.Provodka).delete()
+db.query(m.YopilganDavr).delete()
+db.commit()
+# Qoidani standartga qaytaramiz (10-bo'lim uni o'zgartirgan edi)
+db.query(m.ProvodkaQoida).delete()
+db.commit()
+gl.yukla(db)
+
+S = date(2026, 10, 5)
+gl.provodka_yoz(db, "qolda", S, [{"debet": "5010", "kredit": "8710",
+                                  "summa": Decimal("10000000"),
+                                  "izoh": "Ustav kapitali"}])
+gl.qoida_boyicha(db, "material_kirim", S,
+                 {"qqssiz": Decimal("3000000"), "qqs": NOL})
+gl.qoida_boyicha(db, "yetkazuvchiga_tolov", S, {"summa": Decimal("3000000")})
+gl.qoida_boyicha(db, "material_ishlab_chiqarishga", S, {"summa": Decimal("2000000")})
+gl.qoida_boyicha(db, "mahsulot_tayyor", S, {"summa": Decimal("2000000")})
+gl.qoida_boyicha(db, "buyurtma_topshirildi", S,
+                 {"qqssiz": Decimal("5000000"), "qqs": Decimal("600000"),
+                  "tannarx": Decimal("2000000")})
+gl.qoida_boyicha(db, "mijoz_tolovi", S, {"summa": Decimal("4000000")})
+
+b = gl.balans(db)
+ok(b["yigildimi"],
+   f"aktiv {b['aktiv_jami']} == passiv {b['passiv_jami']} "
+   f"(farq {b['farq']})")
+fz2 = gl.foyda_zarar(db)
+ok(fz2["foyda"] == Decimal("3000000"),
+   f"foyda 5 000 000 - 2 000 000 = {fz2['foyda']}")
+kodlar = {x["kod"] for x in b["passiv"]}
+ok("8330" in kodlar, "joriy davr foydasi passivda ko'rsatildi")
 
 db.close()
 print("\n" + "=" * 62)

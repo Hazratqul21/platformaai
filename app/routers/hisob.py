@@ -242,3 +242,16 @@ def davr_och(data: DavrIn, db: Session = Depends(get_db),
                              f"bo'lishi mumkin"))
     db.commit()
     return {"ok": True, "oy": data.oy}
+
+
+@router.get("/balans")
+def balans(sana: str | None = None, db: Session = Depends(get_db),
+           user=Depends(buxgalter)):
+    """Balans — aktiv va passiv. Ikkalasi teng bo'lishi shart."""
+    r = gl.balans(db, _sana(sana))
+    return {
+        "sana": r["sana"],
+        "aktiv": [{**x, "qoldiq": _f(x["qoldiq"])} for x in r["aktiv"]],
+        "passiv": [{**x, "qoldiq": _f(x["qoldiq"])} for x in r["passiv"]],
+        "aktiv_jami": _f(r["aktiv_jami"]), "passiv_jami": _f(r["passiv_jami"]),
+        "farq": _f(r["farq"]), "yigildimi": r["yigildimi"]}

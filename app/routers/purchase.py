@@ -107,6 +107,11 @@ def create_purchase(d: PurchaseIn, db: Session = Depends(get_db), user=Depends(b
                           reason=f"Xarid #{p.id}"))
     if paid > 0:
         ks.naqd_xarid(db, p, user.name)
+    # BOSH KITOB — parallel yozuv (xatosi xaridni to'xtatmaydi)
+    from ..hisob import ulash as gl_ulash
+    gl_ulash.material_kirim(db, p, user.name)
+    if paid > 0:
+        gl_ulash.yetkazuvchiga_tolov(db, paid, p.purchased_at, p.id, user.name)
     db.add(m.AuditLog(who=user.name, action="Xarid (zakup)",
                       detail=f"{mat.name} · {d.qty} {d.unit or mat.unit} · "
                              f"{float(total):,.0f} so'm · {d.payment_type}".replace(",", " ")))
@@ -217,6 +222,8 @@ def pay_purchase(d: PayIn, db: Session = Depends(get_db), user=Depends(buyer)):
     db.add(pp)
     db.flush()
     ks.xarid_qarziga_tolov(db, pp, user.name)
+    from ..hisob import ulash as gl_ulash
+    gl_ulash.yetkazuvchiga_tolov(db, pp.amount, date.today(), p.id, user.name)
     db.add(m.AuditLog(who=user.name, action="Xarid qarziga to'lov",
                       detail=f"Xarid #{p.id} · {d.amount:,.0f} so'm".replace(",", " ")))
     db.commit()

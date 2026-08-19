@@ -263,3 +263,44 @@ def foyda_zarar(db: Session, boshi: date | None = None,
             xarajat += x["qoldiq"]
     return {"daromad": daromad, "xarajat": xarajat,
             "foyda": daromad - xarajat, "tafsilot": tafsilot}
+
+
+def balans(db: Session, sana: date | None = None) -> dict:
+    """BALANS — aktiv va passiv.
+
+    Buxgalteriyaning asosiy hisoboti: korxonada nima bor (aktiv) va u
+    kimning puliga olingan (passiv). Ikkalasi TENG bo'lishi shart.
+
+    Foyda alohida hisoblanadi: 9-sinf schetlari (daromad/xarajat) yil
+    davomida yopilmaydi, ularning natijasi passivga «joriy davr foydasi»
+    bo'lib tushadi. Aks holda balans yig'ilmaydi.
+    """
+    aktiv, passiv = [], []
+    a_jami = p_jami = NOL
+
+    for s in db.query(m.Schet).order_by(m.Schet.kod).all():
+        if s.sinf == "9":
+            continue                      # foyda-zarar alohida
+        x = saldo(db, s.kod, None, sana)
+        if x["qoldiq"] == NOL and not x["debet"] and not x["kredit"]:
+            continue
+        qator = {"kod": s.kod, "nom": s.nom, "qoldiq": x["qoldiq"]}
+        if s.tur == "aktiv":
+            aktiv.append(qator)
+            a_jami += x["qoldiq"]
+        elif s.tur == "passiv":
+            passiv.append(qator)
+            p_jami += x["qoldiq"]
+
+    # Joriy davr foydasi — passivga qo'shiladi (zarar bo'lsa manfiy)
+    fz = foyda_zarar(db, None, sana)
+    foyda = fz["foyda"]
+    if foyda != NOL:
+        passiv.append({"kod": "8330", "nom": "Joriy davr foydasi (zarari)",
+                       "qoldiq": foyda})
+        p_jami += foyda
+
+    return {"sana": (sana or date.today()).isoformat(),
+            "aktiv": aktiv, "passiv": passiv,
+            "aktiv_jami": a_jami, "passiv_jami": p_jami,
+            "farq": a_jami - p_jami, "yigildimi": a_jami == p_jami}

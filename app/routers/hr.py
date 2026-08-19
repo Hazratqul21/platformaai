@@ -202,6 +202,15 @@ def add_cash(data: CashIn, db: Session = Depends(get_db),
     else:
         ks.xodim_avansi(db, c, user.name)
 
+    # BOSH KITOB — parallel. Xarajat: Дт2010 Кт5010,
+    # xodim avansi: Дт6710 Кт5010 (ish haqi bo'yicha qarz kamayadi).
+    from ..hisob import ulash as gl_ulash
+    if data.kind == "Xarajat":
+        gl_ulash.sex_xarajati(db, c.amount, date.today(), c.id,
+                              izoh=data.note or "Sex xarajati", kim=user.name)
+    else:
+        gl_ulash.ish_haqi_tolandi(db, c.amount, date.today(), c.id, user.name)
+
     db.add(m.AuditLog(who=user.name,
                       action="Pul berildi" if data.kind == "Avans" else "Xarajat yozildi",
                       detail=f"{who} · {data.amount:,.0f} so'm · {data.note or 'izohsiz'}"))
