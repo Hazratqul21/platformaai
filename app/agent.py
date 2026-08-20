@@ -612,7 +612,37 @@ def _javobni_qisqartir(natija: dict) -> dict:
     return qisqa
 
 
-def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash"):
+def _ai_sarf_yoz(javob: dict, agent_kalit: str, user_login: str = "") -> None:
+    """AI so'rovini boshqaruv bazasidagi `ai_sarf` ga yozadi.
+
+    Ijarachiliksiz rejimda (akkaunt yo'q) — o'tkazib yuboriladi.
+    Xatosi AI javobini TO'XTATMAYDI: sarf yozilmasa ham foydalanuvchi
+    javobsiz qolmasin. Har LLM chaqiruvi alohida yoziladi (har qadam
+    o'z tokenini sarflaydi)."""
+    try:
+        from . import tenancy
+        akkaunt = tenancy.joriy() if tenancy.yoqilganmi() else None
+        if not akkaunt:
+            return
+        from .platforma.db import BoshqaruvSession
+        from .platforma import xizmat as px
+        bdb = BoshqaruvSession()
+        try:
+            px.sarf_yoz(
+                bdb, akkaunt.id, javob.get("provayder", ""),
+                javob.get("model", ""),
+                int(javob.get("kirish_token", 0) or 0),
+                int(javob.get("chiqish_token", 0) or 0),
+                agent=agent_kalit, user_login=user_login,
+                muvaffaqiyat=not javob.get("rad_etildi"))
+        finally:
+            bdb.close()
+    except Exception:                                  # noqa: BLE001
+        log.warning("AI sarfi yozilmadi (javob buzilmadi)")
+
+
+def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash",
+                user_login: str = ""):
     """Bitta navbatni yuritadi va HAR QADAMNI oqim sifatida chiqaradi.
 
     NEGA OQIM: agent bitta savolga 10–25 soniya sarflaydi (model
@@ -696,6 +726,8 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash"):
             yield {"tur": "qayta_boshlandi"}
             continue
         provayder, model = javob["provayder"], javob["model"]
+        # AI SARFI — har chaqiruvdan keyin (ijarachilikda ai_sarf ga).
+        _ai_sarf_yoz(javob, agent_kalit, user_login)
 
         if javob["rad_etildi"]:
             yield yakun("Kechirasiz, bu so'rovga javob bera olmadim. "
@@ -743,14 +775,15 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash"):
                 "Nima qilishimni aniqroq ayting.")
 
 
-def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash") -> dict:
+def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash",
+           user_login: str = "") -> dict:
     """Oqimsiz variant — oxirgi natijani qaytaradi.
 
     `suhbat_oqim` ustiga qurilgan, ya'ni mantiq bitta joyda. Oqim
     kerak bo'lmagan chaqiruvchilar (bot, testlar) shuni ishlatadi.
     """
     oxirgi = None
-    for hodisa in suhbat_oqim(db, xabarlar, agent_kalit):
+    for hodisa in suhbat_oqim(db, xabarlar, agent_kalit, user_login):
         if hodisa.get("tur") == "yakun":
             oxirgi = hodisa
     if oxirgi is None:                       # bo'lmasligi kerak, lekin

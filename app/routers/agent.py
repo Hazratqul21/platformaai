@@ -176,7 +176,8 @@ def oqim(data: XabarIn, db: Session = Depends(get_db), user=Depends(get_user)):
                          ensure_ascii=False) + "\n"
         yakuniy = None
         try:
-            for hodisa in ai.suhbat_oqim(db, tarix, data.agent):
+            for hodisa in ai.suhbat_oqim(db, tarix, data.agent,
+                                        getattr(user, "login", "")):
                 if hodisa.get("tur") == "yakun":
                     yakuniy = hodisa
                     # Xom tarixni mijozga bermaymiz — u katta va kerak emas

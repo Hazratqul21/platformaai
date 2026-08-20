@@ -179,11 +179,14 @@ def _anthropic(xabarlar, asboblar, korsatma, model):
     # shuning uchun `stop_reason` content dan OLDIN tekshiriladi.
     if javob.stop_reason == "refusal":
         return {"matn": "", "chaqiruvlar": [], "rad_etildi": True}
+    u = getattr(javob, "usage", None)
     return {
         "matn": "".join(b.text for b in javob.content if b.type == "text"),
         "chaqiruvlar": [{"id": b.id, "nom": b.name, "kirish": b.input or {}}
                         for b in javob.content if b.type == "tool_use"],
         "rad_etildi": False,
+        "kirish_token": int(getattr(u, "input_tokens", 0) or 0),
+        "chiqish_token": int(getattr(u, "output_tokens", 0) or 0),
     }
 
 
@@ -236,6 +239,8 @@ def _openai(xabarlar, asboblar, korsatma, model):
              "kirish": _json_yoki_bosh(c.function.arguments)}
             for c in (xabar.tool_calls or [])],
         "rad_etildi": False,
+        "kirish_token": int(getattr(getattr(javob, "usage", None), "prompt_tokens", 0) or 0),
+        "chiqish_token": int(getattr(getattr(javob, "usage", None), "completion_tokens", 0) or 0),
     }
 
 
@@ -344,7 +349,10 @@ def _gemini(xabarlar, asboblar, korsatma, model):
             raise JavobBuzildi(sabab)
         matn = (f"Model bo'sh javob qaytardi (sabab: {sabab}). "
                 f"Savolni qisqaroq yoki aniqroq yozib ko'ring.")
-    return {"matn": matn, "chaqiruvlar": chaqiruvlar, "rad_etildi": False}
+    um = getattr(javob, "usage_metadata", None)
+    return {"matn": matn, "chaqiruvlar": chaqiruvlar, "rad_etildi": False,
+            "kirish_token": int(getattr(um, "prompt_token_count", 0) or 0),
+            "chiqish_token": int(getattr(um, "candidates_token_count", 0) or 0)}
 
 
 def _gemini_sxema(sxema: dict) -> dict:
