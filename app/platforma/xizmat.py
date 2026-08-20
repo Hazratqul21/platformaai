@@ -123,6 +123,7 @@ def limit_holati(db: Session, akkaunt_id: int, oy: str | None = None) -> dict:
 KOD_QOLIP = re.compile(r"^[a-z][a-z0-9-]{2,39}$")
 # Subdomen sifatida ishlatib bo'lmaydigan yoki chalkashtiradigan nomlar.
 BAND_KODLAR = {"www", "api", "app", "admin", "mail", "ftp", "ns", "static",
+               "test", "tizim", "archive", "base", "diydor",
                "cdn", "test", "dev", "stage", "docs", "status", "innasoft"}
 
 

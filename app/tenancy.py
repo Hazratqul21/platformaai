@@ -184,6 +184,11 @@ def hammasini_yop() -> None:
 # ---------------------------------------------------------------------
 _ASOSIY_DOMEN = None
 
+# Akkaunt bo'la OLMAYDIGAN subdomenlar: platforma entry (test = ro'yxatdan
+# o'tish sahifasi) va shu serverdagi boshqa loyihalar.
+BAND_SUBDOMEN = {"www", "app", "api", "admin", "test", "tizim", "archive",
+                 "base", "diydor", "mail", "ftp", "ns", "static", "cdn"}
+
 
 def asosiy_domen() -> str:
     return os.getenv("ASOSIY_DOMEN", "innasoft.uz").lower()
@@ -199,7 +204,9 @@ def kod_ajrat(host: str) -> str | None:
         return None
     kod = host[: -(len(domen) + 1)]
     # `www.innasoft.uz` akkaunt emas; ichma-ich subdomen ham qabul qilinmaydi
-    if not kod or "." in kod or kod in ("www", "app", "api", "admin"):
+    # Band subdomenlar: platforma xizmat nomlari + shu serverdagi BOSHQA
+    # loyihalar (tizim/archive/base/diydor). Ular akkaunt EMAS.
+    if not kod or "." in kod or kod in BAND_SUBDOMEN:
         return None
     return kod
 
