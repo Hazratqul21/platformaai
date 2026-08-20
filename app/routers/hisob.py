@@ -255,3 +255,31 @@ def balans(sana: str | None = None, db: Session = Depends(get_db),
         "passiv": [{**x, "qoldiq": _f(x["qoldiq"])} for x in r["passiv"]],
         "aktiv_jami": _f(r["aktiv_jami"]), "passiv_jami": _f(r["passiv_jami"]),
         "farq": _f(r["farq"]), "yigildimi": r["yigildimi"]}
+
+
+@router.get("/boshlangich-qoldiq")
+def boshlangich_qoldiq_korish(db: Session = Depends(get_db), user=Depends(buxgalter)):
+    """Sehrgar ko'rsatishi uchun: hozirgi holat + kiritilganmi."""
+    q = gl.boshlangich_qoldiq_hisobla(db)
+    return {"bor": gl.boshlangich_qoldiq_bormi(db),
+            "mijoz_qarzi": _f(q["mijoz_qarzi"]), "mijoz_avansi": _f(q["mijoz_avansi"]),
+            "yetkazuvchi_qarzi": _f(q["yetkazuvchi_qarzi"]),
+            "kassa": _f(q["kassa"]), "ombor": _f(q["ombor"])}
+
+
+class BoshlangichIn(BaseModel):
+    sana: str | None = None
+
+
+@router.post("/boshlangich-qoldiq")
+def boshlangich_qoldiq_kirit(data: BoshlangichIn, db: Session = Depends(get_db),
+                             user=Depends(require_roles("Rahbar", "Buxgalter"))):
+    """Ochilish provodkasini yozadi — balans haqiqiy raqam ko'rsatadi."""
+    try:
+        p = gl.boshlangich_qoldiq_yoz(db, _sana(data.sana), kim=user.name)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    db.add(m.AuditLog(who=user.name, action="Boshlang'ich qoldiq kiritildi",
+                      detail=f"provodka #{p.id}"))
+    db.commit()
+    return {"ok": True, "provodka_id": p.id}

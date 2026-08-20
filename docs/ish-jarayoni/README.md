@@ -85,3 +85,4 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 028 | [AI sarfini yozish](028-ai-sarfi-yozish.md) | ✅ llm token qaytaradi, agent ai_sarf ga yozadi |
 | 029 | [Frontend sayqali (1-tur)](029-frontend-sayqal-1.md) | ✅ buyurtma rasmlari + buxgalteriya bo'sh holati |
 | 030 | [Uploads izolyatsiya](030-uploads-izolyatsiya.md) | ✅ rasm akkaunt papkasidan, leak yopildi |
+| 031 | [Boshlang'ich qoldiq sehrgari](031-boshlangich-qoldiq-sehrgari.md) | ✅ balans to'ldi (1.56 mlrd, aktiv=passiv) |

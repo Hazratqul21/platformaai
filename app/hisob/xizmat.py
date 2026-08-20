@@ -304,3 +304,86 @@ def balans(db: Session, sana: date | None = None) -> dict:
             "aktiv": aktiv, "passiv": passiv,
             "aktiv_jami": a_jami, "passiv_jami": p_jami,
             "farq": a_jami - p_jami, "yigildimi": a_jami == p_jami}
+
+
+# =====================================================================
+# BOSHLANG'ICH QOLDIQ SEHRGARI
+#
+# Mavjud korxona GL siz ishlab kelgan bo'lsa (yoki ma'lumot ko'chirilgan
+# bo'lsa), balans BO'SH chiqadi — GL faqat yangi amallardan boshlanadi.
+# Bu sehrgar ERP ning HOZIRGI holatidan (mijoz qarzi, yetkazuvchi qarzi,
+# kassa, ombor) ochilish provodkalarini yaratadi va balans HAQIQIY
+# raqam ko'rsatadi.
+#
+# Har qator Дт—Кт shakli bilan 8330 (taqsimlanmagan foyda) ga
+# tenglashtiriladi — natijada aktiv == passiv AVTOMAT (struktura).
+# =====================================================================
+def boshlangich_qoldiq_hisobla(db: Session) -> dict:
+    """Hozirgi holatni sanaydi (yozmaydi) — sehrgar ko'rsatishi uchun."""
+    from .. import services as s
+    from decimal import Decimal as D
+
+    # Mijoz qarzi (musbat = bizga qarzdor) va avans (manfiy)
+    qarz = avans = NOL
+    for v in s.client_balances_batch(db).values():
+        d = D(str(v.get("debt", 0)))
+        if d >= 0:
+            qarz += d
+        else:
+            avans += -d
+
+    # Yetkazib beruvchi qarzi (global): olindi − berildi
+    got = (_d(db.query(func.coalesce(func.sum(m.Purchase.total), 0)).scalar())
+           + _d(db.query(func.coalesce(
+               func.sum(m.RawLot.qty_kg * m.RawLot.price_per_kg), 0)).scalar()))
+    paid = (_d(db.query(func.coalesce(func.sum(m.Purchase.paid_amount), 0)).scalar())
+            + _d(db.query(func.coalesce(func.sum(m.PurchasePayment.amount), 0)).scalar())
+            + _d(db.query(func.coalesce(func.sum(m.SupplierPayment.amount), 0)).scalar()))
+    yetkazuvchi = max(NOL, got - paid)
+
+    # Kassa (kirim − chiqim, so'mda)
+    kirim = _d(db.query(func.coalesce(func.sum(m.KassaEntry.amount), 0))
+               .filter(m.KassaEntry.direction == "Kirim",
+                       m.KassaEntry.currency == "so'm").scalar())
+    chiqim = _d(db.query(func.coalesce(func.sum(m.KassaEntry.amount), 0))
+                .filter(m.KassaEntry.direction == "Chiqim",
+                        m.KassaEntry.currency == "so'm").scalar())
+    kassa = max(NOL, kirim - chiqim)
+
+    # Ombor qiymati: material qoldig'i + qog'oz partiyalari qoldig'i
+    ombor = (_d(db.query(func.coalesce(
+                 func.sum(m.Material.stock_qty * m.Material.last_price), 0)).scalar())
+             + _d(db.query(func.coalesce(
+                 func.sum(m.RawLot.remaining_kg * m.RawLot.price_per_kg), 0)).scalar()))
+
+    return {"mijoz_qarzi": qarz, "mijoz_avansi": avans,
+            "yetkazuvchi_qarzi": yetkazuvchi, "kassa": kassa, "ombor": ombor}
+
+
+def boshlangich_qoldiq_bormi(db: Session) -> bool:
+    return (db.query(m.Provodka)
+            .filter(m.Provodka.hodisa == "boshlangich_qoldiq").first() is not None)
+
+
+def boshlangich_qoldiq_yoz(db: Session, sana: date | None = None,
+                           kim: str = "") -> m.Provodka:
+    """Ochilish provodkasini yozadi. BIR MARTA — takror chaqirilsa xato."""
+    if boshlangich_qoldiq_bormi(db):
+        raise ValueError("Boshlang'ich qoldiq allaqachon kiritilgan")
+    q = boshlangich_qoldiq_hisobla(db)
+    KAP = "8330"          # taqsimlanmagan foyda — muvozanat scheti
+    qatorlar = [
+        {"debet": "4010", "kredit": KAP, "summa": q["mijoz_qarzi"],
+         "izoh": "Mijozlar qarzi (ochilish)"},
+        {"debet": "5010", "kredit": KAP, "summa": q["kassa"],
+         "izoh": "Kassa qoldig'i (ochilish)"},
+        {"debet": "1010", "kredit": KAP, "summa": q["ombor"],
+         "izoh": "Ombor qoldig'i (ochilish)"},
+        {"debet": KAP, "kredit": "6010", "summa": q["yetkazuvchi_qarzi"],
+         "izoh": "Yetkazib beruvchi qarzi (ochilish)"},
+        {"debet": KAP, "kredit": "6310", "summa": q["mijoz_avansi"],
+         "izoh": "Mijozlardan olingan avans (ochilish)"},
+    ]
+    return provodka_yoz(db, "boshlangich_qoldiq", sana or date.today(),
+                        qatorlar, hujjat_turi="ochilish",
+                        izoh="Boshlang'ich qoldiq (ERP holatidan)", kim=kim)

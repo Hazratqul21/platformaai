@@ -72,8 +72,10 @@ async function hisobBalans() {
         Баланс <b>янги амаллардан</b> тўлади: буюртма топширилганда,
         тўлов қабул қилинганда ва харид қилинганда автомат проводка ёзилади.<br>
         Эски маълумот (қарзлар, касса, омбор) баланста кўриниши учун
-        <b>бошланғич қолдиқ</b> киритилади — уни қўлда проводка орқали
-        (Проводкалар → «Қўлда проводка») ёки бухгалтер тасдиғи билан қилинади.</div>
+        <b>бошланғич қолдиқ</b> киритилади — тизим ҳозирги ҳолатдан
+        (мижоз қарзи, етказувчи қарзи, касса, омбор) автомат ҳисоблаб беради.</div>
+      <button class="btn pri" style="margin-top:18px" onclick="boshlangichSehrgar()">
+        Бошланғич қолдиқ киритиш</button>
     </div>`;
   }
   const qator = x => `<tr><td class="muted" style="width:64px">${x.kod}</td>
@@ -330,4 +332,45 @@ async function davrOch(oy) {
     await api('/api/hisob/davr/och', 'POST', { oy });
     toast('w', 'alertic', 'Давр очилди', 'Аудитга ёзилди'); hisobTab('davr');
   } catch (e) { toast('d', 'alertic', 'Бажарилмади', e.message); }
+}
+
+
+/* ---------- BOSHLANG'ICH QOLDIQ SEHRGARI ---------- */
+async function boshlangichSehrgar() {
+  let d;
+  try { d = await api('/api/hisob/boshlangich-qoldiq'); }
+  catch (e) { return toast('d','alertic','Хатолик', e.message); }
+  if (d.bor) return toast('w','alertic','Аллақачон','Бошланғич қолдиқ киритилган');
+
+  const qator = (nom, val, akt) => `<tr>
+    <td>${nom}</td>
+    <td style="text-align:right"><b>${som(val)}</b> сўм</td>
+    <td class="muted" style="font-size:11px">${akt}</td></tr>`;
+
+  modal(`<h2 class="sec">Бошланғич қолдиқ</h2>
+  <div class="muted" style="font-size:12px;margin:4px 0 12px;line-height:1.55">
+    Тизим ҳозирги ҳолатдан ҳисоблади. Тасдиқласангиз, ушбу қолдиқлар
+    билан <b>очилиш проводкаси</b> ёзилади ва баланс тўлади.
+    Актив ва пассив ТЕНГ бўлади (2-ёқлама ёзув).</div>
+  <table><tbody>
+    ${qator('Мижозлар қарзи (актив)', d.mijoz_qarzi, 'Дт 4010')}
+    ${qator('Касса (актив)', d.kassa, 'Дт 5010')}
+    ${qator('Омбор қолдиғи (актив)', d.ombor, 'Дт 1010')}
+    ${qator('Етказиб берувчи қарзи (пассив)', d.yetkazuvchi_qarzi, 'Кт 6010')}
+    ${d.mijoz_avansi>0 ? qator('Мижоз аванси (пассив)', d.mijoz_avansi, 'Кт 6310') : ''}
+  </tbody></table>
+  <label class="fl" style="margin-top:10px">Сана</label>
+  <input class="fld" id="bq_sana" type="date" value="${new Date().toISOString().slice(0,10)}"/>
+  <div class="row" style="margin-top:16px;justify-content:flex-end;gap:8px">
+    <button class="btn ghost" onclick="closeModal()">Бекор</button>
+    <button class="btn pri" onclick="boshlangichSaqla()">Тасдиқлаш ва ёзиш</button></div>`);
+}
+
+async function boshlangichSaqla() {
+  try {
+    await api('/api/hisob/boshlangich-qoldiq', 'POST', { sana: f('bq_sana') });
+    closeModal();
+    toast('o','check','Ёзилди','Баланс энди ҳақиқий рақам кўрсатади');
+    hisobTab('balans');
+  } catch (e) { toast('d','alertic','Ёзилмади', e.message); }
 }
