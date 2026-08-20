@@ -834,8 +834,12 @@ def upload_photo(oid: int, body: PhotoIn, db: Session = Depends(get_db),
     if len(o.photos) >= 10:
         raise HTTPException(400, "Бир буюртмага кўпи билан 10 та расм")
 
-    upload_dir = Path(__file__).resolve().parent.parent.parent / "uploads"
-    upload_dir.mkdir(exist_ok=True)
+    # AKKAUNT PAPKASIGA saqlanadi — bir akkaunt rasmi boshqasiga
+    # ko'rinmasin (ijarachiliksiz rejimda papka "_yagona").
+    from .. import tenancy
+    upload_dir = (Path(__file__).resolve().parent.parent.parent
+                  / "uploads" / tenancy.kalit())
+    upload_dir.mkdir(parents=True, exist_ok=True)
     ext = "png" if blob[:8] == b"\x89PNG\r\n\x1a\n" else "webp" if blob[8:12] == b"WEBP" else "jpg"
     name = f"order_{oid}_{int(datetime.now().timestamp() * 1000)}.{ext}"
     (upload_dir / name).write_bytes(blob)

@@ -84,3 +84,4 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 027 | [To'liq ma'lumot + admin panel](027-toliq-malumot-va-admin-panel.md) | ✅ kochir 9 jadval qo'shdi, admin.innasoft.uz |
 | 028 | [AI sarfini yozish](028-ai-sarfi-yozish.md) | ✅ llm token qaytaradi, agent ai_sarf ga yozadi |
 | 029 | [Frontend sayqali (1-tur)](029-frontend-sayqal-1.md) | ✅ buyurtma rasmlari + buxgalteriya bo'sh holati |
+| 030 | [Uploads izolyatsiya](030-uploads-izolyatsiya.md) | ✅ rasm akkaunt papkasidan, leak yopildi |

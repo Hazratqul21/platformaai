@@ -269,7 +269,32 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 # Mahsulot rasmlari (sexda telefonda olingan) — diskda saqlanadi
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+import re as _re
+_SAFE_FAYL = _re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+@app.get("/uploads/{fayl}", include_in_schema=False)
+def upload_fayl(fayl: str):
+    """Rasmni JORIY akkauntning papkasidan beradi.
+
+    Ilgari flat `StaticFiles` mount edi — hamma akkaunt bitta papkani
+    ko'rardi (bir akkaunt rasmini boshqasi ochsa bo'lardi). Endi host'dan
+    aniqlangan akkauntning papkasidan beriladi. Path traversal
+    (`..`, `/`) rad etiladi.
+    """
+    from . import tenancy
+    if not _SAFE_FAYL.match(fayl):
+        raise HTTPException(404, "Rasm topilmadi")
+    yol = UPLOAD_DIR / tenancy.kalit() / fayl
+    if yol.is_file():
+        return FileResponse(yol, headers={"Cache-Control": "public, max-age=86400"})
+    # Yagona rejimda eski (flat) rasmlar ham ishlasin. Ijarachilikda
+    # bu yo'l YO'Q — aks holda subdomen orqali leak bo'lardi.
+    if not tenancy.yoqilganmi() and (UPLOAD_DIR / fayl).is_file():
+        return FileResponse(UPLOAD_DIR / fayl,
+                            headers={"Cache-Control": "public, max-age=86400"})
+    raise HTTPException(404, "Rasm topilmadi")
 
 
 if __name__ == "__main__":

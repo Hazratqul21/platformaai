@@ -23,6 +23,10 @@ OCHIQ = {
     "/":                "statik sahifa",
     "/favicon.ico":     "statik",
     "/robots.txt":      "statik",
+    # Rasm — `<img src>` auth sarlavha yubormaydi, shuning uchun URL
+    # bo'yicha ochiq (avvalgi StaticFiles mount ham shunday edi). Endi
+    # akkaunt papkasidan beriladi — bir akkaunt boshqasinikini ko'rmaydi.
+    "/uploads/{fayl}":  "mahsulot rasmi — akkaunt papkasidan",
     # Ro'yxatdan o'tish — odam hali firmaga ega EMAS, token bo'lishi
     # mumkin emas. Boshqaruv bazasi bilan ishlaydi, ERP ma'lumotiga
     # tegmaydi. Parol tekshiruvi endpoint ichida.
