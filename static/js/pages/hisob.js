@@ -61,6 +61,21 @@ const som = n => new Intl.NumberFormat('ru-RU').format(Math.round(n || 0));
 /* ---------- BALANS ---------- */
 async function hisobBalans() {
   const b = await api('/api/hisob/balans');
+  // Bo'sh balans (provodka yo'q) — chalkash 0 lar o'rniga tushuntirish.
+  // Ko'chirilgan tarixiy ma'lumotda provodka bo'lmaydi: GL faqat YANGI
+  // amallardan boshlanadi.
+  if(!b.aktiv.length && !b.passiv.length){
+    return `<div class="glass card" style="text-align:center;padding:40px 24px">
+      <div style="font-size:34px;margin-bottom:12px">📖</div>
+      <h2 class="sec" style="margin-bottom:8px">Бош китоб ҳали бўш</h2>
+      <div class="muted" style="font-size:13px;line-height:1.65;max-width:520px;margin:0 auto">
+        Баланс <b>янги амаллардан</b> тўлади: буюртма топширилганда,
+        тўлов қабул қилинганда ва харид қилинганда автомат проводка ёзилади.<br>
+        Эски маълумот (қарзлар, касса, омбор) баланста кўриниши учун
+        <b>бошланғич қолдиқ</b> киритилади — уни қўлда проводка орқали
+        (Проводкалар → «Қўлда проводка») ёки бухгалтер тасдиғи билан қилинади.</div>
+    </div>`;
+  }
   const qator = x => `<tr><td class="muted" style="width:64px">${x.kod}</td>
     <td>${esc(x.nom)}</td><td style="text-align:right"><b>${som(x.qoldiq)}</b></td></tr>`;
   const bos = b.yigildimi

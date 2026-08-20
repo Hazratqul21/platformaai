@@ -45,6 +45,7 @@ function renderOrders(){
         <span class="tag ${sohaTag(o.status)}">${kir(o.status)}</span></div>
       ${o.photo_url?`<img src="${esc(o.photo_url)}" alt="маҳсулот расми" loading="lazy"
         style="width:100%;height:130px;object-fit:cover;border-radius:10px;margin-top:8px;cursor:zoom-in"
+        onerror="this.style.display='none'"
         onclick="rasmniKatta('${esc(o.photo_url)}')"/>`:''}
       <div style="font-size:12.5px;margin-top:4px"><b>${esc(o.company)}</b></div>
       ${o.product_name ? `<div style="font-size:12px;margin-top:2px;color:var(--text-main)">📦 ${esc(o.product_name)}</div>` : ''}
@@ -232,6 +233,7 @@ function ordPhotoGallery(o){
   }
   return `<div style="position:relative">
     <img id="ord_ph_img" src="${esc(ph[0].url)}" style="width:100%;max-height:300px;object-fit:contain;border-radius:12px;background:var(--hair);cursor:zoom-in"
+      onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{className:'muted',style:'padding:40px;text-align:center;background:var(--hair);border-radius:12px;font-size:13px',textContent:'Расм мавжуд эмас'}))"
       onclick="rasmniKatta(_ordPh.list[_ordPh.idx].url)"/>
     ${ph.length>1?`<span onclick="ordPhNav(-1)" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;cursor:pointer">‹</span>
       <span onclick="ordPhNav(1)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;cursor:pointer">›</span>
