@@ -25,6 +25,9 @@ PAGES.set = async () => {
             html = await aiKorsatmaAdmin();
         } else if (tabName === 'obuna') {
             html = await obunaAdmin();
+            // bot bloki alohida yuklanadi (ikkinchi so'rov) — asosiy
+            // ekran kutib turmasin
+            setTimeout(() => botBlokChiz(), 0);
         } else if (tabName === 'lang') {
             const curLang = localStorage.getItem('tizim_lang') || 'uz_lat';
             html = `
@@ -674,8 +677,71 @@ async function obunaAdmin(){
     </div>
   </div>
 
+  <div class="glass card mb" id="botBlok">
+    <div class="muted">Telegram бот юкланмоқда…</div></div>
+
   ${guruh('Ёрдамчилар бўйича', sarf.agent_boyicha)}
   ${guruh('Ходимлар бўйича', sarf.foydalanuvchi_boyicha)}`;
+}
+
+/* ---------- TELEGRAM BOT (har akkaunt O'Z boti) ---------- */
+async function botBlokChiz(){
+  const el = document.getElementById('botBlok');
+  if(!el) return;
+  let b;
+  try{ b = await api('/api/obuna/bot'); }
+  catch(e){ el.innerHTML = `<div class="muted">${esc(e.message)}</div>`; return; }
+
+  el.innerHTML = `
+    <div class="between"><h2 class="sec">Telegram бот ва Mini App</h2>
+      ${b.ishlayapti ? '<span class="tag ok">ишлаяпти</span>'
+        : b.bor ? '<span class="tag warn">тўхтаган</span>'
+        : '<span class="tag">қўйилмаган</span>'}</div>
+    <div class="sec-sub">Ўз ботингиз — мижозларингизга <b>сиз номингиздан</b>
+      ёзади. Смета тасдиқлаш ва Mini App шу бот орқали ишлайди.</div>
+
+    <div style="margin-top:12px;padding:12px;border-radius:12px;
+      background:linear-gradient(120deg,rgba(160,163,255,.12),rgba(124,127,240,.04));
+      font-size:12.5px;line-height:1.7">
+      <b>Қандай олинади:</b><br>
+      1. Telegram да <b>@BotFather</b> га ёзинг → <code>/newbot</code><br>
+      2. Бот номи ва username беринг<br>
+      3. BotFather берган <b>токенни</b> шу ерга қўйинг
+    </div>
+
+    <label class="fl" style="margin-top:12px">Бот токени
+      ${b.bor?`<span class="muted">(ҳозир: ${esc(b.token_oxiri)})</span>`:''}</label>
+    <input class="fld" id="bot_token" placeholder="1234567890:ABCdef..."
+      autocomplete="off"/>
+    <label class="fl">Mini App манзили</label>
+    <input class="fld" id="bot_url" value="${esc(b.webapp_url||'')}"
+      placeholder="${esc(b.taklif_url)}"/>
+    <div class="muted" style="font-size:11.5px;margin-top:4px">
+      Ботда «ERP очиш» тугмаси шу манзилни очади</div>
+
+    <div class="row" style="margin-top:14px;gap:8px">
+      <button class="btn pri" onclick="botSaqla()">Сақлаш ва ишга тушириш</button>
+      ${b.bor?`<button class="btn ghost" onclick="botOchir()">Ботни ўчириш</button>`:''}
+    </div>`;
+}
+
+async function botSaqla(){
+  const token = f('bot_token').trim();
+  if(!token) return toast('w','alertic','Токен','BotFather берган токенни қўйинг');
+  try{
+    const r = await api('/api/obuna/bot','POST',{bot_token:token, webapp_url:f('bot_url').trim()});
+    toast('o','check', r.izoh, '');
+    botBlokChiz();
+  }catch(e){ toast('d','alertic','Сақланмади', e.message); }
+}
+
+async function botOchir(){
+  if(!confirm('Ботни ўчирасизми? Мижозларга хабар бормай қолади.')) return;
+  try{
+    await api('/api/obuna/bot','POST',{bot_token:'', webapp_url:''});
+    toast('o','check','Бот ўчирилди','');
+    botBlokChiz();
+  }catch(e){ toast('d','alertic','Бажарилмади', e.message); }
 }
 
 async function obunaLimitSaqla(){

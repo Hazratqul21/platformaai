@@ -7,6 +7,7 @@ kelgan hisob ishonchni yo'qotadi.
 Platforma tokeni bilan ishlaydi (ERP tokeni emas) — boshqaruv bazasi
 bilan. ERP ma'lumotiga tegmaydi.
 """
+import re
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -217,3 +218,64 @@ def obuna_ai_limit(data: LimitIn, _erp=Depends(get_db),
              tafsilot=f"{data.limit_som} so'm (ERP ichidan)")
     bdb.commit()
     return {"ok": True, "limit_som": data.limit_som, "oy": oy}
+
+
+class BotIn(BaseModel):
+    bot_token: str = ""
+    webapp_url: str = ""
+
+
+@obuna_router.get("/bot")
+def obuna_bot_korish(_erp=Depends(get_db), user=Depends(require_roles("Rahbar")),
+                     bdb: Session = Depends(boshqaruv_db)):
+    """Telegram bot sozlamasi. Token TO'LIQ qaytarilmaydi — faqat oxirgi
+    4 belgi (kim ko'rsa ham botni o'g'irlab keta olmasin)."""
+    akk = _joriy_akkaunt(bdb)
+    t = akk.bot_token or ""
+    ishlayapti = False
+    try:
+        from ..bot import _BOTLAR
+        ishlayapti = akk.baza_nomi in _BOTLAR
+    except Exception:                                   # noqa: BLE001
+        pass
+    return {"bor": bool(t),
+            "token_oxiri": ("…" + t[-4:]) if len(t) > 4 else "",
+            "webapp_url": akk.webapp_url or f"https://{akk.kod}.{_domen()}",
+            "ishlayapti": ishlayapti,
+            "taklif_url": f"https://{akk.kod}.{_domen()}"}
+
+
+@obuna_router.post("/bot")
+def obuna_bot_saqla(data: BotIn, _erp=Depends(get_db),
+                    user=Depends(require_roles("Rahbar")),
+                    bdb: Session = Depends(boshqaruv_db)):
+    """Bot tokenini saqlaydi va botni darhol ishga tushiradi.
+
+    Token bo'sh yuborilsa — bot o'chiriladi (yozuv tozalanadi)."""
+    akk = _joriy_akkaunt(bdb)
+    token = (data.bot_token or "").strip()
+    # Telegram token shakli: <raqam>:<harf-raqam>. Noto'g'ri token
+    # bilan bot jim yiqilardi — darhol aytamiz.
+    if token and not re.match(r"^\d{6,}:[A-Za-z0-9_-]{30,}$", token):
+        raise HTTPException(400, "Token shakli noto'g'ri. BotFather bergan "
+                                 "ko'rinish: 1234567890:ABCdef...")
+    akk.bot_token = token
+    akk.webapp_url = (data.webapp_url or "").strip()
+    px.audit(bdb, "bot_sozlandi", akkaunt_id=akk.id, kim=user.name,
+             tafsilot="token qo'yildi" if token else "token o'chirildi")
+    bdb.commit()
+
+    ishga_tushdi = False
+    if token:
+        try:
+            from .. import bot as bot_mod
+            from .. import tenancy
+            bot_mod._akkaunt_boti_boshla(
+                tenancy.Akkaunt(id=akk.id, kod=akk.kod, baza_nomi=akk.baza_nomi),
+                token, akk.webapp_url)
+            ishga_tushdi = True
+        except Exception:                               # noqa: BLE001
+            pass
+    return {"ok": True, "ishga_tushdi": ishga_tushdi,
+            "izoh": ("Bot ishga tushdi" if ishga_tushdi else
+                     "Token saqlandi" if token else "Bot o'chirildi")}

@@ -43,6 +43,12 @@ class Akkaunt(BoshqaruvBase):
     # Frontend shu maydonni kuzatadi: `tayyorlanmoqda` -> `tayyor` / `xato`.
     tayyorlik: Mapped[str] = mapped_column(String(20), default="tayyorlanmoqda")
     tayyorlik_izohi: Mapped[str] = mapped_column(Text, default="")
+    # TELEGRAM — har akkaunt O'Z botini qo'yadi (o'z mijozlariga o'z
+    # nomidan yozadi). Token BOSHQARUV bazasida: bot menejeri hamma
+    # akkauntning tokenini bir joydan o'qiy olishi kerak, aks holda
+    # har mijoz bazasini ochib chiqish kerak bo'lardi.
+    bot_token: Mapped[str] = mapped_column(String(120), default="")
+    webapp_url: Mapped[str] = mapped_column(String(200), default="")
 
     @property
     def yozish_mumkinmi(self) -> bool:

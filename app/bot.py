@@ -1,14 +1,22 @@
 """Telegram bot (aiogram 3) — TZ 1.3 tasdiqlash zanjiri.
 
-BOT_TOKEN .env da bo'lsa server bilan birga polling rejimida ishga tushadi.
-Mini App: bot menyusiga WEBAPP_URL tugmasi qo'yiladi.
+HAR AKKAUNT O'Z BOTI bilan ishlaydi: token boshqaruv bazasidagi
+`Akkaunt.bot_token` da, Mini App manzili `webapp_url` da. Sabab —
+har korxona mijozlariga O'Z nomidan yozishi kerak, umumiy bot emas.
+
+Har akkaunt uchun alohida thread + alohida asyncio halqasi ishga
+tushadi va o'sha thread ichida `tenancy` konteksti O'RNATILADI —
+shuning uchun handler ichidagi `sessiya()` avtomat TO'G'RI akkaunt
+bazasiga boradi (contextvars thread bo'yicha ajratilgan).
+
+Ijarachiliksiz rejimda eski yo'l saqlanadi: `.env` dagi BOT_TOKEN.
 """
 import asyncio
 import logging
 import os
 from decimal import Decimal
 
-from .db import SessionLocal
+from .db import SessionLocal, sessiya
 from . import models as m
 from . import domain
 from .domain import soha_oqi
@@ -19,20 +27,45 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "")
 
 
+def joriy_token() -> tuple[str, str]:
+    """(bot_token, webapp_url) — JORIY akkauntniki, yo'q bo'lsa `.env` dan.
+
+    So'rov ichida chaqiriladi (tenancy o'rnatilgan), shuning uchun
+    akkauntni contextvar dan oladi."""
+    try:
+        from . import tenancy
+        a = tenancy.joriy() if tenancy.yoqilganmi() else None
+        if a:
+            from .platforma.db import BoshqaruvSession
+            from .platforma import models as pm
+            bdb = BoshqaruvSession()
+            try:
+                akk = bdb.get(pm.Akkaunt, a.id)
+                if akk and akk.bot_token:
+                    return akk.bot_token, (akk.webapp_url or "")
+            finally:
+                bdb.close()
+            return "", ""          # akkaunt bor, lekin token qo'ymagan
+    except Exception:                                  # noqa: BLE001
+        log.warning("Bot tokenini olishda xato")
+    return BOT_TOKEN, WEBAPP_URL
+
+
 def notify_order(order_id: int):
     """Menejer buyurtma yaratganda mijozga smeta yuborish (bot ishlayotgan bo'lsa)."""
-    if not BOT_TOKEN:
+    token, _ = joriy_token()
+    if not token:
         return
     from aiogram import Bot
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
     async def send():
-        db = SessionLocal()
+        db = sessiya()
         try:
             o = db.get(m.Order, order_id)
             if not o or not o.client.telegram_chat_id:
                 return
-            bot = Bot(BOT_TOKEN)
+            bot = Bot(token)
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"ok:{o.id}"),
                 InlineKeyboardButton(text="💬 Muzokara", callback_data=f"neg:{o.id}"),
@@ -57,7 +90,12 @@ def notify_order(order_id: int):
         asyncio.run(send())
 
 
-async def run_bot():
+async def run_bot(token: str = "", webapp_url: str = ""):
+    """Bitta akkauntning botini yuritadi.
+
+    `token` berilmasa `.env` dagi ishlatiladi (yagona rejim)."""
+    token = token or BOT_TOKEN
+    webapp_url = webapp_url or WEBAPP_URL
     from aiogram import Bot, Dispatcher, F
     from aiogram.filters import CommandStart
     from aiogram.types import (
@@ -65,12 +103,13 @@ async def run_bot():
         MenuButtonWebApp, WebAppInfo,
     )
 
-    bot = Bot(BOT_TOKEN)
+    bot = Bot(token)
     dp = Dispatcher()
 
-    if WEBAPP_URL:
+    if webapp_url:
         await bot.set_chat_menu_button(
-            menu_button=MenuButtonWebApp(text="ERP ochish", web_app=WebAppInfo(url=WEBAPP_URL)))
+            menu_button=MenuButtonWebApp(text="ERP ochish",
+                                         web_app=WebAppInfo(url=webapp_url)))
 
     @dp.message(CommandStart())
     async def start(msg: Message):
@@ -84,7 +123,7 @@ async def run_bot():
     @dp.message(F.contact)
     async def contact(msg: Message):
         phone = msg.contact.phone_number.lstrip("+")
-        db = SessionLocal()
+        db = sessiya()
         try:
             client = None
             for c in db.query(m.Client).all():
@@ -104,7 +143,7 @@ async def run_bot():
     @dp.callback_query(F.data.startswith("ok:"))
     async def confirm(cb: CallbackQuery):
         oid = int(cb.data.split(":")[1])
-        db = SessionLocal()
+        db = sessiya()
         try:
             o = db.get(m.Order, oid)
             if not o:
@@ -144,7 +183,7 @@ async def run_bot():
     @dp.callback_query(F.data.startswith("neg:"))
     async def negotiate(cb: CallbackQuery):
         oid = int(cb.data.split(":")[1])
-        db = SessionLocal()
+        db = sessiya()
         try:
             o = db.get(m.Order, oid)
             if not o:
@@ -170,8 +209,81 @@ async def run_bot():
     await dp.start_polling(bot, handle_signals=False)
 
 
+# ---------------------------------------------------------------------
+# BOT MENEJERI — har akkauntga alohida bot
+# ---------------------------------------------------------------------
+# Ishlab turgan botlar: baza_nomi -> thread. Token o'zgarganda eski
+# thread to'xtatiladi va yangisi ishga tushadi.
+_BOTLAR: dict[str, dict] = {}
+
+
+def _akkaunt_boti_boshla(akkaunt, token: str, webapp_url: str) -> None:
+    """Bitta akkaunt uchun bot thread'ini ishga tushiradi.
+
+    MUHIM: `tenancy.ornat()` THREAD ICHIDA chaqiriladi — contextvars
+    thread bo'yicha ajratilgan, shuning uchun handler ichidagi
+    `sessiya()` avtomat shu akkauntning bazasiga boradi."""
+    import threading
+    from . import tenancy
+
+    kalit = akkaunt.baza_nomi
+    eski = _BOTLAR.get(kalit)
+    if eski and eski.get("token") == token:
+        return                       # allaqachon shu token bilan ishlayapti
+
+    def runner():
+        # Kontekst SHU thread uchun o'rnatiladi va umrbod turadi
+        tenancy.ornat(akkaunt)
+        try:
+            asyncio.run(run_bot(token, webapp_url))
+        except Exception as e:                        # noqa: BLE001
+            log.warning("«%s» boti to'xtadi: %s", akkaunt.kod, str(e)[:150])
+
+    t = threading.Thread(target=runner, daemon=True,
+                         name=f"bot-{akkaunt.kod}")
+    t.start()
+    _BOTLAR[kalit] = {"token": token, "thread": t, "kod": akkaunt.kod}
+    log.info("«%s» akkaunt boti ishga tushdi", akkaunt.kod)
+
+
+def akkaunt_botlarini_boshla() -> int:
+    """Boshqaruv bazasidan tokeni bor akkauntlarni olib, botlarini
+    ishga tushiradi. Yangi token qo'shilganda ham chaqiriladi."""
+    from . import tenancy
+    from .platforma.db import BoshqaruvSession
+    from .platforma import models as pm
+
+    n = 0
+    bdb = BoshqaruvSession()
+    try:
+        for akk in bdb.query(pm.Akkaunt).filter(
+                pm.Akkaunt.bot_token != "",
+                pm.Akkaunt.holat != "ochirilgan").all():
+            _akkaunt_boti_boshla(
+                tenancy.Akkaunt(id=akk.id, kod=akk.kod,
+                                baza_nomi=akk.baza_nomi,
+                                yozish_mumkinmi=akk.yozish_mumkinmi),
+                akk.bot_token, akk.webapp_url or "")
+            n += 1
+    finally:
+        bdb.close()
+    return n
+
+
 def start_bot_bg():
-    """Server startup'da alohida thread'da botni ishga tushirish."""
+    """Server startup'da botlarni ishga tushirish.
+
+    Ijarachilikda — har akkauntga alohida bot. Aks holda `.env`
+    dagi yagona BOT_TOKEN (eski yo'l)."""
+    from . import tenancy
+    if tenancy.yoqilganmi():
+        try:
+            n = akkaunt_botlarini_boshla()
+            log.info("Ijarachilik: %d akkaunt boti ishga tushdi", n)
+        except Exception as e:                        # noqa: BLE001
+            log.warning("Akkaunt botlari boshlanmadi: %s", str(e)[:150])
+        return
+
     if not BOT_TOKEN:
         log.info("BOT_TOKEN yo'q — bot o'chirilgan (faqat web rejim)")
         return

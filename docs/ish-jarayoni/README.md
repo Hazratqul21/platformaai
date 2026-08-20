@@ -87,3 +87,4 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 030 | [Uploads izolyatsiya](030-uploads-izolyatsiya.md) | ✅ rasm akkaunt papkasidan, leak yopildi |
 | 031 | [Boshlang'ich qoldiq sehrgari](031-boshlangich-qoldiq-sehrgari.md) | ✅ balans to'ldi (1.56 mlrd, aktiv=passiv) |
 | 032 | [Obuna/kabinet ekrani](032-obuna-kabinet-ekrani.md) | ✅ ERP ichida obuna + AI sarfi (ikkinchi login yo'q) |
+| 033 | [Akkaunt boti](033-akkaunt-boti.md) | ✅ har akkaunt o'z Telegram boti + Mini App |
