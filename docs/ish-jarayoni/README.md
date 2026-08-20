@@ -80,3 +80,4 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 - [../KOD-XARITASI.md](../KOD-XARITASI.md) — har faylda nima bor
 - [../A-IJARACHILIK.md](../A-IJARACHILIK.md) — joriy bosqichning TZ si
 | 024 | [Rustam aka ma'lumoti yuklandi](024-rustam-aka-malumoti-yuklandi.md) | ✅ test.innasoft.uz ga read-only nusxa, butunlik toza |
+| 025 | [Ijarachilik prodda yoqildi](025-ijarachilik-prodda-yoqildi.md) | ✅ 2 akkaunt (karton+mebel), izolyatsiya, Rustam tizimi buzilmadi |
