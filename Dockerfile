@@ -22,6 +22,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY static ./static
 COPY tests ./tests
+# tools/ — migratsiya va butunlik tekshiruvi (kochir.py, butunlik.py,
+# migratsiya.py). Prod ish vaqtida kerak emas, lekin ma'lumot ko'chirish
+# va tekshiruv uchun konteynerda bo'lishi kerak.
+COPY tools ./tools
 
 # ROOT'SIZ ishlaydi: konteynerda teshik topilsa ham hujumchi darhol
 # root bo'lib qolmasin. `uploads` — yagona yoziladigan joy, egasi shu

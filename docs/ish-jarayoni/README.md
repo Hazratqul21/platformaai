@@ -79,3 +79,4 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 - [../README.md](../README.md) — hamma reja bir sahifada
 - [../KOD-XARITASI.md](../KOD-XARITASI.md) — har faylda nima bor
 - [../A-IJARACHILIK.md](../A-IJARACHILIK.md) — joriy bosqichning TZ si
+| 024 | [Rustam aka ma'lumoti yuklandi](024-rustam-aka-malumoti-yuklandi.md) | ✅ test.innasoft.uz ga read-only nusxa, butunlik toza |
