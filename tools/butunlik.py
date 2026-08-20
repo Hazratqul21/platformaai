@@ -127,11 +127,15 @@ def tekshir_hammasi(db) -> Natija:
     n.tekshir("QC dan o'tmagan ishga haq yozilmagan", not yomon,
               f"{len(yomon)} ta: " + ", ".join(yomon[:5]))
 
-    # Ish haqi = miqdor × stavka (QC dan o'tganlarda)
+    # Ish haqi = miqdor × stavka — FAQAT sdelshina (qty>0) uchun.
+    # qty=0 bo'lsa bu OKLAD (belgilangan maosh): amount to'g'ridan-to'g'ri
+    # yoziladi va qty×stavka ga bog'liq emas. Rustam akaning bazasida
+    # ishchilar okladga ishlaydi (qty=0, amount=4 mln) — bu real holat.
     notogri = [f"#{w.id}" for w in db.query(m.WorkEntry).all()
-               if w.qc_passed and abs(Decimal(str(w.amount or 0))
-                                      - Decimal(str(w.qty)) * Decimal(str(w.rate))) > TIYIN]
-    n.tekshir("ish haqi = miqdor × stavka", not notogri,
+               if w.qc_passed and Decimal(str(w.qty)) > 0
+               and abs(Decimal(str(w.amount or 0))
+                       - Decimal(str(w.qty)) * Decimal(str(w.rate))) > TIYIN]
+    n.tekshir("ish haqi = miqdor × stavka (sdelshina)", not notogri,
               f"{len(notogri)} ta: " + ", ".join(notogri[:5]))
 
     # ---- 6. To'lovlar mijozga bog'langanmi --------------------------

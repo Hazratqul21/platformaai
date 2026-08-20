@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>INNASOFT — Platforma admin</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+<link rel="stylesheet" href="/static/css/style.css">
+<style>
+  body{overflow:auto}
+  .ad-wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+  .ad-top{display:flex;align-items:center;gap:12px;padding:14px 18px;margin-bottom:18px}
+  .ad-top h1{font-family:var(--serif);font-size:16px;letter-spacing:1px}
+  .ad-top small{display:block;color:var(--ink-3);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
+  .ad-login{max-width:400px;margin:8vh auto 0;padding:32px 28px;text-align:center}
+  .ad-card{padding:20px;margin-bottom:14px}
+  .ad-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--hair);font-size:13px}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-3)}
+  .badge{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+  .b-faol{background:rgba(26,158,99,.12);color:var(--ok)}
+  .b-sinov{background:rgba(124,127,240,.14);color:var(--primary-deep)}
+  .b-muz{background:rgba(214,61,73,.12);color:var(--danger)}
+</style>
+</head>
+<body>
+<svg class="paper-bg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1440 900" aria-hidden="true"><rect width="1440" height="900" fill="#EAEDF8"/></svg>
+
+<div id="login" class="glass ad-login">
+  <div class="logo-xl" style="margin:0 auto 14px">🛡️</div>
+  <h1 style="font-family:var(--serif);font-size:26px;letter-spacing:1.5px">Platforma admin</h1>
+  <div class="kicker" style="margin:6px 0 18px">INNASOFT boshqaruvi</div>
+  <div style="text-align:left">
+    <label class="fl">Login</label>
+    <input class="fld" id="lg" placeholder="admin" autocomplete="username"/>
+    <label class="fl">Parol</label>
+    <input class="fld" id="pw" type="password" autocomplete="current-password"/>
+  </div>
+  <button class="btn pri" style="width:100%;justify-content:center;margin-top:16px;padding:12px" onclick="kir()">Kirish</button>
+  <div id="lerr" style="color:var(--danger);font-size:12px;margin-top:10px"></div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="ad-wrap">
+    <div class="ad-top glass">
+      <div class="logo">🛡️</div>
+      <div><h1>PLATFORMA ADMIN</h1><small id="whoami">—</small></div>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn sm" onclick="yukla()">↻ Yangilash</button>
+      <button class="btn sm ghost" onclick="chiq()">Chiqish</button>
+    </div>
+    <div class="ad-kpi" id="kpi"></div>
+    <div class="glass ad-card">
+      <h2 class="sec" style="margin-bottom:10px">Akkauntlar</h2>
+      <div style="overflow-x:auto"><table id="tbl"><thead><tr>
+        <th>Kod</th><th>Nomi</th><th>Holat</th><th>Tarif</th><th>Tayyorlik</th>
+        <th style="text-align:right">AI sarfi (oy)</th><th></th>
+      </tr></thead><tbody id="rows"></tbody></table></div>
+    </div>
+    <div class="glass ad-card">
+      <h2 class="sec" style="margin-bottom:10px">Oxirgi amallar (audit)</h2>
+      <div style="overflow-x:auto"><table><thead><tr>
+        <th>Vaqt</th><th>Amal</th><th>Kim</th><th>Tafsilot</th>
+      </tr></thead><tbody id="audit"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let TOKEN = localStorage.getItem('inna_admin_token') || '';
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const som = n => new Intl.NumberFormat('ru-RU').format(Math.round(n||0));
+
+async function api(path, opts={}){
+  const r = await fetch(path, {...opts, headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN, ...(opts.headers||{})}});
+  if(r.status===401){ chiq(); throw new Error('Sessiya tugadi'); }
+  if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.detail||('Xato '+r.status)); }
+  return r.json();
+}
+
+async function kir(){
+  const login = document.getElementById('lg').value.trim();
+  const parol = document.getElementById('pw').value;
+  document.getElementById('lerr').textContent = '';
+  try{
+    const r = await fetch('/api/platforma/kir', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({login, parol})});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail||'Login xato');
+    if(d.roli !== 'admin') throw new Error('Bu foydalanuvchi admin emas');
+    TOKEN = d.token; localStorage.setItem('inna_admin_token', TOKEN);
+    ochil(d);
+  }catch(e){ document.getElementById('lerr').textContent = e.message; }
+}
+
+function chiq(){ localStorage.removeItem('inna_admin_token'); TOKEN=''; location.reload(); }
+
+function ochil(me){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('whoami').textContent = (me&&me.login) ? me.login : 'admin';
+  yukla();
+}
+
+const holatBadge = h => ({
+  faol:'<span class="badge b-faol">faol</span>',
+  sinov:'<span class="badge b-sinov">sinov</span>',
+  muzlatilgan:'<span class="badge b-muz">muzlatilgan</span>',
+  ochirilgan:'<span class="badge b-muz">o\'chirilgan</span>',
+}[h] || esc(h));
+
+async function yukla(){
+  try{
+    const [akk, sarf, aud] = await Promise.all([
+      api('/api/admin/akkauntlar'), api('/api/admin/sarf'), api('/api/admin/audit?limit=30')
+    ]);
+    document.getElementById('kpi').innerHTML = `
+      ${kpiCard('Akkauntlar', akk.jami)}
+      ${kpiCard('Bu oy AI sarfi', som(sarf.jami_som)+' so\'m')}
+      ${kpiCard('AI so\'rovlar', sarf.jami_sorov)}`;
+    document.getElementById('rows').innerHTML = akk.akkauntlar.map(a=>`
+      <tr>
+        <td><b>${esc(a.kod)}</b><br><a href="https://${esc(a.kod)}.innasoft.uz" target="_blank" style="font-size:11px;color:var(--primary-deep)">ochish ↗</a></td>
+        <td>${esc(a.nom)}</td>
+        <td>${holatBadge(a.holat)}</td>
+        <td>${esc(a.tarif)}</td>
+        <td>${a.tayyorlik==='tayyor'?'✅':esc(a.tayyorlik)}</td>
+        <td style="text-align:right">${som(a.ai_som)}<br><span style="font-size:11px;color:var(--ink-3)">${a.ai_sorov} so'rov</span></td>
+        <td style="text-align:right">${a.holat==='muzlatilgan'
+          ? `<button class="btn sm" onclick="holat(${a.id},'faol')">Ochish</button>`
+          : `<button class="btn sm dngr" onclick="holat(${a.id},'muzlatilgan')">Muzlatish</button>`}</td>
+      </tr>`).join('') || '<tr><td colspan="7" style="color:var(--ink-3)">Akkaunt yo\'q</td></tr>';
+    document.getElementById('audit').innerHTML = aud.amallar.map(x=>`
+      <tr><td style="font-size:11.5px;color:var(--ink-3)">${(x.vaqt||'').slice(0,16).replace('T',' ')}</td>
+      <td>${esc(x.amal)}</td><td>${esc(x.kim||'—')}</td><td style="font-size:12px">${esc(x.tafsilot||'')}</td></tr>`
+    ).join('') || '<tr><td colspan="4" style="color:var(--ink-3)">—</td></tr>';
+  }catch(e){ alert(e.message); }
+}
+
+function kpiCard(lab, val){
+  return `<div class="glass card kpi"><div class="val" style="font-size:22px">${val}</div><div class="lab">${lab}</div></div>`;
+}
+
+async function holat(id, yangi){
+  const nom = yangi==='muzlatilgan'?'muzlatish':'ochish';
+  if(!confirm(`Akkauntni ${nom}?`)) return;
+  try{
+    await api(`/api/admin/akkaunt/${id}/holat`, {method:'POST', body:JSON.stringify({holat:yangi, sabab:'admin panel'})});
+    yukla();
+  }catch(e){ alert(e.message); }
+}
+
+document.getElementById('pw').addEventListener('keydown', e=>{ if(e.key==='Enter') kir(); });
+if(TOKEN){ ochil(null); }
+</script>
+</body>
+</html>

@@ -237,7 +237,12 @@ def health(db: Session = Depends(get_db)):
 
 
 @app.get("/", include_in_schema=False)
-def index():
+def index(request: Request):
+    # admin.innasoft.uz -> platforma admin paneli (boshqa sahifa).
+    # Bu bizning (operatorlar) paneli — akkauntlar, AI sarfi, muzlatish.
+    host = (request.headers.get("host") or "").split(":")[0].lower()
+    if host.split(".")[0] == "admin":
+        return FileResponse(STATIC_DIR / "admin.html")
     return FileResponse(STATIC_DIR / "index.html")
 
 

@@ -150,11 +150,11 @@ def kochir(manba: str, tekshir_faqat: bool = False) -> dict:
         hisob["materiallar"] = len(mat_xarita)
 
         # ---- 4. Qog'oz partiyalari (karton yo'li) --------------------
-        lot_soni = 0
+        lot_xarita = {}
         if jadval_bormi(conn, "raw_lots"):
             for r in conn.execute("SELECT * FROM raw_lots"):
                 yb = yb_xarita.get(_q(r, "supplier_id"))
-                db.add(m.RawLot(
+                lot = m.RawLot(
                     lot_no=_q(r, "lot_no", ""),
                     supplier_id=yb.id if yb else None,
                     grade=_q(r, "grade", ""), grammage=int(_q(r, "grammage", 0) or 0),
@@ -162,9 +162,11 @@ def kochir(manba: str, tekshir_faqat: bool = False) -> dict:
                     remaining_kg=_d(_q(r, "remaining_kg")),
                     price_per_kg=_d(_q(r, "price_per_kg")),
                     received_at=(_sana(_q(r, "received_at")) or datetime.utcnow()).date(),
-                ))
-                lot_soni += 1
-        hisob["qogoz_partiyalari"] = lot_soni
+                )
+                db.add(lot)
+                lot_xarita[r["id"]] = lot
+            db.flush()
+        hisob["qogoz_partiyalari"] = len(lot_xarita)
 
         # ---- 5. Buyurtmalar ------------------------------------------
         # ENG MUHIM QADAM: karton ustunlari `attributes` ga o'tadi.
@@ -245,19 +247,153 @@ def kochir(manba: str, tekshir_faqat: bool = False) -> dict:
         hisob["kassa_yozuvlari"] = kassa_soni
 
         # ---- 8. Xodimlar ---------------------------------------------
-        xodim_soni = 0
+        emp_xarita = {}
         if jadval_bormi(conn, "employees"):
             for r in conn.execute("SELECT * FROM employees"):
-                db.add(m.Employee(
+                emp = m.Employee(
                     name=_q(r, "name", "Nomsiz"),
                     position=_q(r, "position", "Stanokchi"),
                     phone=_q(r, "phone", ""),
                     rate_per_box=_d(_q(r, "rate_per_box"), "150"),
                     brigade=_q(r, "brigade", ""), firm=_q(r, "firm", ""),
                     active=bool(_q(r, "active", 1)),
+                )
+                db.add(emp)
+                emp_xarita[r["id"]] = emp
+            db.flush()
+        hisob["xodimlar"] = len(emp_xarita)
+
+        # ---- 9. Xaridlar (yetkazib beruvchidan) ---------------------
+        xarid_xarita = {}
+        if jadval_bormi(conn, "purchases"):
+            for r in conn.execute("SELECT * FROM purchases"):
+                mt = mat_xarita.get(_q(r, "material_id"))
+                yb = yb_xarita.get(_q(r, "supplier_id"))
+                if mt is None or yb is None:
+                    continue
+                pdate = (_sana(_q(r, "purchased_at")) or datetime.utcnow()).date()
+                pu = m.Purchase(
+                    material_id=mt.id, supplier_id=yb.id,
+                    qty=_d(_q(r, "qty"), "1"), unit=_q(r, "unit", "kg"),
+                    fmt=_q(r, "fmt", ""), unit_price=_d(_q(r, "unit_price")),
+                    total=_d(_q(r, "total")),
+                    payment_type=_q(r, "payment_type", "Naqd"),
+                    paid_amount=_d(_q(r, "paid_amount")),
+                    due_date=_sana(_q(r, "due_date")).date() if _sana(_q(r, "due_date")) else None,
+                    purchased_at=pdate, note=_q(r, "note", ""),
+                    firm=_q(r, "firm", ""),
+                )
+                db.add(pu)
+                xarid_xarita[r["id"]] = pu
+            db.flush()
+        hisob["xaridlar"] = len(xarid_xarita)
+
+        # ---- 10. Xarid to'lovlari ----------------------------------
+        n = 0
+        if jadval_bormi(conn, "purchase_payments"):
+            for r in conn.execute("SELECT * FROM purchase_payments"):
+                pu = xarid_xarita.get(_q(r, "purchase_id"))
+                if pu is None:
+                    continue
+                db.add(m.PurchasePayment(
+                    purchase_id=pu.id, amount=_d(_q(r, "amount")),
+                    method=_q(r, "method", "Naqd"),
+                    paid_at=(_sana(_q(r, "paid_at")) or datetime.utcnow()).date(),
+                    note=_q(r, "note", ""),
                 ))
-                xodim_soni += 1
-        hisob["xodimlar"] = xodim_soni
+                n += 1
+        hisob["xarid_tolovlari"] = n
+
+        # ---- 11. Kassa harakatlari (sex xarajat / xodim avansi) -----
+        n = 0
+        if jadval_bormi(conn, "cash_entries"):
+            for r in conn.execute("SELECT * FROM cash_entries"):
+                emp = emp_xarita.get(_q(r, "employee_id"))
+                db.add(m.CashEntry(
+                    employee_id=emp.id if emp else None,
+                    kind=_q(r, "kind", "Xarajat"), amount=_d(_q(r, "amount")),
+                    note=_q(r, "note", ""), firm=_q(r, "firm", ""),
+                    entry_at=(_sana(_q(r, "entry_at")) or datetime.utcnow()).date(),
+                ))
+                n += 1
+        hisob["kassa_harakatlari"] = n
+
+        # ---- 12. Sdelshina (ish yozuvlari) -------------------------
+        n = 0
+        if jadval_bormi(conn, "work_entries"):
+            for r in conn.execute("SELECT * FROM work_entries"):
+                emp = emp_xarita.get(_q(r, "employee_id"))
+                o = buyurtma_xarita.get(_q(r, "order_id"))
+                if emp is None:
+                    continue
+                db.add(m.WorkEntry(
+                    employee_id=emp.id, order_id=o.id if o else None,
+                    qty=_d(_q(r, "qty")), qc_passed=bool(_q(r, "qc_passed", 1)),
+                    rate=_d(_q(r, "rate")), amount=_d(_q(r, "amount")),
+                    worked_at=(_sana(_q(r, "worked_at")) or datetime.utcnow()).date(),
+                ))
+                n += 1
+        hisob["sdelshina"] = n
+
+        # ---- 13. Ombor harakatlari (stock + material moves) --------
+        n = 0
+        if jadval_bormi(conn, "stock_moves"):
+            for r in conn.execute("SELECT * FROM stock_moves"):
+                lot = lot_xarita.get(_q(r, "lot_id"))
+                o = buyurtma_xarita.get(_q(r, "order_id"))
+                if lot is None:
+                    continue
+                db.add(m.StockMove(
+                    lot_id=lot.id, order_id=o.id if o else None,
+                    kg=_d(_q(r, "kg")), cost=_d(_q(r, "cost")),
+                    moved_at=_sana(_q(r, "moved_at")) or datetime.utcnow(),
+                    note=_q(r, "note", ""),
+                ))
+                n += 1
+        hisob["ombor_harakati"] = n
+        n2 = 0
+        if jadval_bormi(conn, "material_moves"):
+            for r in conn.execute("SELECT * FROM material_moves"):
+                mt = mat_xarita.get(_q(r, "material_id"))
+                o = buyurtma_xarita.get(_q(r, "order_id"))
+                if mt is None:
+                    continue
+                db.add(m.MaterialMove(
+                    material_id=mt.id, qty=_d(_q(r, "qty")),
+                    reason=_q(r, "reason", ""), order_id=o.id if o else None,
+                    at=_sana(_q(r, "at")) or datetime.utcnow(),
+                ))
+                n2 += 1
+        hisob["material_harakati"] = n2
+
+        # ---- 14. To'lov grafigi (yetkazib beruvchiga) --------------
+        n = 0
+        if jadval_bormi(conn, "payment_schedules"):
+            for r in conn.execute("SELECT * FROM payment_schedules"):
+                yb = yb_xarita.get(_q(r, "supplier_id"))
+                if yb is None:
+                    continue
+                db.add(m.PaymentSchedule(
+                    supplier_id=yb.id,
+                    due_date=(_sana(_q(r, "due_date")) or datetime.utcnow()).date(),
+                    amount=_d(_q(r, "amount")), paid=bool(_q(r, "paid", 0)),
+                ))
+                n += 1
+        hisob["tolov_grafigi"] = n
+
+        # ---- 15. Sozlamalar (rekvizit, brak %) — UPSERT ------------
+        # NEGA: hujjat rekvizitlari va brak foizi hisob-kitobga ta'sir
+        # qiladi. Ular ko'chmasa akt/nakladnoy bo'sh rekvizit bilan
+        # chiqadi va tannarx brak foizisiz noto'g'ri bo'ladi.
+        n = 0
+        if jadval_bormi(conn, "settings"):
+            for r in conn.execute("SELECT * FROM settings"):
+                k = _q(r, "key")
+                if not k:
+                    continue
+                db.merge(m.Setting(key=k, value=_q(r, "value", "")))
+                n += 1
+        hisob["sozlamalar"] = n
 
         if tekshir_faqat:
             db.rollback()
