@@ -86,3 +86,4 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 029 | [Frontend sayqali (1-tur)](029-frontend-sayqal-1.md) | ✅ buyurtma rasmlari + buxgalteriya bo'sh holati |
 | 030 | [Uploads izolyatsiya](030-uploads-izolyatsiya.md) | ✅ rasm akkaunt papkasidan, leak yopildi |
 | 031 | [Boshlang'ich qoldiq sehrgari](031-boshlangich-qoldiq-sehrgari.md) | ✅ balans to'ldi (1.56 mlrd, aktiv=passiv) |
+| 032 | [Obuna/kabinet ekrani](032-obuna-kabinet-ekrani.md) | ✅ ERP ichida obuna + AI sarfi (ikkinchi login yo'q) |

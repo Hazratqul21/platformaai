@@ -23,6 +23,8 @@ PAGES.set = async () => {
             html = await rekvizitAdmin();
         } else if (tabName === 'ai') {
             html = await aiKorsatmaAdmin();
+        } else if (tabName === 'obuna') {
+            html = await obunaAdmin();
         } else if (tabName === 'lang') {
             const curLang = localStorage.getItem('tizim_lang') || 'uz_lat';
             html = `
@@ -70,6 +72,7 @@ PAGES.set = async () => {
             <button class="btn set-tab" id="tab_sys" onclick="openSetTab('sys')">${icon('settings',14)} Тизим созламалари</button>
             <button class="btn set-tab" id="tab_rekvizit" onclick="openSetTab('rekvizit')">${icon('doc',14)} Ҳужжат реквизитлари</button>
             <button class="btn set-tab" id="tab_ai" onclick="openSetTab('ai')">${icon('bot',14)} AI кўрсатмаси</button>
+            <button class="btn set-tab" id="tab_obuna" onclick="openSetTab('obuna')">${icon('wallet',14)} Обуна ва AI сарфи</button>
             <button class="btn set-tab" id="tab_lang" onclick="openSetTab('lang')">${icon('globe',14)} Тил (Language)</button>
         </div>
         <div id="setContent"></div>
@@ -589,4 +592,96 @@ async function korsTikla(kalit){
     toast('o','check','Qaytarildi','Standart ko\'rsatma tiklandi');
     openSetTab('ai');
   }catch(e){ toast('d','alertic','Bajarilmadi', e.message); }
+}
+
+/* ================= OBUNA VA AI SARFI ===============================
+   Akkaunt egasi (Rahbar) o'z obunasini va AI xarajatini ko'radi.
+   ERP tokeni bilan ishlaydi — ikkinchi login kerak emas
+   (`/api/obuna/*`, subdomendan akkaunt aniqlanadi).
+
+   SHAFFOFLIK: raqam yalang'och kelmaydi — qaysi yordamchi va qaysi
+   xodim qancha sarflagani ko'rsatiladi (docs/07-TARQATISH.md §7.6).
+   ==================================================================== */
+async function obunaAdmin(){
+  let d, sarf;
+  try{
+    d = await api('/api/obuna/mening');
+    sarf = await api('/api/obuna/ai-sarf');
+  }catch(e){
+    return `<div class="glass card"><div class="muted" style="font-size:13px">
+      ${esc(e.message)}</div></div>`;
+  }
+  const a = d.akkaunt, ai = d.ai;
+  const holatBadge = {
+    faol:'<span class="tag ok">фаол</span>',
+    sinov:'<span class="tag">синов</span>',
+    muzlatilgan:'<span class="tag dn">музлатилган</span>',
+  }[a.holat] || esc(a.holat);
+
+  // AI limiti chizig'i
+  const foiz = Math.min(100, ai.foiz || 0);
+  const rang = ai.toxtatilgan ? 'var(--danger)' : ai.ogoh ? 'var(--warn)' : 'var(--ok)';
+  const limitBlok = ai.limit_som > 0 ? `
+    <div style="margin-top:10px">
+      <div class="row" style="justify-content:space-between;font-size:12px">
+        <span class="muted">${som(ai.som)} / ${som(ai.limit_som)} сўм</span>
+        <b style="color:${rang}">${foiz}%</b></div>
+      <div style="height:8px;background:var(--hair);border-radius:6px;margin-top:5px;overflow:hidden">
+        <div style="height:100%;width:${foiz}%;background:${rang};transition:.3s"></div></div>
+      ${ai.toxtatilgan ? `<div class="muted" style="font-size:11.5px;margin-top:6px;color:var(--danger)">
+        Лимит тугади — <b>AI тўхтади</b>. ERP тўлиқ ишлайверади.</div>` :
+        ai.ogoh ? `<div class="muted" style="font-size:11.5px;margin-top:6px;color:var(--warn)">
+        Лимитнинг 80% идан ошди.</div>` : ''}
+    </div>` : `<div class="muted" style="font-size:12px;margin-top:8px">
+      Лимит қўйилмаган — чекловсиз</div>`;
+
+  const guruh = (nom, rows) => `
+    <div class="glass card mb">
+      <h3 class="sec" style="margin-bottom:8px">${nom}</h3>
+      <table><tbody>${rows.map(x=>`<tr>
+        <td>${esc(x.nom)}</td>
+        <td class="muted" style="width:90px;font-size:11.5px">${x.sorov} сўров</td>
+        <td style="text-align:right"><b>${som(x.som)}</b> сўм</td></tr>`).join('')
+        || '<tr><td class="muted">Ҳали сарф йўқ</td></tr>'}</tbody></table>
+    </div>`;
+
+  return `
+  <div class="grid g3 mb">
+    ${kpi('doc','Тариф', esc(a.tarif), a.holat, a.holat==='faol'?'up':'')}
+    ${kpi('wallet','Бу ой AI сарфи', som(ai.som)+' сўм', ai.sorov+' сўров','')}
+    ${kpi('bot','Ишлатилган токен', mshort(ai.token), ai.oy, '')}
+  </div>
+
+  <div class="glass card mb">
+    <div class="between"><h2 class="sec">${esc(a.nom)}</h2>${holatBadge}</div>
+    <div class="sec-sub">Манзилингиз: <b>${esc(a.manzil)}</b>
+      ${a.obuna_tugaydi?` · обуна тугайди: ${a.obuna_tugaydi.slice(0,10)}`:''}</div>
+    ${!a.yozish_mumkinmi ? `<div style="margin-top:10px;padding:10px 12px;border-radius:12px;
+      background:rgba(214,61,73,.08);border:1px solid rgba(214,61,73,.25);font-size:12.5px">
+      Обуна тугаган — маълумот <b>ўқиш учун очиқ</b>, янги ёзув киритилмайди.
+      Маълумотингиз ўчирилмайди.</div>`:''}
+  </div>
+
+  <div class="glass card mb">
+    <h2 class="sec">AI ойлик лимити</h2>
+    <div class="sec-sub">Лимит тугаса AI тўхтайди — <b>ERP ишлайверади</b></div>
+    ${limitBlok}
+    <div class="row" style="gap:8px;align-items:flex-end;margin-top:14px">
+      <div><label class="fl">Лимит (сўм, 0 = чекловсиз)</label>
+        <input class="fld" id="ob_limit" inputmode="numeric"
+          value="${Math.round(ai.limit_som||0)}" style="width:180px"/></div>
+      <button class="btn pri" onclick="obunaLimitSaqla()">Сақлаш</button>
+    </div>
+  </div>
+
+  ${guruh('Ёрдамчилар бўйича', sarf.agent_boyicha)}
+  ${guruh('Ходимлар бўйича', sarf.foydalanuvchi_boyicha)}`;
+}
+
+async function obunaLimitSaqla(){
+  try{
+    await api('/api/obuna/ai-limit', 'POST', { limit_som: fnum('ob_limit') });
+    toast('o','check','Сақланди','AI лимити янгиланди');
+    openSetTab('obuna');
+  }catch(e){ toast('d','alertic','Сақланмади', e.message); }
 }

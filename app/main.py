@@ -219,6 +219,8 @@ for r in (clients, orders, warehouse, hr, finance, reports, users,
 # Ro'yxatdan o'tish — boshqaruv bazasi bilan ishlaydi, akkauntiz ochiq.
 app.include_router(royxat_router.router)
 app.include_router(kabinet_router.router)
+# Obuna — ERP ichida (akkaunt egasi o'z subdomenida ko'radi)
+app.include_router(kabinet_router.obuna_router)
 app.include_router(admin_router.router)
 
 
