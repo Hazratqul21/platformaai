@@ -68,7 +68,7 @@ PAGES.set = async () => {
 
     document.getElementById('content').innerHTML = `
     <div class="page show">
-        <div class="tabs mb" style="display:flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+        <div class="tabs mb">
             <button class="btn set-tab" id="tab_users" onclick="openSetTab('users')">${icon('users',14)} Фойдаланувчилар</button>
             <button class="btn set-tab" id="tab_catalog" onclick="openSetTab('catalog')">${icon('list',14)} Каталоглар</button>
             <button class="btn set-tab" id="tab_constructor" onclick="openSetTab('constructor')">${icon('box',14)} Конструктор</button>

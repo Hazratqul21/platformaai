@@ -33,7 +33,7 @@ PAGES.hisob = async () => {
       топшириш учун бухгалтер тасдиғи керак.
     </div>
   </div>
-  <div class="row mb" style="gap:6px;flex-wrap:wrap">${tugmalar}</div>
+  <div class="tabs mb">${tugmalar}</div>
   <div id="hisobBody"><div class="muted">Юкланмоқда…</div></div>`;
 };
 
@@ -90,17 +90,17 @@ async function hisobBalans() {
     <div class="sec-sub">Актив — корхонада нима бор. Пассив — у кимнинг пулига олинган.
       Иккаласи ТЕНГ бўлиши шарт.</div>
   </div>
-  <div class="lnd-two" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  <div class="split teng mb">
     <div class="glass card">
       <h3 class="sec">АКТИВ</h3>
-      <table><tbody>${b.aktiv.map(qator).join('') ||
+      <table class="oralsin"><tbody>${b.aktiv.map(qator).join('') ||
         '<tr><td class="muted">ёзув йўқ</td></tr>'}</tbody>
         <tfoot><tr><td colspan="2"><b>ЖАМИ</b></td>
         <td style="text-align:right"><b>${som(b.aktiv_jami)}</b></td></tr></tfoot></table>
     </div>
     <div class="glass card">
       <h3 class="sec">ПАССИВ</h3>
-      <table><tbody>${b.passiv.map(qator).join('') ||
+      <table class="oralsin"><tbody>${b.passiv.map(qator).join('') ||
         '<tr><td class="muted">ёзув йўқ</td></tr>'}</tbody>
         <tfoot><tr><td colspan="2"><b>ЖАМИ</b></td>
         <td style="text-align:right"><b>${som(b.passiv_jami)}</b></td></tr></tfoot></table>

@@ -61,7 +61,19 @@ body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-sm
 @media(max-width:860px){
   .app.on{grid-template-columns:1fr;padding:10px;gap:10px}
   .side{display:none}
-  .topbar{padding:11px 14px}
+  /* TOPBAR MOBILDA SIQILADI.
+     Muammo: flex qatorda sarlavha + firma tanlash + userchip + chiqish
+     tugmasi 375px ga sig'masdi. `min-width:auto` tufayli hech biri
+     qisqarmasdi — sarlavha 3 qatorga o'raldi, userchip 72px va chiqish
+     tugmasi 119px ekrandan CHIQIB ketdi (brauzerda o'lchandi).
+     Yechim: hamma element qisqara olsin, uzun matn uch nuqta bilan
+     kesilsin, tanlash maydoniga shift qo'yilsin. */
+  .topbar{padding:11px 14px;gap:8px;flex-wrap:nowrap}
+  .topbar > *{min-width:0}
+  .page-title{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .page-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #firmSel{max-width:132px;flex-shrink:2}
+  .userchip{flex-shrink:0;padding:5px 9px}
   .content{padding-bottom:86px}
   .bottom-nav{display:flex;position:fixed;left:10px;right:10px;bottom:10px;z-index:60;padding:7px;gap:3px;justify-content:space-around;border-radius:22px}
   .bottom-nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:14px;color:var(--ink-3);text-decoration:none;font-size:9.5px;font-weight:600;cursor:pointer}
@@ -74,6 +86,29 @@ body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-sm
   table{font-size:11.5px!important}
   th,td{padding:8px 8px!important}
   .hide-m{display:none!important}
+
+  /* JADVAL MOBILDA SURILADI.
+     Muammo: jadval 450px, ekran 375px — ustunlar KESILIB qolardi va
+     ularni ko'rishning iloji yo'q edi (ota `overflow:visible`).
+     Endi kartochka ichida gorizontal suriladi. Brauzerda o'lchab
+     topilgan (Xodimlar va Moliya bo'limlari). */
+  .card > table, .glass > table{
+    display:block;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    white-space:nowrap;
+  }
+  /* GRID/FLEX ELEMENTI KICHRAYA OLSIN.
+     Standart `min-width:auto` grid elementini min-content dan
+     kichrayishga qo'ymaydi — natijada ichidagi keng jadval butun
+     kartochkani 617px ga cho'zib yuborardi (ekran 375px). Bu
+     klassik grid tuzog'i. `min-width:0` uni yechadi. */
+  .split > *, .grid > *, .g2 > *, .g3 > *, .g4 > *{min-width:0}
+
+  /* Surilayotganini bildirish — o'ng chekkada yengil soya */
+  .card > table::-webkit-scrollbar, .glass > table::-webkit-scrollbar{height:4px}
+  .card > table::-webkit-scrollbar-thumb, .glass > table::-webkit-scrollbar-thumb{
+    background:rgba(124,127,240,.3);border-radius:4px}
 }
 
 /* ---------- Primitives ---------- */
@@ -82,6 +117,9 @@ body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-sm
 .g3{grid-template-columns:repeat(3,1fr)}
 .g2{grid-template-columns:repeat(2,1fr)}
 .split{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}
+/* Balansda Актив/Пассив teng bo'lishi kerak — biri ikkinchisidan
+   keng ko'rinsa, ular teng degan asosiy g'oya buziladi. */
+.split.teng{grid-template-columns:1fr 1fr}
 .card{padding:18px}
 .row{display:flex;align-items:center;gap:10px}
 .between{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -260,7 +298,12 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 
 @media (max-width:520px){
   .agent-panel{width:100vw}
-  .agent-och{right:14px; bottom:14px}
+  /* AI tugmasi pastki menyu USTIDA turadi.
+     Ilgari `bottom:14px` edi — u pastki menyu (10px, balandligi ~62px)
+     bilan bitta joyda va bitta z-index (60) da bo'lib, oxirgi menyu
+     bandini («Мижозлар») bosib turardi: brauzerda o'lchandi —
+     tugma 309..361, menyu 10..365. Endi menyudan yuqoriga chiqarildi. */
+  .agent-och{right:14px; bottom:84px; z-index:61}
 }
 
 .agent-tanla{
@@ -458,4 +501,32 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
   .lnd-top .btn{flex:1;justify-content:center}
   .lnd-hero{padding:34px 18px 30px}
   .lnd-wrap{padding:14px 12px 40px}
+}
+
+/* Juda tor ekran (≤520px): userchip da faqat avatar qoladi.
+   Ism 84px joy egallaydi, u esa chiqish tugmasini surib yuboradi.
+   Kim kirganini avatar harfi va Sozlamalar bo'limi ko'rsatadi. */
+@media(max-width:520px){
+  .userchip #uname{display:none}
+  .userchip{gap:0}
+  #firmSel{max-width:104px}
+}
+
+/* TAB QATORI — o'ralmaydi, yon tomonga suriladi.
+   Ilgari `flex-wrap:wrap` edi: 7 ta tab mobil ekranda 4 qatorga
+   o'ralib, kontentni pastga surib yuborardi. Bir qator + surish
+   ancha ixcham va telefon uchun tanish naqsh. */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs > .btn{flex:0 0 auto;white-space:nowrap}
+
+/* NOMI UZUN, RAQAMI MUHIM jadvallar (balans kabi).
+   Umumiy mobil qoida jadvalga `white-space:nowrap` beradi va uni
+   suriladigan qiladi — ko'p ustunli ro'yxatlar uchun to'g'ri. Lekin
+   balansda atigi 3 ta ustun bor va eng muhimi — SUMMA — o'ngga surilib
+   ko'rinmay qolardi. Bu yerda hisob nomi o'ralsin, summa joyida qolsin. */
+@media(max-width:860px){
+  table.oralsin{white-space:normal!important}
+  table.oralsin td:nth-child(2){word-break:break-word}
 }
