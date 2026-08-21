@@ -20,6 +20,7 @@ function agentPanelYasa() {
   panel.innerHTML = `
     <div class="agent-head">
       <div style="flex:1;min-width:0">
+        <div class="agent-title" id="agentNom">Ёрдамчи</div>
         <select class="agent-tanla" id="agentTanla"></select>
         <div class="agent-sub" id="agentHolat">tekshirilmoqda…</div>
       </div>
@@ -31,7 +32,7 @@ function agentPanelYasa() {
     <div class="agent-oqim" id="agentOqim"></div>
     <div class="agent-kirish">
       <textarea id="agentMatn" rows="2"
-        placeholder="Biznesingizni ayting — masalan: «Non zavodimiz bor, kuniga 3000 non yopamiz»"></textarea>
+        placeholder="Savolingizni yozing…"></textarea>
       <button class="btn agent-yubor" id="agentYubor">Yuborish</button>
     </div>`;
   document.body.appendChild(panel);
@@ -79,7 +80,17 @@ async function agentHolatniOl() {
     const sel = document.getElementById('agentTanla');
     // Yordamchi BITTA (2026-08-20) — tanlash ro'yxati keraksiz,
     // faqat joy egallaydi. Bitta bo'lsa yashiriladi.
-    if (sel) sel.style.display = AGENT_ROYXAT.length > 1 ? '' : 'none';
+    // Yordamchi bitta bo'lsa tanlash ro'yxati yashiriladi va uning
+    // o'rniga oddiy sarlavha chiqadi. Ilgari ikkalasi ham yo'q edi —
+    // panel boshida faqat model nomi turardi, kim bilan gaplashayotgani
+    // bilinmasdi.
+    const nomEl = document.getElementById('agentNom');
+    const bitta = AGENT_ROYXAT.length <= 1;
+    if (sel) sel.style.display = bitta ? 'none' : '';
+    if (nomEl) {
+      nomEl.style.display = bitta ? '' : 'none';
+      if (bitta && AGENT_ROYXAT.length) nomEl.textContent = AGENT_ROYXAT[0].nom;
+    }
     if (sel && sel.options.length !== AGENT_ROYXAT.length) {
       sel.innerHTML = AGENT_ROYXAT
         .map(a => `<option value="${a.kalit}">${a.nom}</option>`).join('');
@@ -100,14 +111,51 @@ const AGENT_SALOM = {
   ombor:   'Ombor bo\'yicha savol bering.\n\nMasalan: «Nima tugayapti?» yoki «25-zakazga nima yetmaydi?»',
   moliya:  'Moliya bo\'yicha savol bering.\n\nMasalan: «Kim qarzdor?» yoki «Pul holati qanday?»',
   buyurtma:'Buyurtmalar bo\'yicha savol bering.\n\nMasalan: «Qaysi zakazlar kechikyapti?»',
+  // Yagona yordamchi (2026-08-20 dan) — hamma bo'limni ko'radi, shuning
+  // uchun salomi ham nima so'rash mumkinligini ko'rsatib turishi kerak.
+  // Ilgari bu kalit ro'yxatda yo'q edi va quruq «Savolingizni yozing»
+  // chiqardi — foydalanuvchi nima so'rashini bilmasdi.
+  yordamchi:
+    'Savol bering — buyurtma, ombor, pul, xodim, harid: hammasini ko\'raman.\n\n' +
+    'Masalan:\n' +
+    '• «Kim qancha qarzdor?»\n' +
+    '• «Nima tugayapti?»\n' +
+    '• «Bu oy qancha kirim bo\'ldi?»\n' +
+    '• «Qaysi buyurtmalar kechikyapti?»',
 };
 
 function agentYangiSuhbat() {
   AGENT_SUHBAT = null;
   document.getElementById('agentOqim').innerHTML = '';
   const a = AGENT_ROYXAT.find(x => x.kalit === AGENT_KALIT);
-  agentXabarQosh('agent', (a ? a.nom + '.\n\n' : '') +
+  // Nom faqat bir nechta yordamchi bo'lganda qo'shiladi. Bitta bo'lsa u
+  // panel sarlavhasida turibdi — salomda takrorlash ortiqcha.
+  const nom = (a && AGENT_ROYXAT.length > 1) ? a.nom + '.\n\n' : '';
+  agentXabarQosh('agent', nom +
     (AGENT_SALOM[AGENT_KALIT] || 'Savolingizni yozing.'));
+}
+
+// **Qalin** yozuvni chizadi. Model markdown ishlatadi, ilgari esa matn
+// to'g'ridan-to'g'ri `textContent` ga qo'yilardi va ekranda xom
+// yulduzchalar ko'rinardi: «**Xon xonim** va **Bahrom** kabi».
+//
+// HTML QURILMAYDI. `innerHTML` ishlatilmaydi — matn tugunlari va
+// `<strong>` elementlari qo'lda yasaladi. Agent javobi ham, foydalanuvchi
+// matni ham ishonchsiz manba, shuning uchun xavfsizlik xossasi
+// o'zgarmasdan qoladi.
+function matnniChiz(idish, matn) {
+  idish.textContent = '';
+  const bolaklar = String(matn == null ? '' : matn).split(/\*\*(.+?)\*\*/gs);
+  bolaklar.forEach((b, i) => {
+    if (!b) return;
+    if (i % 2 === 1) {                      // qavs ichidagi — qalin
+      const q = document.createElement('strong');
+      q.textContent = b;
+      idish.appendChild(q);
+    } else {
+      idish.appendChild(document.createTextNode(b));
+    }
+  });
 }
 
 function agentXabarQosh(kim, matn, asboblar, komponentlar, suhbatId) {
@@ -118,7 +166,7 @@ function agentXabarQosh(kim, matn, asboblar, komponentlar, suhbatId) {
   // foydalanuvchi matni ham ishonchsiz manba hisoblanadi.
   const p = document.createElement('div');
   p.className = 'agent-matn';
-  p.textContent = matn;
+  matnniChiz(p, matn);
   div.appendChild(p);
   // GenUI: agent chizgan komponentlar matndan KEYIN keladi. Matn qisqa
   // xulosa, tafsilot esa jadval/ko'rsatkich/tasdiq tugmasi ko'rinishida.

@@ -465,16 +465,21 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
                                                   m.Order.delivered_qty > 0)
                          if o.payment_due_date]
             eng_eski = min(muddatlar) if muddatlar else None
+            # MAYDON TARTIBI MUHIM. Model jadvalni shu tartibda chizadi,
+            # telefon esa `qarz` dan oldin turganda mobil ekranda aynan
+            # SAVOLNING JAVOBI — summa — o'ngga surilib ko'rinmay qolardi
+            # (brauzerda ko'rildi). Eng muhim raqam nomdan keyin turadi,
+            # telefon esa oxiriga o'tkazildi.
             chiqish.append({
                 "mijoz_id": c_id, "mijoz": q["company"],
-                "telefon": telefonlar.get(c_id, ""),
                 "qarz": round(q["debt"], 2),
                 "kredit_limiti": q["credit_limit"],
                 "qora_royxatda": q["blacklisted"],
                 "muddat_boyicha": q["aging"],
                 "eng_eski_muddat": eng_eski.isoformat() if eng_eski else None,
                 "kechikkan_kun": (date.today() - eng_eski).days
-                                 if eng_eski and eng_eski < date.today() else 0})
+                                 if eng_eski and eng_eski < date.today() else 0,
+                "telefon": telefonlar.get(c_id, "")})
         # ENG KATTALARI qaytariladi, hammasi emas.
         #
         # Nega: 53 mijozning hammasini bersak, model ularni jadvalga
@@ -823,7 +828,16 @@ _UMUMIY_USLUB = """
 ## Uslub
 O'zbek tilida yoz. Qisqa gaplar. Raqamlarni aniq ayt, taxmin qilma —
 bilmasang asbob chaqirib bil. Ma'lumot yo'q bo'lsa «ma'lumot yo'q» deb
-ayt, o'ylab topma. Uzun hisobot yozma."""
+ayt, o'ylab topma. Uzun hisobot yozma.
+
+## Jadval ustunlari
+Jadvalda 3-4 tadan ortiq ustun bo'lmasin va SO'RALMAGAN ustunni
+qo'shma. Birinchi ustun — nom yoki raqam, IKKINCHI ustun — savolning
+javobi bo'lgan raqam. Telefon, id, manzil kabilar faqat so'ralgandagina
+chiqadi.
+
+Nega: javob telefonda ham o'qiladi, ekran tor. Ortiqcha ustun qo'shsang
+savolning javobi ekrandan surilib chiqib ketadi va odam uni ko'rmaydi."""
 
 AGENTLAR = {
     "sozlash": {
