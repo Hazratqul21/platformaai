@@ -31,8 +31,8 @@ PAGES.ai = async () => {
     <div class="glass card ai-chat-quti">
       <div class="between ai-bosh">
         <div style="min-width:0">
-          <select class="fld ai-tanla" id="aiTanla">${AI_ROYXAT
-            .map(a => `<option value="${esc(a.kalit)}" ${a.kalit === AI_KALIT ? 'selected' : ''}>${esc(a.nom)}</option>`).join('')}</select>
+          <div class="ai-tanla" style="font-family:var(--serif);font-size:16px;
+            font-weight:700;padding:2px 0">${esc((AI_ROYXAT[0]||{}).nom || 'Yordamchi')}</div>
           <div class="muted ai-holat ${tayyor ? '' : 'ai-ogoh'}" id="aiHolat">
             ${tayyor ? `${esc(holat.provayder)} · ${esc(holat.model)}` : esc(holat.izoh)}
           </div>
@@ -63,7 +63,8 @@ PAGES.ai = async () => {
 
 function aiOrnat() {
   const sel = _id('aiTanla');
-  if (sel) sel.onchange = e => { AI_KALIT = e.target.value; aiYangiSuhbat(); };
+  // Yordamchi BITTA — tanlash yo'q (2026-08-20). Sel bo'lsa ham
+  // hodisa bog'lanmaydi.
   const matn = _id('aiMatn');
   if (matn) {
     matn.addEventListener('input', () => aiOlchamla(matn));
@@ -82,27 +83,14 @@ function aiOrnat() {
  *  Bo'sh oynaga qarab turgan odam nima so'rashni bilmaydi — shuning
  *  uchun bosiladigan namunalar beriladi. */
 const AI_NAMUNA = {
-  sozlash: {
-    salom: 'Тизимни бизнесингизга мослаб бераман. Нима ишлаб чиқарасиз ёки сотасиз?',
-    savollar: ['Нон заводимиз бор, кунига 3000 нон ёпамиз',
-               'Қандай тайёр соҳа профиллари бор?',
-               'Мебель цехи учун тизим ясаб бер'],
-  },
-  ombor: {
-    salom: 'Омбор бўйича савол беринг.',
-    savollar: ['Омборда нима бор?', 'Нима тугаяпти?',
-               'Қайси буюртмага хомашё етмайди?'],
-  },
-  moliya: {
-    salom: 'Молия бўйича савол беринг.',
-    savollar: ['Ким энг кўп қарздор?', 'Пул ҳолати қандай?',
-               'Қарз ёшини диаграмма қилиб кўрсат'],
-  },
-  buyurtma: {
-    salom: 'Буюртмалар бўйича савол беринг.',
-    savollar: ['Қайси буюртмалар кечикяпти?',
-               'Жараёндаги буюртмалар қанча?',
-               'Шу буюртмага қанча материал кетади?'],
+  // BITTA yordamchi — savollar hamma bo'limdan aralash. Foydalanuvchi
+  // bo'lim tanlamaydi, shunchaki so'raydi.
+  yordamchi: {
+    salom: 'Саволингизни ёзинг — омбор, буюртма, мижоз, пул ёки тизим созламаси.',
+    savollar: ['Ким энг кўп қарздор?',
+               'Омборда нима тугаяпти?',
+               'Қайси буюртмалар кечикяпти?',
+               'Пул ҳолати қандай?'],
   },
 };
 
@@ -111,8 +99,9 @@ function aiYangiSuhbat() {
   const oqim = _id('aiOqim');
   if (oqim) oqim.innerHTML = '';
   const a = AI_ROYXAT.find(x => x.kalit === AI_KALIT);
-  const n = AI_NAMUNA[AI_KALIT] || { salom: 'Саволингизни ёзинг.', savollar: [] };
-  aiXabar('agent', (a ? a.nom + '.\n\n' : '') + n.salom);
+  const n = AI_NAMUNA[AI_KALIT] || AI_NAMUNA.yordamchi
+            || { salom: 'Саволингизни ёзинг.', savollar: [] };
+  aiXabar('agent', n.salom);
 
   const quti = _id('aiTaklif');
   if (!quti) return;

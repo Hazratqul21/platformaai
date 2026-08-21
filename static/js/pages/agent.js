@@ -77,7 +77,10 @@ async function agentHolatniOl() {
 
     AGENT_ROYXAT = h.agentlar || [];
     const sel = document.getElementById('agentTanla');
-    if (sel.options.length !== AGENT_ROYXAT.length) {
+    // Yordamchi BITTA (2026-08-20) — tanlash ro'yxati keraksiz,
+    // faqat joy egallaydi. Bitta bo'lsa yashiriladi.
+    if (sel) sel.style.display = AGENT_ROYXAT.length > 1 ? '' : 'none';
+    if (sel && sel.options.length !== AGENT_ROYXAT.length) {
       sel.innerHTML = AGENT_ROYXAT
         .map(a => `<option value="${a.kalit}">${a.nom}</option>`).join('');
       // Rolga ochiq birinchisi — Rahbarda «sozlash», sklad mudirida «ombor»

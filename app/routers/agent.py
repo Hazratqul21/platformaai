@@ -76,15 +76,15 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
           user=Depends(get_user)):
     """Agentga xabar yuboradi va javobini qaytaradi.
 
-    Rol tekshiruvi AGENT DARAJASIDA: sozlash agenti faqat Rahbarga
-    (u profil almashtira oladi — hamma ekranga ta'sir qiladi), ombor
-    agenti sklad mudiriga ham ochiq. Har agentning o'z ro'yxati bor.
+    Rol tekshiruvi ASBOB DARAJASIDA: yordamchi bitta, lekin unga
+    beriladigan asboblar foydalanuvchi roliga qarab filtrlanadi.
     """
-    a = ai.AGENTLAR.get(data.agent)
-    if not a:
-        raise HTTPException(404, f"'{data.agent}' — bunday yordamchi yo'q")
-    if user.role not in a["rollar"]:
-        raise HTTPException(403, f"«{a['nom']}» sizning rolingizga ochiq emas")
+    # BITTA yordamchi: eski kalitlar («moliya», «ombor»…) ham qabul
+    # qilinadi va hammasi shunga olib boradi. Rol cheklovi endi ASBOB
+    # darajasida (`ai.rolga_asboblar`) — sklad mudiri qarzdorlar
+    # asbobini umuman ko'rmaydi.
+    if not ai.rolga_asboblar(user.role):
+        raise HTTPException(403, "Sizning rolingizga AI yordamchi ochiq emas")
 
     tayyor, izoh = llm.tayyormi()
     if not tayyor:
@@ -107,7 +107,8 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
     tarix.append({"rol": "user", "matn": matn})
 
     try:
-        natija = ai.suhbat(db, tarix, data.agent)
+        natija = ai.suhbat(db, tarix, data.agent,
+                           getattr(user, "login", ""), user.role)
     except llm.LLMBand as e:
         # Vaqtinchalik band — 503 va tushunarli xabar. 502 «server buzuq»
         # degani, bu esa «keyinroq urinib ko'ring» degani.
@@ -146,11 +147,12 @@ def oqim(data: XabarIn, db: Session = Depends(get_db), user=Depends(get_user)):
     xabar matni kerak (POST). Oddiy qatorli oqimni brauzer
     `response.body.getReader()` bilan hech qanday kutubxonasiz o'qiydi.
     """
-    a = ai.AGENTLAR.get(data.agent)
-    if not a:
-        raise HTTPException(404, f"'{data.agent}' — bunday yordamchi yo'q")
-    if user.role not in a["rollar"]:
-        raise HTTPException(403, f"«{a['nom']}» sizning rolingizga ochiq emas")
+    # BITTA yordamchi: eski kalitlar («moliya», «ombor»…) ham qabul
+    # qilinadi va hammasi shunga olib boradi. Rol cheklovi endi ASBOB
+    # darajasida (`ai.rolga_asboblar`) — sklad mudiri qarzdorlar
+    # asbobini umuman ko'rmaydi.
+    if not ai.rolga_asboblar(user.role):
+        raise HTTPException(403, "Sizning rolingizga AI yordamchi ochiq emas")
     tayyor, izoh = llm.tayyormi()
     if not tayyor:
         raise HTTPException(400, izoh)
@@ -177,7 +179,8 @@ def oqim(data: XabarIn, db: Session = Depends(get_db), user=Depends(get_user)):
         yakuniy = None
         try:
             for hodisa in ai.suhbat_oqim(db, tarix, data.agent,
-                                        getattr(user, "login", "")):
+                                        getattr(user, "login", ""),
+                                        user.role):
                 if hodisa.get("tur") == "yakun":
                     yakuniy = hodisa
                     # Xom tarixni mijozga bermaymiz — u katta va kerak emas

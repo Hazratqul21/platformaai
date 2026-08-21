@@ -641,8 +641,8 @@ def _ai_sarf_yoz(javob: dict, agent_kalit: str, user_login: str = "") -> None:
         log.warning("AI sarfi yozilmadi (javob buzilmadi)")
 
 
-def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash",
-                user_login: str = ""):
+def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "yordamchi",
+                user_login: str = "", rol: str = ""):
     """Bitta navbatni yuritadi va HAR QADAMNI oqim sifatida chiqaradi.
 
     NEGA OQIM: agent bitta savolga 10–25 soniya sarflaydi (model
@@ -660,10 +660,22 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash",
     `suhbat()` shu generatorning ustiga qurilgan — eski chaqiruvchilar
     (masalan Telegram bot) o'zgarishsiz ishlayveradi.
     """
+    # Eski agent kalitlari («moliya», «ombor»…) ham qabul qilinadi —
+    # hammasi BITTA yordamchiga olib boradi (eski havolalar buzilmasin).
+    if agent_kalit not in AGENTLAR:
+        agent_kalit = YORDAMCHI_KALIT
     a = AGENTLAR[agent_kalit]
+
+    # ASBOBLAR ROL BO'YICHA FILTRLANADI — himoyaning asosiy joyi.
+    # Sklad mudiriga `qarzdorlar` umuman berilmaydi, ya'ni model uni
+    # chaqira olmaydi (ilgari bu agent darajasida edi).
+    if agent_kalit == YORDAMCHI_KALIT and rol:
+        ruxsat = set(rolga_asboblar(rol))
+    else:
+        ruxsat = set(a["asboblar"])
     # `korsat` HAR agentga beriladi: ko'rinish chizish bo'limga bog'liq
     # emas, hammasiga kerak.
-    asboblar = [x for x in HAMMA_ASBOBLAR if x["nom"] in a["asboblar"]]
+    asboblar = [x for x in HAMMA_ASBOBLAR if x["nom"] in ruxsat]
     asboblar.append(KORSAT_ASBOBI)
     # Ko'rsatma KODDAN emas, `korsatma.ol()` dan — mijoz yoki biz
     # uni bazadan o'zgartirgan bo'lishimiz mumkin. Xavfsizlik
@@ -775,15 +787,15 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "sozlash",
                 "Nima qilishimni aniqroq ayting.")
 
 
-def suhbat(db, xabarlar: list[dict], agent_kalit: str = "sozlash",
-           user_login: str = "") -> dict:
+def suhbat(db, xabarlar: list[dict], agent_kalit: str = "yordamchi",
+           user_login: str = "", rol: str = "") -> dict:
     """Oqimsiz variant — oxirgi natijani qaytaradi.
 
     `suhbat_oqim` ustiga qurilgan, ya'ni mantiq bitta joyda. Oqim
     kerak bo'lmagan chaqiruvchilar (bot, testlar) shuni ishlatadi.
     """
     oxirgi = None
-    for hodisa in suhbat_oqim(db, xabarlar, agent_kalit, user_login):
+    for hodisa in suhbat_oqim(db, xabarlar, agent_kalit, user_login, rol):
         if hodisa.get("tur") == "yakun":
             oxirgi = hodisa
     if oxirgi is None:                       # bo'lmasligi kerak, lekin
@@ -886,10 +898,106 @@ ishi. Sen hisoblaysan va ko'rsatasan.""",
 }
 
 
+
+
+# =====================================================================
+#  BITTA YORDAMCHI (2026-08-20)
+#
+# Ilgari 4 ta alohida agent bor edi (sozlash / ombor / moliya /
+# buyurtma) va foydalanuvchi qaysi biriga savol berishni O'ZI tanlardi.
+# Amalda bu noqulay: odam «qarzim qancha» deb so'ramoqchi, lekin avval
+# «Moliya yordamchisi» ni tanlashi kerak edi. Savol chegarani kesib
+# o'tsa («shu mijozga qancha mol bergan va qancha qarzi bor?») —
+# ikkita agentga bo'lib so'rashga to'g'ri kelardi.
+#
+# Endi BITTA yordamchi. Nima o'zgardi va nima O'ZGARMADI:
+#
+#   O'ZGARDI:  foydalanuvchi agent tanlamaydi — shunchaki so'raydi
+#   O'ZGARMADI: ROL CHEKLOVI. Ilgari cheklov AGENT darajasida edi
+#              (moliya agenti faqat Rahbar/Buxgalterga ochiq), endi
+#              ASBOB darajasida: sklad mudiri `qarzdorlar` asbobini
+#              umuman KO'RMAYDI, ya'ni himoya aynan o'sha kuchda.
+#
+# Nega endi xavfsiz: asboblar jami 12 ta. Dastlabki tashvish «40 asbob
+# berilsa model chalkashadi» edi — 12 ta zamonaviy model uchun muammo
+# emas. Asbob soni 20 dan oshsa, bu qaror qayta ko'riladi.
+# =====================================================================
+
+# Har asbobni qaysi rol ishlatishi mumkin. Eski AGENTLAR dagi
+# `rollar` maydonlarining BIRLASHMASI — himoya kuchi o'zgarmadi.
+ASBOB_ROLLARI = {
+    # Tizimni sozlash — faqat Rahbar (profil yaratadi/o'zgartiradi)
+    "modullarni_kor":       ["Rahbar"],
+    "profillarni_kor":      ["Rahbar"],
+    "profilni_oqi":         ["Rahbar"],
+    "profil_saqla":         ["Rahbar"],
+    "profilni_faollashtir": ["Rahbar"],
+    # Ombor va ishlab chiqarish
+    "ombor_qoldigi":     ["Rahbar", "Sklad mudiri", "Sex boshlig'i", "Menejer"],
+    "buyurtma_retsepti": ["Rahbar", "Sklad mudiri", "Sex boshlig'i", "Menejer"],
+    "sinov_buyurtma":    ["Rahbar", "Sklad mudiri", "Sex boshlig'i", "Menejer"],
+    # Buyurtmalar
+    "buyurtmalar":       ["Rahbar", "Menejer", "Sex boshlig'i"],
+    # MOLIYA — pul ma'lumoti. Sklad mudiri va sex boshlig'i KO'RMAYDI.
+    "qarzdorlar":        ["Rahbar", "Buxgalter"],
+    "pul_holati":        ["Rahbar", "Buxgalter"],
+    "mijoz_hisobi":      ["Rahbar", "Buxgalter"],
+}
+
+YORDAMCHI_KALIT = "yordamchi"
+
+YORDAMCHI_KORSATMASI = """Sen — korxonaning ERP yordamchisisan.
+
+Rahbar, menejer, buxgalter, sklad mudiri va sex boshlig'i senga savol
+beradi: ombor, buyurtma, mijoz qarzi, pul holati, tizim sozlamasi.
+Javobni RAQAM va SANA bilan ber.
+
+MUHIM: senga berilgan asboblar foydalanuvchining ROLIGA qarab
+tanlangan. Ro'yxatda yo'q asbobni chaqirma va «men buni ko'ra
+olmayman» deb ayt — masalan sklad mudiri qarzdorlarni so'rasa,
+«bu ma'lumot buxgalter va rahbarga ochiq» deb javob ber.
+
+Ish tartibing:
+1. Savol qaysi sohaga tegishli ekanini o'zing aniqla — foydalanuvchi
+   bo'lim tanlamaydi.
+2. Kerakli asbobni chaqir. Bir nechta kerak bo'lsa ketma-ket chaqir
+   (masalan «bu mijozga qancha mol berdik va qarzi qancha?» —
+   `buyurtmalar` va `mijoz_hisobi`).
+3. Raqamni ASBOBDAN ol. Bilmasang «ma'lumot yo'q» deb ayt.
+
+Sen bazaga O'ZING yozmaysan. O'zgartirish kerak bo'lsa TAKLIF
+qilasan — tugmani odam bosadi."""
+
+
+# Bitta yordamchining ta'rifi. Eski `AGENTLAR` saqlanadi (ko'rsatma
+# tahrirlash va eski chaqiruvlar uchun), lekin ishlatiladigan
+# yordamchi shu.
+AGENTLAR[YORDAMCHI_KALIT] = {
+    "nom": "Yordamchi",
+    "izoh": "Ombor, buyurtma, mijoz, pul va sozlama — hammasi bitta joyda",
+    # Hamma rol ochiq: nima ko'rishi ASBOB darajasida hal qilinadi
+    "rollar": ["Rahbar", "Menejer", "Buxgalter", "Sklad mudiri",
+               "Sex boshlig'i"],
+    "asboblar": list(ASBOB_ROLLARI.keys()),
+    "korsatma": YORDAMCHI_KORSATMASI,
+}
+
+
+def rolga_asboblar(rol: str) -> list[str]:
+    """Shu rol ishlatishi mumkin bo'lgan asboblar."""
+    return [nom for nom, rollar in ASBOB_ROLLARI.items() if rol in rollar]
+
+
 def agent_royxati(rol: str) -> list[dict]:
-    """Foydalanuvchi roliga ochiq agentlar."""
-    return [{"kalit": k, "nom": a["nom"], "izoh": a["izoh"]}
-            for k, a in AGENTLAR.items() if rol in a["rollar"]]
+    """Ochiq yordamchilar — endi BITTA.
+
+    Ro'yxat shakli saqlanadi (frontend va eski chaqiruvchilar
+    o'zgarmasin), lekin ichida bitta yozuv bo'ladi. Rol nima
+    ko'rishini asboblar hal qiladi (`rolga_asboblar`)."""
+    y = AGENTLAR[YORDAMCHI_KALIT]
+    n = len(rolga_asboblar(rol))
+    return [{"kalit": YORDAMCHI_KALIT, "nom": y["nom"], "izoh": y["izoh"],
+             "asbob_soni": n}]
 
 
 # --- Bo'lim agentlari uchun qo'shimcha asboblar ------------------------

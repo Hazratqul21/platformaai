@@ -59,7 +59,12 @@ with TestClient(app) as c:
 
     print("1. STANDART HOLAT — kod darajasi")
     r = c.get("/api/agent/korsatma", headers=A).json()
-    ok(len(r["agentlar"]) == 4, f"4 agent ({len(r['agentlar'])})")
+    # 5 ta: eski 4 ta (sozlash/ombor/moliya/buyurtma — ko'rsatmasi
+    # saqlanadi) + BITTA yordamchi (2026-08-20 dan ishlatiladigani).
+    # Ko'rsatma tahriri hamma kalit uchun ochiq qoladi.
+    ok(len(r["agentlar"]) == 5, f"5 agent ({len(r['agentlar'])})")
+    ok(any(a["kalit"] == "yordamchi" for a in r["agentlar"]),
+       "birlashgan «yordamchi» ro'yxatda")
     ok(all(a["manba"] == "kod" for a in r["agentlar"]),
        "hammasi koddan kelyapti")
     ok(len(r["xavfsizlik_qismi"]) > 20, "xavfsizlik qismi ko'rsatilgan")
