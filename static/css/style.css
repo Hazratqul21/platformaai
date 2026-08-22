@@ -629,3 +629,85 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
   .rx-rejimlar{grid-template-columns:1fr}
   .rx-sohalar{max-height:150px}
 }
+
+/* =====================================================================
+   TIZIM YARATILISH EKRANI (static/js/core/qurish.js)
+
+   Chapda qurilish tasmasi, o'ngda AI paneli (u ERP dagi bilan bir xil
+   panel — `.agent-panel`, kengligi 420px). Chap qism uning yonida
+   turadi, ustida emas.
+   ===================================================================== */
+.qur{display:none;position:fixed;inset:0;z-index:130;padding:16px;
+  padding-right:calc(min(420px,100vw) + 16px)}
+.qur.on{display:block}
+.qur-chap{height:100%;display:flex;flex-direction:column;padding:22px 22px 16px;
+  overflow:hidden}
+
+.qur-bosh{text-align:center;padding:6px 0 16px;flex:none}
+.qur-gayka{position:relative;height:64px;margin-bottom:12px}
+.qur-gayka svg{position:absolute;left:50%;width:46px;height:46px;color:var(--primary)}
+/* Ikki gayka qarama-qarshi aylanadi — «mexanizm ishlayapti» hissi.
+   Tayyor bo'lgach sekinlashadi (`.tayyor`). */
+.qur-g1{margin-left:-40px;top:6px;animation:qurAylan 5.5s linear infinite}
+.qur-g2{margin-left:-6px;top:20px;width:34px !important;height:34px !important;
+  opacity:.6;animation:qurAylanTes 4s linear infinite}
+@keyframes qurAylan{to{transform:rotate(360deg)}}
+@keyframes qurAylanTes{to{transform:rotate(-360deg)}}
+.qur.tayyor .qur-g1{animation-duration:22s}
+.qur.tayyor .qur-g2{animation-duration:18s}
+
+.qur-sarlavha{font-family:var(--serif);font-size:22px;font-weight:700}
+.qur-sub{font-size:12.5px;color:var(--ink-3);line-height:1.55;margin-top:5px;
+  max-width:420px;margin-left:auto;margin-right:auto}
+
+.qur-tasma{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:9px;
+  padding:4px 2px}
+.qur-tasma::-webkit-scrollbar{width:6px}
+.qur-tasma::-webkit-scrollbar-thumb{background:rgba(91,95,230,.25);border-radius:10px}
+
+.qur-bosh-holat{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;flex:1;min-height:180px;text-align:center}
+.qur-kutish{font-size:12px;color:var(--ink-3);max-width:280px;line-height:1.6}
+/* Nafas olayotgan nur — «kutyapmiz, lekin tirikmiz» */
+.qur-nur{width:64px;height:64px;border-radius:50%;
+  background:radial-gradient(circle,var(--primary-soft),transparent 68%);
+  animation:qurNafas 2.6s ease-in-out infinite}
+@keyframes qurNafas{0%,100%{transform:scale(.82);opacity:.5}
+                    50%{transform:scale(1.08);opacity:.95}}
+
+.qur-karta{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;
+  border-radius:15px;opacity:0;transform:translateY(10px);transition:.42s ease;
+  background:linear-gradient(150deg,rgba(255,255,255,.8),rgba(236,238,255,.6));
+  border:1px solid rgba(59,63,191,.14)}
+.qur-karta.kirdi{opacity:1;transform:none}
+.qur-karta-belgi{width:24px;height:24px;border-radius:50%;flex:none;color:#fff;
+  display:grid;place-items:center;font-size:12px;font-weight:700;
+  background:var(--accent);box-shadow:0 6px 14px -6px var(--primary-glow)}
+.qur-karta-nom{font-size:13px;font-weight:700}
+.qur-karta-izoh{font-size:11.5px;color:var(--ink-3);margin-top:2px;line-height:1.45}
+
+.qur-past{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding-top:12px;border-top:1px solid var(--hair);flex:none}
+.chaqnaydi{animation:qurChaqna 1.6s ease-in-out 3}
+@keyframes qurChaqna{0%,100%{box-shadow:0 10px 24px -12px var(--primary-glow)}
+                     50%{box-shadow:0 12px 34px -8px var(--primary)}}
+
+/* Suhbatni ochish/yashirish — kichik tugma, panel yonida */
+.qur-chat-tugma{position:fixed;right:calc(min(420px,100vw) + 18px);bottom:18px;
+  z-index:131;width:42px;height:42px;border-radius:50%;cursor:pointer;color:#fff;
+  border:none;font-size:17px;background:var(--accent);
+  box-shadow:0 12px 26px -10px var(--primary-glow)}
+.qur-chat-tugma:hover{transform:scale(1.06)}
+
+.qur-rejim-nishon{display:inline-block;margin-left:6px;padding:1px 7px;
+  border-radius:9px;font-size:10.5px;font-weight:700;color:var(--primary-deep);
+  background:rgba(154,160,255,.3)}
+
+/* Telefonda panel butun ekranni egallaydi — chap qism ostida qoladi
+   va suhbat tugmasi bilan almashtiriladi. */
+@media(max-width:860px){
+  .qur{padding:10px;padding-right:10px}
+  .qur-chap{padding:18px 16px 12px}
+  .qur-sarlavha{font-size:19px}
+  .qur-chat-tugma{right:16px;bottom:16px}
+}

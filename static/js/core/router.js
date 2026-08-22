@@ -118,6 +118,15 @@ window.addEventListener('hashchange', () => {
 });
 
 function enterApp(){
+  // YANGI AKKAUNT — avval QURISH ekrani, ERP emas.
+  // Ro'yxatdan o'tgan odam `?qur=1` bilan keladi. Unga darrov bo'sh
+  // ERP ni ko'rsatish noto'g'ri: u nimadan boshlashni bilmaydi va
+  // chap tarafdagi 14 ta bo'lim uni qo'rqitadi. Avval tizim uning
+  // ko'z oldida yig'iladi, keyin ichkariga kiradi.
+  if(typeof qurSorovi==='function' && qurSorovi()){
+    qurBoshla();
+    return;
+  }
   document.getElementById('loginScreen').style.display='none';
   // Lending ham yashirilishi SHART. Ilgari faqat login oynasi
   // yashirilardi va lending (z-index 140) ilova ustida qolib ketardi —
