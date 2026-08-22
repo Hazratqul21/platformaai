@@ -197,3 +197,70 @@ def agent_shablon_ochir(kalit: str,
     db.commit()
     kors.keshni_tozala(hammasi=True)
     return {"ok": True, "kalit": kalit}
+
+# ---------------------------------------------------------------------
+# SOZLAMALAR — INN provayderi va boshqalar
+# ---------------------------------------------------------------------
+class SozlamaIn(BaseModel):
+    qiymat: str = ""
+
+
+def _sir_korinishi(qiymat: str) -> str:
+    """Sir qiymatning faqat oxirgi 4 belgisi. Bot tokeni bilan bir naqsh.
+
+    To'liq kalit API orqali QAYTARILMAYDI: admin panelini ochgan har
+    kim (yoki brauzer kengaytmasi, yoki ekran yozuvi) uni ko'rib
+    qolmasin. Kalitni kim yozgan bo'lsa, o'zida bor.
+    """
+    q = qiymat or ""
+    return ("…" + q[-4:]) if len(q) > 4 else ("…" if q else "")
+
+
+@router.get("/sozlamalar")
+def sozlamalar(_: pm.PlatformaUser = Depends(pa.joriy_admin),
+               db: Session = Depends(boshqaruv_db)):
+    """Admin panelidan o'zgaradigan sozlamalar.
+
+    Hozircha INN qidiruvi provayderi. Kalitning o'zi qaytarilmaydi —
+    faqat qo'yilgan-qo'yilmagani va oxirgi 4 belgisi.
+    """
+    from ..platforma.inn import SOZLAMALAR as INN_KALITLAR
+    tavsif = {
+        "inn_provayder": ("Provayder", "ihamkor / maxsus / bo'sh = o'chirilgan", False),
+        "inn_manzil": ("So'rov manzili", "{inn} o'rniga raqam qo'yiladi", False),
+        "inn_kalit": ("API kaliti", "Sir — faqat oxirgi 4 belgisi ko'rinadi", True),
+        "inn_sarlavha": ("Kalit sarlavhasi", "Masalan X-API-Key. Bo'sh = Authorization: Bearer", False),
+    }
+    bor = {x.kalit: x for x in db.query(pm.PlatformaSozlama).all()}
+    chiqish = []
+    for k in INN_KALITLAR:
+        nom, izoh, sirmi = tavsif[k]
+        y = bor.get(k)
+        chiqish.append({
+            "kalit": k, "nom": nom, "izoh": izoh, "sirmi": sirmi,
+            "qoyilgan": bool(y and y.qiymat),
+            "qiymat": (_sir_korinishi(y.qiymat) if sirmi else (y.qiymat if y else "")),
+            "ozgartirilgan": y.ozgartirilgan.isoformat() if y else None,
+            "kim": y.kim if y else None,
+        })
+    return {"sozlamalar": chiqish, "guruh": "INN qidiruvi"}
+
+
+@router.put("/sozlama/{kalit}")
+def sozlama_saqla(kalit: str, data: SozlamaIn,
+                  admin: pm.PlatformaUser = Depends(pa.joriy_admin),
+                  db: Session = Depends(boshqaruv_db)):
+    from ..platforma.inn import SOZLAMALAR as INN_KALITLAR
+    if kalit not in INN_KALITLAR:
+        raise HTTPException(404, "Bunday sozlama yo'q")
+    qiymat = (data.qiymat or "").strip()
+    if kalit == "inn_manzil" and qiymat:
+        if not qiymat.startswith(("http://", "https://")):
+            raise HTTPException(400, "Manzil http:// yoki https:// bilan boshlansin")
+        if "{inn}" not in qiymat:
+            raise HTTPException(400, "Manzilda {inn} o'rni bo'lishi shart")
+    px.sozlama_yoz(db, kalit, qiymat, sirmi=(kalit == "inn_kalit"),
+                   kim=admin.login)
+    px.audit(db, "sozlama_ozgardi", kim=admin.login, izoh=kalit)
+    db.commit()
+    return {"kalit": kalit, "qoyilgan": bool(qiymat)}

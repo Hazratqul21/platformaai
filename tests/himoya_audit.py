@@ -37,6 +37,11 @@ OCHIQ = {
     # tokengacha ko'rsatadi. Bu koddagi shablonlar ro'yxati, hech
     # kimning ma'lumoti emas; sayt sahifasining o'zida ham turgan.
     "/sohalar":           "yo'nalishlar ro'yxati — mijoz ma'lumoti emas",
+    # INN qidiruvi — ro'yxatdan o'tishning 1-qadami, token bo'lishi
+    # mumkin emas. Mijoz ma'lumotiga tegmaydi (boshqa bazaga ham
+    # bormaydi). PULLIK tashqi xizmatga borgani uchun IP bo'yicha
+    # so'rov cheklovi qo'yilgan — `platforma/inn.py: chek_oshdimi`.
+    "/inn/{inn}":         "INN qidiruvi — ochiq, lekin IP bo'yicha cheklangan",
 }
 HIMOYA = {"get_user", "get_user_parolsiz", "require_roles",
           "joriy_user", "joriy_admin"}   # platforma kabineti/admin

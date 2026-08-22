@@ -168,3 +168,31 @@ def audit(db: Session, amal: str, akkaunt_id: int | None = None,
           kim: str = "", tafsilot: str = "") -> None:
     db.add(pm.PlatformaAudit(amal=amal, akkaunt_id=akkaunt_id, kim=kim,
                              tafsilot=tafsilot))
+
+def sozlama_yoz(db, kalit: str, qiymat: str, *, sirmi: bool = False,
+                izoh: str = "", kim: str = "") -> None:
+    """Platforma sozlamasini yozadi yoki yangilaydi (kalit/qiymat).
+
+    Admin panelidan o'zgaradigan narsalar shu yerda: INN provayderi
+    manzili va kaliti, kelajakda boshqalari. Kod qayta joylanmasin.
+    """
+    from . import models as pm
+    y = db.query(pm.PlatformaSozlama).filter(
+        pm.PlatformaSozlama.kalit == kalit).first()
+    if y is None:
+        y = pm.PlatformaSozlama(kalit=kalit)
+        db.add(y)
+    y.qiymat = qiymat or ""
+    y.sirmi = bool(sirmi) or y.sirmi
+    if izoh:
+        y.izoh = izoh
+    if kim:
+        y.kim = kim
+    y.ozgartirilgan = datetime.utcnow()
+
+
+def sozlama_oqi(db, kalit: str, zaxira: str = "") -> str:
+    from . import models as pm
+    y = db.query(pm.PlatformaSozlama).filter(
+        pm.PlatformaSozlama.kalit == kalit).first()
+    return (y.qiymat if y else "") or zaxira

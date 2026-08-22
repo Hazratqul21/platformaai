@@ -165,3 +165,25 @@ class AgentShablon(BoshqaruvBase):
     kim: Mapped[str] = mapped_column(String(120), default="")
     ozgartirilgan: Mapped[datetime] = mapped_column(DateTime,
                                                     default=datetime.utcnow)
+
+class PlatformaSozlama(BoshqaruvBase):
+    """Admin panelidan o'zgaradigan sozlamalar — kalit/qiymat.
+
+    NEGA JADVAL, KOD EMAS: INN qidiruvi provayderi (i-hamkor, org.info
+    yoki boshqa) vaqt o'tishi bilan almashishi mumkin — manzili
+    o'zgaradi, kaliti tugaydi, boshqasiga o'tiladi. Buning uchun har
+    safar kod qayta joylanmasin.
+
+    SIR QIYMATLAR (`sirmi=True`) API orqali HECH QACHON to'liq
+    qaytarilmaydi — faqat oxirgi 4 belgisi ko'rsatiladi. Bot tokeni
+    bilan bir xil naqsh (`routers/kabinet.py`).
+    """
+    __tablename__ = "platforma_sozlamalar"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kalit: Mapped[str] = mapped_column(String(60), unique=True, index=True)
+    qiymat: Mapped[str] = mapped_column(Text, default="")
+    sirmi: Mapped[bool] = mapped_column(Boolean, default=False)
+    izoh: Mapped[str] = mapped_column(String(300), default="")
+    kim: Mapped[str] = mapped_column(String(120), default="")
+    ozgartirilgan: Mapped[datetime] = mapped_column(DateTime,
+                                                    default=datetime.utcnow)

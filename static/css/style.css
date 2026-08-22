@@ -554,3 +554,78 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
   table.oralsin{white-space:normal!important}
   table.oralsin td:nth-child(2){word-break:break-word}
 }
+
+/* =====================================================================
+   RO'YXATDAN O'TISH SEHRGARI (static/js/core/royxat.js)
+   ===================================================================== */
+.rx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+.rx-qadamlar{display:flex;align-items:center;gap:6px}
+.rx-nuqta{width:22px;height:4px;border-radius:3px;background:rgba(59,63,191,.16);transition:.25s}
+.rx-nuqta.otdi{background:var(--primary-soft)}
+.rx-nuqta.joriy{background:var(--primary);width:30px}
+.rx-qadam-matn{font-size:11px;color:var(--ink-3);font-weight:600;margin-left:4px}
+
+.rx-izoh{font-size:12.5px;color:var(--ink-2);line-height:1.55;margin:6px 0 14px}
+.rx-kichik{font-size:11.5px;margin-top:5px;min-height:16px}
+.rx-ikki{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rx-inn-qator{display:grid;grid-template-columns:1fr auto;gap:8px}
+.rx-kod-qator{display:flex;align-items:center;gap:7px}
+.rx-kod-qator .fld{flex:1}
+.rx-kod-qator .muted{font-size:12px;white-space:nowrap}
+.rx-qqs{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12.5px;
+  color:var(--ink-2);cursor:pointer}
+.rx-tugmalar{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+
+/* Natija bloklari. QIZIL RANG FAQAT HAQIQIY XATOGA.
+   «INN topilmadi» — xato emas, oddiy holat: odam nomini o'zi yozadi.
+   Qizil ko'rsatilsa, u noto'g'ri ish qildim deb o'ylaydi va tashlab
+   ketadi. Shuning uchun eslatma neytral rangda. */
+.rx-natija{margin-top:8px;min-height:4px}
+.rx-eslatma{font-size:12px;color:var(--ink-3);padding:9px 12px;border-radius:12px;
+  background:rgba(59,63,191,.06);border:1px solid rgba(59,63,191,.12)}
+.rx-xato{font-size:12px;color:var(--danger);padding:9px 12px;border-radius:12px;
+  background:rgba(206,47,61,.07);border:1px solid rgba(206,47,61,.22)}
+.rx-topildi{font-size:12.5px;padding:11px 13px;border-radius:13px;line-height:1.5;
+  background:linear-gradient(120deg,rgba(18,136,90,.13),rgba(18,136,90,.04));
+  border:1px solid rgba(18,136,90,.26)}
+.rx-topildi .muted{font-size:11.5px;margin-top:2px}
+
+/* Yo'nalish chiplari — select emas.
+   29 ta yo'nalishni select ichida ko'rish uchun ochish kerak; chiplar
+   esa darrov ko'rinadi va telefonda barmoq bilan bosish osonroq. */
+.rx-sohalar{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 4px;
+  max-height:186px;overflow-y:auto;padding:2px}
+.rx-soha{font:inherit;font-size:12px;font-weight:600;cursor:pointer;
+  padding:8px 13px;border-radius:20px;color:var(--ink-2);transition:.15s;
+  border:1px solid rgba(59,63,191,.18);
+  background:linear-gradient(160deg,rgba(255,255,255,.7),rgba(255,255,255,.4))}
+.rx-soha:hover{border-color:var(--primary-soft);color:var(--primary-deep)}
+.rx-soha.tanlangan{color:#fff;border-color:transparent;background:var(--accent);
+  box-shadow:0 8px 18px -8px var(--primary-glow)}
+.rx-bosh{font-size:12px;color:var(--ink-3);padding:12px 4px}
+
+.rx-xulosa{border-radius:14px;padding:12px 14px;
+  background:rgba(255,255,255,.55);border:1px solid var(--hair)}
+.rx-xulosa-qator{display:flex;justify-content:space-between;gap:14px;
+  font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--hair)}
+.rx-xulosa-qator:last-child{border-bottom:0}
+.rx-xulosa-qator span{color:var(--ink-3)}
+.rx-xulosa-qator b{text-align:right}
+
+.rx-rejimlar{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:6px}
+.rx-rejim{font:inherit;text-align:left;cursor:pointer;padding:12px 13px;
+  border-radius:14px;transition:.15s;display:flex;flex-direction:column;gap:3px;
+  border:1px solid rgba(59,63,191,.18);
+  background:linear-gradient(160deg,rgba(255,255,255,.7),rgba(255,255,255,.4))}
+.rx-rejim:hover{border-color:var(--primary-soft)}
+.rx-rejim.tanlangan{border-color:var(--primary);
+  background:linear-gradient(140deg,rgba(154,160,255,.26),rgba(91,95,230,.1));
+  box-shadow:0 10px 22px -14px var(--primary-glow)}
+.rx-rejim-nom{font-size:13px;font-weight:700;color:var(--ink)}
+.rx-rejim-izoh{font-size:11px;color:var(--ink-3);line-height:1.4}
+
+@media(max-width:520px){
+  .rx-ikki{grid-template-columns:1fr}
+  .rx-rejimlar{grid-template-columns:1fr}
+  .rx-sohalar{max-height:150px}
+}

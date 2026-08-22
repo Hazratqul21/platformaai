@@ -12,7 +12,7 @@ emas — shuning uchun `get_db` EMAS, `boshqaruv_db` ishlatiladi.
 """
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -34,6 +34,16 @@ class RoyxatIn(BaseModel):
     inn: str = ""
     qqs_tolovchi: bool = False
     soha: str | None = None    # tanlangan profil kaliti (ixtiyoriy)
+    # RO'YXATDA YO'Q YO'NALISH. Odam o'z ishini o'z so'zi bilan yozadi
+    # («gilam yuvish xizmati»). Bunda tayyor profil yo'q — AI sozlash
+    # yordamchisi uni suhbatda yasab beradi. Shuning uchun bu matn rad
+    # ETILMAYDI, saqlanadi va yordamchiga birinchi kontekst bo'lib
+    # beriladi.
+    soha_matni: str = ""
+    # Ro'yxatdan o'tayotgan odam (ERP dagi admin foydalanuvchi nomi)
+    ism: str = ""
+    familiya: str = ""
+    telefon: str = ""
 
 
 def _fon_tayyorla(akkaunt_id: int, baza_nomi: str, parol: str,
@@ -59,6 +69,28 @@ def _fon_tayyorla(akkaunt_id: int, baza_nomi: str, parol: str,
         db.commit()
     finally:
         db.close()
+
+
+@router.get("/inn/{inn}")
+def inn_qidir(inn: str, request: Request,
+              db: Session = Depends(boshqaruv_db)):
+    """INN bo'yicha korxona ma'lumoti — ro'yxatdan o'tishning 1-qadami.
+
+    OCHIQ ENDPOINT: odam hali akkauntga ega emas.
+
+    HECH QACHON 4xx QAYTARMAYDI. Topilmasa ham 200 va
+    `{"topildi": false, "qolda": true, "sabab": "..."}` beriladi —
+    forma qizil xato ko'rsatmaydi, qo'lda kiritishga o'tadi. Tashqi
+    xizmat yiqilsa bizning ro'yxatdan o'tishimiz to'xtamasligi kerak.
+    """
+    from ..platforma import inn as inn_xizmat
+    # Kvotani himoya qilamiz — pastdagi izohga qarang (`inn.py`).
+    ip = (request.client.host if request.client else "") or "?"
+    if inn_xizmat.chek_oshdimi(ip):
+        # Bu yerda ham 429 emas, 200: forma ishlashda davom etsin.
+        return {"topildi": False, "qolda": True,
+                "sabab": "Juda ko'p so'rov — nomini o'zingiz yozing"}
+    return inn_xizmat.qidir(db, inn)
 
 
 @router.get("/sohalar")
@@ -102,19 +134,31 @@ def royxat(data: RoyxatIn, fon: BackgroundTasks,
     except ValueError as e:
         raise HTTPException(400, str(e))
 
+    # Odamning ISMI — akkaunt nomi emas. Ilgari bu yerda `akkaunt_nom`
+    # yozilardi, ya'ni foydalanuvchi o'zini «Mebel Sex MCHJ» deb ko'rardi.
+    odam = " ".join(x for x in [(data.ism or "").strip(),
+                                (data.familiya or "").strip()] if x)
     user = pm.PlatformaUser(login=login, parol_hash=hash_pw(data.parol),
-                            ism=data.akkaunt_nom, akkaunt_id=akkaunt.id,
+                            ism=odam or data.akkaunt_nom, akkaunt_id=akkaunt.id,
                             platforma_roli="egasi", tasdiqlangan=True)
     db.add(user)
+
+    # RO'YXATDA YO'Q YO'NALISH saqlanadi — AI sozlash yordamchisi
+    # suhbatni shu matndan boshlaydi, odam ikkinchi marta yozmasin.
+    soha_matni = (data.soha_matni or "").strip()[:500]
+    if soha_matni:
+        px.sozlama_yoz(db, f"akkaunt_{akkaunt.id}_soha_matni", soha_matni,
+                       izoh="Ro'yxatdan o'tishda yozilgan yo'nalish")
     db.commit()
 
     # Baza tayyorlash — FON vazifasi. So'rov ichida qilinsa foydalanuvchi
     # bir necha soniya «osilib qolgan» ekranni ko'radi.
     fon.add_task(_fon_tayyorla, akkaunt.id, akkaunt.baza_nomi, data.parol,
-                 data.akkaunt_nom, data.soha)
+                 odam or data.akkaunt_nom, data.soha)
 
     return {"akkaunt_kod": akkaunt.kod, "holat": akkaunt.tayyorlik,
-            "manzil": f"https://{akkaunt.kod}.{_domen()}"}
+            "manzil": f"https://{akkaunt.kod}.{_domen()}",
+            "soha_matni": soha_matni}
 
 
 def _domen() -> str:
