@@ -701,7 +701,7 @@ async function botBlokChiz(){
       ёзади. Смета тасдиқлаш ва Mini App шу бот орқали ишлайди.</div>
 
     <div style="margin-top:12px;padding:12px;border-radius:12px;
-      background:linear-gradient(120deg,rgba(160,163,255,.12),rgba(124,127,240,.04));
+      background:linear-gradient(120deg,rgba(154,160,255,.12),rgba(91,95,230,.04));
       font-size:12.5px;line-height:1.7">
       <b>Қандай олинади:</b><br>
       1. Telegram да <b>@BotFather</b> га ёзинг → <code>/newbot</code><br>

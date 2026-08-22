@@ -158,7 +158,7 @@ function smetaHtml(q, body) {
   }
 
   const ichki = `
-    <div style="background:rgba(124,127,240,.07);border-radius:12px;padding:12px;margin-bottom:10px">
+    <div style="background:rgba(91,95,230,.07);border-radius:12px;padding:12px;margin-bottom:10px">
       <div class="muted" style="font-size:10px;letter-spacing:1px;margin-bottom:6px">ФАҚАТ СИЗГА КЎРИНАДИ — мижозга чиқмайди</div>
       ${(q.materiallar || []).map(mt => `
         <div class="between" style="font-size:12px;padding:2px 0">

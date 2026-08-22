@@ -1,28 +1,52 @@
 /* =====================================================
-   TIZIM — Light Liquid Glass · #A0A3FF urg'u
-   Fon: sohaga bog'liq bo'lmagan sovuq oq-siyohrang · INNASOFT MChJ
+   TIZIM — Light Liquid Glass · INNASOFT MChJ
+   Fon: sohaga bog'liq bo'lmagan sovuq oq-siyohrang
+
+   PALITRA SAYQALLANDI (2026-08-22). Ilgari ranglar hira va
+   to'yinmagan ko'rinardi. Sabab o'lchandi:
+     · urg'u #5B5FE6 — yorqinligi 71%, ya'ni juda ochiq
+     · fon #E2E6F8 — deyarli oq-kulrang, rangi yo'q hisob
+     · shisha ustiga oq qo'yilib, hamma narsa oqarib ketardi
+   Natijada OQ MATN URG'U RANGIDA atigi 3.41 kontrast berardi —
+   WCAG AA uchun 4.5 kerak, ya'ni tugmalardagi yozuv me'yordan
+   past edi. Endi 4.97.
+
+   Rang OILASI o'zgarmadi (siyohrang-binafsha, H≈237) — faqat
+   to'yintirildi va chuqurlashtirildi.
    ===================================================== */
 :root{
-  --primary:#7C7FF0; --primary-soft:#A0A3FF; --primary-deep:#5E63E0;
-  --accent:linear-gradient(135deg,#A0A3FF,#7C7FF0);
-  --ink:#20223A; --ink-2:#4B4E6D; --ink-3:#797B95;
-  --ok:#1A9E63; --warn:#B7791F; --danger:#D63D49;
-  --glass-3:rgba(255,255,255,.3); --stroke:rgba(255,255,255,.7);
-  --hair:rgba(40,45,100,.08); --radius:20px;
-  --shadow:0 22px 44px -24px rgba(66,76,160,.45),0 3px 12px -5px rgba(66,76,150,.14),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -14px 26px -16px rgba(120,130,210,.16);
-  --blur:saturate(155%) blur(26px);
+  --primary:#5B5FE6; --primary-soft:#9AA0FF; --primary-deep:#3B3FBF;
+  --primary-glow:rgba(91,95,230,.42);
+  --accent:linear-gradient(135deg,#8F93FF,#5B5FE6 62%,#4A4ED6);
+  --ink:#161834; --ink-2:#3D4166; --ink-3:#6B6F94;
+  --ok:#12885A; --warn:#A76B12; --danger:#CE2F3D;
+  --glass-3:rgba(255,255,255,.34); --stroke:rgba(255,255,255,.75);
+  --hair:rgba(40,45,100,.11); --radius:20px;
+  --shadow:0 22px 46px -24px rgba(59,63,191,.5),0 3px 14px -5px rgba(59,63,191,.18),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -14px 26px -16px rgba(110,116,215,.2);
+  --blur:saturate(178%) blur(26px);
   --serif:"Playfair Display",Georgia,serif;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-smoothing:antialiased;overflow:hidden}
-.paper-bg{position:fixed;inset:0;z-index:-2;background:#EAEDF8}
-.glass{background:radial-gradient(135% 95% at 0% 0%,rgba(255,255,255,.55),transparent 48%),linear-gradient(160deg,rgba(255,255,255,.76),rgba(255,255,255,.54) 55%,rgba(255,255,255,.66));
+body{font-family:var(--sans);color:var(--ink);background:#E2E6F8;-webkit-font-smoothing:antialiased;overflow:hidden}
+/* Fonda RANG bor. Ilgari tekis #E2E6F8 edi — deyarli oq, shuning
+   uchun ustidagi oq shisha kartochkalar fondan ajralmasdi va butun
+   ekran «yuvilgan» ko'rinardi. Endi ikki nurli dog' fonni jonlantiradi,
+   shisha esa ular ustida aniq ko'rinadi. */
+.paper-bg{position:fixed;inset:0;z-index:-2;
+  background:
+    radial-gradient(58% 44% at 8% 4%,rgba(154,160,255,.5),transparent 62%),
+    radial-gradient(52% 46% at 96% 96%,rgba(91,95,230,.3),transparent 64%),
+    linear-gradient(168deg,#E9ECFB,#DDE2F7 58%,#D6DCF5)}
+/* Shishada endi yengil RANG TINI bor (oxiridagi siyohrang qatlam).
+   Toza oq ustiga toza oq qo'yilsa chegara bilinmaydi — aynan shu
+   «hira» hissini berardi. */
+.glass{background:radial-gradient(135% 95% at 0% 0%,rgba(255,255,255,.62),transparent 46%),linear-gradient(160deg,rgba(255,255,255,.78),rgba(255,255,255,.56) 52%,rgba(236,238,255,.7));
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border:1px solid transparent;border-radius:var(--radius);box-shadow:var(--shadow);position:relative}
 .glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1px;
-  background:linear-gradient(140deg,rgba(255,255,255,1),rgba(255,255,255,.35) 20%,rgba(160,163,255,0) 48%,rgba(124,127,240,.5) 100%);
+  background:linear-gradient(140deg,rgba(255,255,255,1),rgba(255,255,255,.4) 18%,rgba(154,160,255,.08) 46%,rgba(91,95,230,.62) 100%);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
 .ic{display:inline-flex;align-items:center;justify-content:center}
@@ -32,14 +56,14 @@ body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-sm
 .app.on{display:grid;grid-template-columns:250px 1fr;padding:14px;gap:14px}
 .side{display:flex;flex-direction:column;padding:16px 12px;overflow:hidden}
 .brand{display:flex;align-items:center;gap:11px;padding:6px 8px 14px}
-.logo{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none;color:#fff;background:var(--accent);box-shadow:0 12px 24px -8px rgba(124,127,240,.7)}
+.logo{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none;color:#fff;background:var(--accent);box-shadow:0 12px 24px -8px rgba(91,95,230,.7)}
 .brand h1{font-family:var(--serif);font-size:16px;letter-spacing:1.4px}
 .brand small{display:block;color:var(--ink-3);font-size:10px;letter-spacing:.4px;text-transform:uppercase;margin-top:2px}
 .nav{display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1}
 .nav::-webkit-scrollbar{width:0}
 .nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:var(--ink-2);text-decoration:none;font-size:13.5px;font-weight:500;cursor:pointer;transition:.18s;border:1px solid transparent}
 .nav a:hover{background:var(--glass-3);color:var(--ink)}
-.nav a.active{background:linear-gradient(120deg,rgba(160,163,255,.34),rgba(124,127,240,.16));color:var(--primary-deep);border-color:rgba(124,127,240,.3)}
+.nav a.active{background:linear-gradient(120deg,rgba(154,160,255,.34),rgba(91,95,230,.16));color:var(--primary-deep);border-color:rgba(91,95,230,.3)}
 .side-foot{padding:10px 8px 2px;border-top:1px solid var(--hair);font-size:10.5px;color:var(--ink-3)}
 .main{display:flex;flex-direction:column;overflow:hidden;gap:12px}
 .topbar{display:flex;align-items:center;gap:12px;padding:12px 18px}
@@ -51,7 +75,7 @@ body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-sm
 .userchip small{color:var(--ink-3);font-weight:500}
 .content{flex:1;overflow-y:auto;padding:2px 2px 20px;-webkit-overflow-scrolling:touch}
 .content::-webkit-scrollbar{width:7px}
-.content::-webkit-scrollbar-thumb{background:rgba(124,127,240,.25);border-radius:10px}
+.content::-webkit-scrollbar-thumb{background:rgba(91,95,230,.25);border-radius:10px}
 .page{display:none;animation:fade .35s ease}
 .page.show{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -77,7 +101,7 @@ body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-sm
   .content{padding-bottom:86px}
   .bottom-nav{display:flex;position:fixed;left:10px;right:10px;bottom:10px;z-index:60;padding:7px;gap:3px;justify-content:space-around;border-radius:22px}
   .bottom-nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:14px;color:var(--ink-3);text-decoration:none;font-size:9.5px;font-weight:600;cursor:pointer}
-  .bottom-nav a.active{color:var(--primary-deep);background:linear-gradient(120deg,rgba(160,163,255,.34),rgba(124,127,240,.14))}
+  .bottom-nav a.active{color:var(--primary-deep);background:linear-gradient(120deg,rgba(154,160,255,.34),rgba(91,95,230,.14))}
   .g4{grid-template-columns:repeat(2,1fr)!important}
   .g3{grid-template-columns:1fr!important}
   .g2{grid-template-columns:1fr!important}
@@ -108,7 +132,7 @@ body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-sm
   /* Surilayotganini bildirish — o'ng chekkada yengil soya */
   .card > table::-webkit-scrollbar, .glass > table::-webkit-scrollbar{height:4px}
   .card > table::-webkit-scrollbar-thumb, .glass > table::-webkit-scrollbar-thumb{
-    background:rgba(124,127,240,.3);border-radius:4px}
+    background:rgba(91,95,230,.3);border-radius:4px}
 }
 
 /* ---------- Primitives ---------- */
@@ -127,7 +151,7 @@ body{font-family:var(--sans);color:var(--ink);background:#EAEDF8;-webkit-font-sm
 .mb{margin-bottom:12px}
 h2.sec{font-family:var(--serif);font-size:16.5px;margin-bottom:2px}
 .sec-sub{font-size:12px;color:var(--ink-3);margin-bottom:13px}
-.kpi .ic-box{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--primary);background:linear-gradient(160deg,rgba(184,187,255,.34),rgba(160,163,255,.12));border:1px solid rgba(124,127,240,.24)}
+.kpi .ic-box{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--primary);background:linear-gradient(160deg,rgba(184,187,255,.34),rgba(154,160,255,.12));border:1px solid rgba(91,95,230,.24)}
 .kpi .val{font-size:22px;font-weight:700;margin:11px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
 .kpi .lab{font-size:11.5px;color:var(--ink-3)}
 .chip{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
@@ -136,23 +160,23 @@ h2.sec{font-family:var(--serif);font-size:16.5px;margin-bottom:2px}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--ink-3);padding:9px 12px;font-weight:600;white-space:nowrap}
 td{padding:10px 12px;border-top:1px solid var(--hair);vertical-align:middle}
-tbody tr:hover{background:rgba(124,127,240,.05)}
+tbody tr:hover{background:rgba(91,95,230,.05)}
 .tag{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .tag.ok{background:rgba(26,158,99,.12);color:var(--ok)}
 .tag.warn{background:rgba(183,121,31,.14);color:var(--warn)}
 .tag.dn{background:rgba(214,61,73,.12);color:var(--danger)}
-.tag.pri{background:rgba(124,127,240,.14);color:var(--primary-deep)}
+.tag.pri{background:rgba(91,95,230,.14);color:var(--primary-deep)}
 .tag.mut{background:rgba(40,45,100,.07);color:var(--ink-2)}
-.btn{font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:12px;border:1px solid rgba(124,127,240,.18);background:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,.3));color:var(--ink);cursor:pointer;transition:.18s;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
-.btn:hover{background:#fff;border-color:rgba(124,127,240,.3)}
-.btn.pri{background:var(--accent);border-color:transparent;color:#fff;box-shadow:0 12px 24px -10px rgba(124,127,240,.75)}
+.btn{font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:12px;border:1px solid rgba(91,95,230,.18);background:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,.3));color:var(--ink);cursor:pointer;transition:.18s;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+.btn:hover{background:#fff;border-color:rgba(91,95,230,.3)}
+.btn.pri{background:var(--accent);border-color:transparent;color:#fff;box-shadow:0 12px 24px -10px rgba(91,95,230,.75)}
 .btn.sm{padding:6px 11px;font-size:11.5px}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--primary-deep)}
 .btn.dngr{background:rgba(214,61,73,.1);border-color:rgba(214,61,73,.25);color:var(--danger)}
-input.fld,select.fld,textarea.fld{width:100%;font-family:inherit;font-size:13px;padding:10px 13px;border-radius:12px;border:1px solid rgba(124,127,240,.22);background:rgba(255,255,255,.6);color:var(--ink);outline:0}
+input.fld,select.fld,textarea.fld{width:100%;font-family:inherit;font-size:13px;padding:10px 13px;border-radius:12px;border:1px solid rgba(91,95,230,.22);background:rgba(255,255,255,.6);color:var(--ink);outline:0}
 input.fld:focus,select.fld:focus{border-color:var(--primary);background:#fff}
 label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:10px 0 5px;text-transform:uppercase;letter-spacing:.5px}
-.pbar{height:8px;border-radius:10px;background:rgba(124,127,240,.13);overflow:hidden}
+.pbar{height:8px;border-radius:10px;background:rgba(91,95,230,.13);overflow:hidden}
 .pbar i{display:block;height:100%;border-radius:10px;background:var(--accent)}
 .alert{display:flex;gap:11px;padding:12px;border-radius:14px;background:linear-gradient(160deg,rgba(255,255,255,.4),rgba(255,255,255,.18));border:1px solid rgba(255,255,255,.5);align-items:flex-start}
 .alert .ai{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none}
@@ -162,7 +186,7 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 .alert b{font-size:12.5px}.alert p{font-size:11.5px;color:var(--ink-3);margin-top:2px}
 .bars{display:flex;align-items:flex-end;gap:10px;height:130px;padding-top:6px}
 .bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
-.col{width:100%;max-width:26px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,#A0A3FF,#C7CAFF)}
+.col{width:100%;max-width:26px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,#9AA0FF,#C7CAFF)}
 .bar small{font-size:10px;color:var(--ink-3)}
 .toasts{position:fixed;right:16px;bottom:16px;z-index:220;display:flex;flex-direction:column;gap:9px;max-width:88vw}
 .toast{min-width:260px;padding:13px 15px;animation:slidein .3s ease}
@@ -174,7 +198,7 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 .modal.wide{width:980px}
 @keyframes pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
 .steps{display:flex;gap:4px;margin:8px 0}
-.steps i{flex:1;height:5px;border-radius:4px;background:rgba(124,127,240,.15)}
+.steps i{flex:1;height:5px;border-radius:4px;background:rgba(91,95,230,.15)}
 .steps i.on{background:var(--accent)}
 
 /* Mini App: oyna balandligi JS'dan --tg-h ga yoziladi (globals.js).
@@ -189,10 +213,10 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 .tg .hide-tg{display:none!important}
 .tg .content{padding-bottom:96px}
 .fab{width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;
-  margin-top:-26px;box-shadow:0 14px 28px -8px rgba(124,127,240,.85),inset 0 1px 0 rgba(255,255,255,.5);border:3px solid rgba(255,255,255,.8)}
+  margin-top:-26px;box-shadow:0 14px 28px -8px rgba(91,95,230,.85),inset 0 1px 0 rgba(255,255,255,.5);border:3px solid rgba(255,255,255,.8)}
 .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .qa{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;border-radius:16px;cursor:pointer;
-  border:1px solid rgba(124,127,240,.18);background:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,.3));
+  border:1px solid rgba(91,95,230,.18);background:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,.3));
   font-size:12px;font-weight:600;color:var(--ink);transition:.15s;text-align:center}
 .qa:hover{background:#fff;transform:translateY(-2px)}
 .qa .qi{font-size:24px}
@@ -201,7 +225,7 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
 .fchip{font-family:inherit;font-size:12px;font-weight:600;padding:7px 15px;border-radius:20px;cursor:pointer;transition:.15s;
   border:1px solid rgba(255,255,255,.6);background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,.25));color:var(--ink-2)}
-.fchip.on{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 8px 18px -8px rgba(124,127,240,.7)}
+.fchip.on{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 8px 18px -8px rgba(91,95,230,.7)}
 .searchbar{display:flex;align-items:center;gap:9px;background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,.26));
   border:1px solid rgba(255,255,255,.62);padding:10px 16px;border-radius:30px;margin-bottom:12px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
@@ -213,20 +237,20 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 .ccard .divider{border:0;border-top:1px solid var(--hair);margin:11px 0}
 /* buyurtma kartasi tracker (Figma: 4 nuqta chiziq bilan) */
 .trk{display:flex;align-items:center;margin:12px 2px 4px}
-.trk .td{width:11px;height:11px;border-radius:50%;background:rgba(124,127,240,.18);flex:none;position:relative}
-.trk .td.on{background:var(--primary);box-shadow:0 0 0 3px rgba(160,163,255,.3)}
-.trk .tl{flex:1;height:2.5px;background:rgba(124,127,240,.15)}
+.trk .td{width:11px;height:11px;border-radius:50%;background:rgba(91,95,230,.18);flex:none;position:relative}
+.trk .td.on{background:var(--primary);box-shadow:0 0 0 3px rgba(154,160,255,.3)}
+.trk .tl{flex:1;height:2.5px;background:rgba(91,95,230,.15)}
 .trk .tl.on{background:var(--primary-soft)}
 .trk-labs{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-3);margin-bottom:6px}
 
 /* ---------- Login ---------- */
 .login-screen{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
 .login-card{max-width:430px;width:100%;padding:34px 30px;text-align:center}
-.login-card .logo-xl{width:72px;height:72px;border-radius:21px;margin:0 auto 16px;display:grid;place-items:center;color:#fff;background:var(--accent);box-shadow:0 20px 44px -14px rgba(124,127,240,.8)}
+.login-card .logo-xl{width:72px;height:72px;border-radius:21px;margin:0 auto 16px;display:grid;place-items:center;color:#fff;background:var(--accent);box-shadow:0 20px 44px -14px rgba(91,95,230,.8)}
 .login-card h1{font-family:var(--serif);font-size:34px;letter-spacing:2.5px}
 .login-card .kicker{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--primary-deep);font-weight:600;margin:7px 0 18px}
 .roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 4px}
-.roles button{font-family:inherit;font-size:11.5px;font-weight:600;padding:9px 6px;border-radius:11px;border:1px solid rgba(124,127,240,.2);background:rgba(255,255,255,.45);color:var(--ink-2);cursor:pointer;transition:.15s}
+.roles button{font-family:inherit;font-size:11.5px;font-weight:600;padding:9px 6px;border-radius:11px;border:1px solid rgba(91,95,230,.2);background:rgba(255,255,255,.45);color:var(--ink-2);cursor:pointer;transition:.15s}
 .roles button:hover{background:#fff;color:var(--primary-deep);border-color:var(--primary)}
 
 /* ================= AI AGENT — o'ng tomondagi suhbat paneli ================= */
@@ -474,9 +498,9 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 .lnd-sec h3{font-family:var(--serif);font-size:18px;margin-bottom:5px}
 .lnd-sec .sub{color:var(--ink-3);font-size:12px;margin-bottom:16px}
 .lnd-chips{display:flex;flex-wrap:wrap;gap:7px}
-.lnd-chip{background:linear-gradient(160deg,rgba(255,255,255,.6),rgba(255,255,255,.3));border:1px solid rgba(124,127,240,.2);
+.lnd-chip{background:linear-gradient(160deg,rgba(255,255,255,.6),rgba(255,255,255,.3));border:1px solid rgba(91,95,230,.2);
   padding:6px 12px;border-radius:30px;font-size:12px;font-weight:500;color:var(--ink-2)}
-.lnd-chip.ai{background:linear-gradient(120deg,rgba(160,163,255,.32),rgba(124,127,240,.14));border-color:rgba(124,127,240,.36);color:var(--primary-deep);font-weight:600}
+.lnd-chip.ai{background:linear-gradient(120deg,rgba(154,160,255,.32),rgba(91,95,230,.14));border-color:rgba(91,95,230,.36);color:var(--primary-deep);font-weight:600}
 
 .lnd-two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:720px){.lnd-two{grid-template-columns:1fr}}
@@ -488,7 +512,7 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 .lnd-list .mk.n{color:var(--ink-3)}
 
 .lnd-tarif{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.lnd-t{padding:18px 16px;border-radius:16px;border:1px solid rgba(124,127,240,.18);background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,.26))}
+.lnd-t{padding:18px 16px;border-radius:16px;border:1px solid rgba(91,95,230,.18);background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,.26))}
 .lnd-t h4{font-size:13.5px;font-weight:700;margin-bottom:4px}
 .lnd-t .who{font-size:11.5px;color:var(--ink-3);margin-bottom:10px}
 .lnd-t ul{list-style:none;display:flex;flex-direction:column;gap:5px;font-size:12.3px;color:var(--ink-2)}
