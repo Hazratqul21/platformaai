@@ -147,5 +147,36 @@ function enterApp(){
   }
 
   loadFirms();
+  sozlashSorovi();
+}
+
+/* RO'YXATDAN O'TGANDAN KEYINGI SOZLASH.
+   Yangi akkaunt egasi `.../?sozlash=1` bilan keladi (lending'dagi
+   «AI bilan sozlashni boshlash» tugmasi). Shu belgini ko'rsak AI
+   panelini ochamiz va sozlash suhbatini boshlaymiz.
+
+   Nega kerak: «Sozlash yordamchisi» tizimni mijozning ishiga
+   moslash uchun yozilgan, lekin unga yo'l yo'q edi — yangi kelgan
+   odam bo'sh ERP ni ko'rib, nimadan boshlashni bilmasdi.
+
+   Belgi darrov URL dan olib tashlanadi, aks holda har yangilashda
+   suhbat qaytadan ochilaverardi. */
+function sozlashSorovi(){
+  let bor=false;
+  try{ bor = new URLSearchParams(location.search).get('sozlash')==='1'; }
+  catch(e){ return; }
+  if(!bor) return;
+  try{ history.replaceState(null,'',location.pathname+location.hash); }catch(e){}
+  if(typeof agentOchYop!=='function') return;
+  setTimeout(()=>{
+    agentOchYop(true);
+    // Sozlash agenti faqat Rahbarga ochiq. Yangi akkauntning admini
+    // Rahbar bo'ladi, lekin boshqa rol kirsa — birlashgan yordamchi
+    // ochiladi, xato chiqmaydi.
+    if(typeof AGENT_KALIT!=='undefined' && ME && ME.role==='Rahbar'){
+      AGENT_KALIT='sozlash';
+    }
+    if(typeof agentYangiSuhbat==='function') agentYangiSuhbat();
+  }, 400);
 }
 

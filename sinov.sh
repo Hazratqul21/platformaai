@@ -20,7 +20,12 @@ XATO=0
 
 qayta_tikla() {   # $1 = SEED_DEMO | SEED_EMPTY
     docker compose down -v >/dev/null 2>&1
-    env "$1=1" docker compose up -d >/dev/null 2>&1
+    # `--build` SHART. Ilgari shunchaki `up -d` edi va oxirgi yig'ilgan
+    # obraz ishlatilardi. Natijada butun to'plam ESKI kod ustida yurdi:
+    # 2026-08-22 da obrazda `routers/hisob.py` umuman yo'q edi, ya'ni
+    # buxgalteriya endpointlari 404 qaytarardi, sinovlar esa «o'tdi»
+    # deb ko'rsatardi. Sinov eski kodni tekshirsa, u sinov emas.
+    env "$1=1" docker compose up -d --build >/dev/null 2>&1
     for _ in $(seq 40); do
         curl -fsS "$BAZA/api/health" >/dev/null 2>&1 && return 0
         sleep 1
@@ -65,6 +70,10 @@ echo "════════ AKKAUNT KABINETI — AI sarfi shaffof, limit ishl
 echo
 echo "════════ ADMIN PANELI — akkauntlarni ko'rish, muzlatish"
 "$PY" tests/admin_test.py || XATO=1
+
+echo
+echo "════════ AGENT ROL CHEKLOVI — sklad mudiri moliyaga kira olmaydi"
+"$PY" tests/agent_rol_test.py || XATO=1
 
 echo
 echo "════════ AI KO'RSATMASI — kod/platforma/akkaunt, xavfsizlik saqlanadi"

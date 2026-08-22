@@ -65,35 +65,52 @@ function lendingBoshla(){
    holda forma ochiladi va tekshiradi, lekin baza yaratilmaydi va
    holat «xato» bo'ladi — bu halol ko'rsatiladi.
    ==================================================================== */
-const ROYXAT_SOHALAR = [
-  {kalit:'', nom:'— sohani keyin tanlayman —'},
-  {kalit:'non', nom:"Non zavodi"},
-  {kalit:'mebel', nom:"Mebel sexi"},
-  {kalit:'karton', nom:"Karton / gofra qutilar"},
-  {kalit:'beton', nom:"Beton / temir-beton"},
-  {kalit:'tikuvchilik', nom:"Tikuvchilik sexi"},
-  {kalit:'poyabzal', nom:"Poyabzal ishlab chiqarish"},
-  {kalit:'sut', nom:"Sut mahsulotlari"},
-  {kalit:'kolbasa', nom:"Go'sht mahsulotlari"},
-  {kalit:'kimyo', nom:"Maishiy kimyo"},
-  {kalit:'avto_servis', nom:"Avto servis"},
-  {kalit:'chakana_dokon', nom:"Chakana do'kon"},
-  {kalit:'ulgurji_savdo', nom:"Ulgurji savdo (distribyutor)"},
-  {kalit:'gisht', nom:"G'isht / qurilish materiallari"},
-  {kalit:'kabel', nom:"Kabel / elektrotexnika"},
-  {kalit:'metall', nom:"Metall konstruksiya"},
-  {kalit:'montaj', nom:"Qurilish-montaj ishlari"},
-  {kalit:'plastik_deraza', nom:"Plastik deraza / eshik"},
-  {kalit:'yogoch_eshik', nom:"Yog'och eshik / deraza"},
-  {kalit:'poligrafiya', nom:"Poligrafiya / bosmaxona"},
-  {kalit:'reklama', nom:"Reklama agentligi"},
-  {kalit:'logistika', nom:"Transport / logistika"},
-  {kalit:'texnika_tamiri', nom:"Maishiy texnika ta'miri"},
-];
+/* YO'NALISHLAR RO'YXATI BACKENDDAN KELADI.
+   Ilgari bu yerda qo'lda yozilgan massiv turardi. Yangi profil
+   qo'shilganda uni bu yerda ham yozish esdan chiqardi va yo'nalish
+   ro'yxatda umuman ko'rinmasdi — ya'ni yozilgan soha mijozga yetib
+   bormasdi. Endi manba bitta: `app/profiles/*.json`. */
+let ROYXAT_SOHALAR = [];
 
-function royxatSohaOptions(){
-  return ROYXAT_SOHALAR.map(s =>
-    `<option value="${s.kalit}">${s.nom.replace(/</g,'&lt;')}</option>`).join('');
+async function royxatSohalarniOl(){
+  if(ROYXAT_SOHALAR.length) return ROYXAT_SOHALAR;
+  try{
+    const d = await (await fetch(API+'/api/platforma/sohalar')).json();
+    ROYXAT_SOHALAR = d.sohalar || [];
+  }catch(e){ ROYXAT_SOHALAR = []; }
+  return ROYXAT_SOHALAR;
+}
+
+function royxatSohaOptions(filtr){
+  const q = (filtr||'').trim().toLowerCase();
+  const mos = q
+    ? ROYXAT_SOHALAR.filter(s =>
+        (s.nom+' '+(s.izoh||'')).toLowerCase().includes(q))
+    : ROYXAT_SOHALAR;
+  const bosh = `<option value="">— sohani keyin tanlayman —</option>`;
+  if(!mos.length) return bosh +
+    `<option value="" disabled>«${esc(q)}» bo'yicha topilmadi</option>`;
+  return bosh + mos.map(s =>
+    `<option value="${esc(s.kalit)}">${esc(s.nom)}</option>`).join('');
+}
+
+/* 29 ta yo'nalish oddiy ro'yxatda ko'p — qidiruv maydonchasi bor.
+   Tanlangani filtr o'zgarganda ham saqlanadi. */
+function royxatSohaFiltr(){
+  const sel = document.getElementById('rx_soha');
+  const tanlangan = sel.value;
+  sel.innerHTML = royxatSohaOptions(f('rx_soha_qidir'));
+  if([...sel.options].some(o=>o.value===tanlangan)) sel.value = tanlangan;
+  royxatSohaIzoh();
+}
+
+function royxatSohaIzoh(){
+  const k = f('rx_soha');
+  const s = ROYXAT_SOHALAR.find(x=>x.kalit===k);
+  const el = document.getElementById('rx_soha_izoh');
+  if(!el) return;
+  el.textContent = s && s.izoh ? s.izoh
+    : 'Tanlamasangiz ham bo\'ladi — keyin AI yordamchi sozlab beradi.';
 }
 
 /** Subdomen kodi: kichik harf, raqam, tire. Nomdan taklif qilinadi. */
@@ -102,7 +119,8 @@ function royxatKodTozala(v){
     .replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,40);
 }
 
-function lendingRoyxat(){
+async function lendingRoyxat(){
+  await royxatSohalarniOl();
   modal(`<h2 class="sec">Ro'yxatdan o'tish</h2>
   <div class="muted" style="font-size:12px;margin:2px 0 14px;line-height:1.5">
     Akkaunt yaratasiz va o'z manzilingizga (masalan
@@ -120,8 +138,12 @@ function lendingRoyxat(){
     <span class="muted" style="font-size:12px">.innasoft.uz</span>
   </div>
 
-  <label class="fl">Soha</label>
-  <select class="fld" id="rx_soha">${royxatSohaOptions()}</select>
+  <label class="fl">Faoliyat yo'nalishi</label>
+  <input class="fld" id="rx_soha_qidir" placeholder="qidirish: ijara, elektr, non…"
+    style="margin-bottom:6px" oninput="royxatSohaFiltr()"/>
+  <select class="fld" id="rx_soha" onchange="royxatSohaIzoh()">${royxatSohaOptions()}</select>
+  <div class="muted" id="rx_soha_izoh" style="font-size:11.5px;margin-top:4px">
+    Tanlamasangiz ham bo'ladi — keyin AI yordamchi sozlab beradi.</div>
 
   <label class="fl">Login (telefon yoki email)</label>
   <input class="fld" id="rx_login" placeholder="+998 90 123 45 67" autocomplete="username"/>
@@ -170,12 +192,28 @@ async function royxatHolatKuzat(kod, manzil, natija, btn){
     try{
       const h=await (await fetch(API+`/api/platforma/holat/${kod}`)).json();
       if(h.tayyorlik==='tayyor'){
+        // AI BILAN SOZLASH — shu yerdan boshlanadi.
+        // Yo'nalish tanlangan bo'lsa ham tizim uni aynan mijozning
+        // ishiga moslashi kerak (qaysi maydonlar, qanday narx, qaysi
+        // bo'limlar). «Sozlash yordamchisi» aynan shu ish uchun bor,
+        // lekin unga yo'l yo'q edi — odam kirib, uni o'zi topishi
+        // kerak edi. Endi ro'yxatdan o'tishning oxiri to'g'ridan
+        // to'g'ri o'sha suhbatga olib boradi.
+        const sozlaUrl = manzil + '/?sozlash=1';
         natija.innerHTML=`<div style="padding:12px;border-radius:12px;
           background:linear-gradient(120deg,rgba(26,158,99,.12),rgba(26,158,99,.04));
           border:1px solid rgba(26,158,99,.25);font-size:13px">
           <b style="color:var(--ok)">✓ Tayyor!</b><br>
           Manzilingiz: <b>${esc(manzil)}</b><br>
-          <span class="muted">Login: admin · parol: siz kiritgan parol</span></div>`;
+          <span class="muted">Login: admin · parol: siz kiritgan parol</span>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <a class="btn pri" href="${esc(sozlaUrl)}">AI bilan sozlashni boshlash</a>
+            <a class="btn ghost" href="${esc(manzil)}">Shunchaki kirish</a>
+          </div>
+          <div class="muted" style="margin-top:8px;font-size:11.5px">
+            AI yordamchi biznesingizni so'raydi va tizimni shunga
+            moslaydi — maydonlar, narx hisobi, kerakli bo'limlar.</div>
+        </div>`;
         btn.textContent='Tayyor'; return;
       }
       if(h.tayyorlik==='xato'){

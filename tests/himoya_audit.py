@@ -33,6 +33,10 @@ OCHIQ = {
     "/royxat":            "ro'yxatdan o'tish — kirish nuqtasi",
     "/holat/{akkaunt_kod}": "baza tayyorlanish holati — sir emas",
     "/kir":               "platforma kabinetiga kirish nuqtasi",
+    # Faoliyat yo'nalishlari ro'yxati — ro'yxatdan o'tish formasi uni
+    # tokengacha ko'rsatadi. Bu koddagi shablonlar ro'yxati, hech
+    # kimning ma'lumoti emas; sayt sahifasining o'zida ham turgan.
+    "/sohalar":           "yo'nalishlar ro'yxati — mijoz ma'lumoti emas",
 }
 HIMOYA = {"get_user", "get_user_parolsiz", "require_roles",
           "joriy_user", "joriy_admin"}   # platforma kabineti/admin

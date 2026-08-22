@@ -1,0 +1,82 @@
+{
+  "kalit": "ombor_xizmati",
+  "nom": "Ombor xizmati (mas'ul saqlash)",
+  "modul": "xizmat",
+  "izoh": "Begona yukni saqlash, yig'ish, jo'natish. Miqdor — m³ × kun emas, m³.",
+  "maydonlar": [
+    {
+      "kalit": "yuk_turi",
+      "nom": "Yuk turi",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Oziq-ovqat",
+        "Sanoat tovari",
+        "Kiyim-kechak",
+        "Qurilish materiali",
+        "Maishiy texnika",
+        "Xavfli yuk"
+      ]
+    },
+    {
+      "kalit": "saqlash_rejimi",
+      "nom": "Saqlash rejimi",
+      "tur": "matn",
+      "standart": "Oddiy",
+      "variantlar": [
+        "Oddiy",
+        "Sovutilgan",
+        "Muzlatilgan",
+        "Quruq"
+      ]
+    },
+    {
+      "kalit": "joy_kodi",
+      "nom": "Joy kodi (yacheyka)",
+      "tur": "matn"
+    },
+    {
+      "kalit": "muddat_kun",
+      "nom": "Saqlash muddati",
+      "tur": "butun",
+      "birlik": "kun",
+      "majburiy": true,
+      "standart": 30,
+      "min": 1,
+      "max": 3650
+    },
+    {
+      "kalit": "kunlik_tarif",
+      "nom": "1 m³ uchun kunlik tarif",
+      "tur": "kasr",
+      "birlik": "so'm",
+      "majburiy": true,
+      "min": "0"
+    },
+    {
+      "kalit": "yigish_xizmati",
+      "nom": "Yig'ish xizmati (pikking)",
+      "tur": "mantiq",
+      "standart": false
+    }
+  ],
+  "olchov": {
+    "birlik": "m³",
+    "kasrli": true,
+    "min": "0.001",
+    "max": "1000000"
+  },
+  "narx": {
+    "usul": "qolda",
+    "izoh": "Narx = m³ × kunlik tarif × kun. Shartnomaga qarab o'zgaradi, qo'lda kiritiladi."
+  },
+  "retsept": [],
+  "matnlar": {
+    "olcham": "{qty} m³, {muddat_kun} kun",
+    "tarkib": "{yuk_turi} ({saqlash_rejimi})",
+    "tur": "{yuk_turi}",
+    "tur_zaxira": "saqlash",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}, joy: {joy_kodi}"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "kalit": "umumiy_ovqatlanish",
+  "nom": "Umumiy ovqatlanish (oshxona, kafe)",
+  "modul": "ishlab_chiqarish",
+  "izoh": "Taom tayyorlash, banket, yetkazib berish. Retsept bo'yicha mahsulot yechiladi.",
+  "maydonlar": [
+    {
+      "kalit": "taom",
+      "nom": "Taom",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Osh",
+        "Shorva",
+        "Somsa",
+        "Kabob",
+        "Manti",
+        "Lag'mon",
+        "Salat",
+        "Shirinlik"
+      ]
+    },
+    {
+      "kalit": "porsiya_gr",
+      "nom": "Porsiya og'irligi",
+      "tur": "butun",
+      "birlik": "gramm",
+      "majburiy": true,
+      "standart": 300,
+      "min": 20,
+      "max": 5000
+    },
+    {
+      "kalit": "shakl",
+      "nom": "Shakl",
+      "tur": "matn",
+      "standart": "Zalda",
+      "variantlar": ["Zalda", "Olib ketish", "Yetkazib berish", "Banket"]
+    },
+    {
+      "kalit": "idish_kerak",
+      "nom": "Bir martalik idish",
+      "tur": "mantiq",
+      "standart": false
+    }
+  ],
+  "olchov": {
+    "birlik": "porsiya",
+    "kasrli": false,
+    "min": "1",
+    "max": "100000"
+  },
+  "narx": {
+    "usul": "retsept",
+    "ish_haqi": "3000",
+    "qoshimcha_xarajat_foiz": 20,
+    "izoh": "Tannarx = mahsulot (retseptdan) + oshpaz haqi + qo'shimcha xarajat (gaz, elektr, ijara)"
+  },
+  "retsept": [
+    {
+      "material": "Oziq-ovqat mahsuloti",
+      "birlik": "kg",
+      "miqdor": "qty * porsiya_gr / 1000",
+      "brak_foiz": 7,
+      "izoh": "Porsiya grammidan kilogrammga o'tkaziladi"
+    },
+    {
+      "material": "Bir martalik idish",
+      "birlik": "dona",
+      "miqdor": "idish_kerak * qty",
+      "brak_foiz": 2
+    }
+  ],
+  "matnlar": {
+    "olcham": "{porsiya_gr} g",
+    "tarkib": "{taom} ({shakl})",
+    "tur": "{taom}",
+    "tur_zaxira": "taom",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

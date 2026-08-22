@@ -133,14 +133,43 @@ class Maydon:
         self.tur = tur
         self.birlik = birlik    # mm, m², g, dona... (bo'sh bo'lishi mumkin)
         self.standart = standart      # foydalanuvchi bermasa shu ishlatiladi
-        self.min = min                # raqamli chegara (ikkalasi ixtiyoriy)
-        self.max = max
+        # CHEGARA MAYDON TURIGA KELTIRILADI.
+        #
+        # `kasr` maydonda qiymat `Decimal`, chegara esa JSON dan satr
+        # bo'lib kelishi mumkin ("min": "0"). Ilgari ular to'g'ridan
+        # to'g'ri solishtirilardi va `Decimal < str` — TypeError berardi:
+        # butun soha ishlamay qolardi, xato esa faqat kimdir buyurtma
+        # kiritganda chiqardi.
+        #
+        # Bu shunchaki mening yozuv xatoyim emas: profillar admin
+        # panelidagi konstruktordan tahrirlanadi, ya'ni odam ham
+        # maydonchaga «0» deb yozsa aynan shu holat yuzaga keladi.
+        # Shuning uchun ma'lumotda emas, KODDA to'g'rilanadi.
+        self.min = self._chegara(min, tur)   # raqamli chegara (ixtiyoriy)
+        self.max = self._chegara(max, tur)
         self.variantlar = variantlar  # ruxsat etilgan qiymatlar ro'yxati
         self.majburiy = majburiy      # bo'sh bo'lmasin
         # `hisoblanadi` — foydalanuvchi kiritmaydi, tizim hisoblaydi
         # (karton: m2_per_box formuladan). Validatsiya bunday maydonni
         # so'ramaydi, aks holda «majburiy maydon yo'q» deb rad etardi.
         self.hisoblanadi = hisoblanadi
+
+    @staticmethod
+    def _chegara(qiymat, tur: str):
+        """Chegarani maydon turiga keltiradi. Keltirib bo'lmasa — chegara yo'q.
+
+        Buzuq chegara tufayli butun soha ishdan chiqmasin: chegarasiz
+        maydon chegarasi noto'g'ri ishlaydigan maydondan yaxshiroq."""
+        if qiymat is None:
+            return None
+        try:
+            if tur == "kasr":
+                return Decimal(str(qiymat))
+            if tur == "butun":
+                return int(qiymat)
+        except (ValueError, TypeError, ArithmeticError):
+            return None
+        return qiymat
 
     def tekshir(self, qiymat) -> str | None:
         """Xato matnini qaytaradi, xato bo'lmasa None."""
@@ -509,8 +538,33 @@ def soha_oqi(order, kalit: str, standart=None):
 
 
 def soha_hammasi(order) -> dict:
-    """Hamma soha maydonlari, Python turlarida."""
-    return {md.kalit: soha_oqi(order, md.kalit) for md in profil().maydonlar}
+    """Hamma soha maydonlari, Python turlarida.
+
+    `qty` HAM QO'SHILADI. Retsept formulalarida u allaqachon bor
+    ("ogirlik_g * qty / 1000"), matn shablonlarida esa yo'q edi —
+    ikki joyda ikki xil qoida, va bu tuzoq: profilda «{qty} kun» deb
+    yozilsa, `_tuldir` uni «profilda yo'q maydon» deb butun bo'lakni
+    TASHLAB yuborardi. Natijada ijara sohasida o'lcham matni bo'sh
+    chiqdi, ombor xizmatida esa «m³» jimgina yo'qoldi.
+
+    Bu ayniqsa muhim, chunki profillar admin panelidagi konstruktordan
+    tahrirlanadi — u yerda «{qty}» deb yozish eng tabiiy narsa.
+    """
+    p = profil()
+    q = {md.kalit: soha_oqi(order, md.kalit) for md in p.maydonlar}
+    # Profilda «qty» nomli maydon bo'lsa, u ustun turadi — mijozning
+    # o'z maydoni jimgina almashtirilmasin.
+    if "qty" not in q:
+        miqdor = getattr(order, "qty", None)
+        # Kasrsiz sohada «7.0 kun» emas, «7 kun». Baza `qty` ni float
+        # saqlaydi, profil esa kasr kerakmi-yo'qmi bilib turadi.
+        if miqdor is not None and not p.kasrli:
+            try:
+                miqdor = int(Decimal(str(miqdor)))
+            except (ValueError, TypeError, ArithmeticError):
+                pass
+        q["qty"] = miqdor
+    return q
 
 
 def retsept_qatorlari(order) -> list[dict]:

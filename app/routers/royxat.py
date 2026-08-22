@@ -61,6 +61,29 @@ def _fon_tayyorla(akkaunt_id: int, baza_nomi: str, parol: str,
         db.close()
 
 
+@router.get("/sohalar")
+def sohalar():
+    """Ro'yxatdan o'tishda tanlanadigan faoliyat yo'nalishlari.
+
+    OCHIQ ENDPOINT — hali akkaunt ham, token ham yo'q.
+
+    Nega backenddan: ilgari bu ro'yxat `static/js/core/lending.js`
+    ichida QO'LDA yozilgan edi. Yangi profil qo'shilganda uni JS da
+    ham yozish esdan chiqardi va yo'nalish tanlash ro'yxatida umuman
+    ko'rinmasdi — ya'ni yozilgan soha mijozga yetib bormasdi.
+    Endi manba bitta: `app/profiles/*.json`.
+    """
+    from .. import domain
+    chiqish = []
+    for kalit, tarif in sorted(domain.shablonlar().items(),
+                               key=lambda x: x[1].get("nom", x[0])):
+        chiqish.append({"kalit": kalit,
+                        "nom": tarif.get("nom", kalit),
+                        "izoh": tarif.get("izoh", ""),
+                        "modul": tarif.get("modul", "")})
+    return {"sohalar": chiqish, "soni": len(chiqish)}
+
+
 @router.post("/royxat")
 def royxat(data: RoyxatIn, fon: BackgroundTasks,
            db: Session = Depends(boshqaruv_db)):

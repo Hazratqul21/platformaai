@@ -674,10 +674,18 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "yordamchi",
     # ASBOBLAR ROL BO'YICHA FILTRLANADI — himoyaning asosiy joyi.
     # Sklad mudiriga `qarzdorlar` umuman berilmaydi, ya'ni model uni
     # chaqira olmaydi (ilgari bu agent darajasida edi).
-    if agent_kalit == YORDAMCHI_KALIT and rol:
+    # ROL — HAR DOIM YUQORI CHEGARA, qaysi agent so'ralganidan qat'i
+    # nazar. Ilgari bu faqat `YORDAMCHI_KALIT` uchun ishlardi va eski
+    # kalitlar («moliya») uni chetlab o'tardi — sklad mudiri moliya
+    # asboblarini olib qolardi. Marshrutizator buni 403 bilan to'xtatadi,
+    # bu esa ikkinchi qatlam: u yerdan o'tib ketilsa ham model
+    # taqiqlangan asbobni KO'RMAYDI.
+    if not rol:
+        ruxsat = set(a["asboblar"])
+    elif agent_kalit == YORDAMCHI_KALIT:
         ruxsat = set(rolga_asboblar(rol))
     else:
-        ruxsat = set(a["asboblar"])
+        ruxsat = set(a["asboblar"]) & set(rolga_asboblar(rol))
     # `korsat` HAR agentga beriladi: ko'rinish chizish bo'limga bog'liq
     # emas, hammasiga kerak.
     asboblar = [x for x in HAMMA_ASBOBLAR if x["nom"] in ruxsat]

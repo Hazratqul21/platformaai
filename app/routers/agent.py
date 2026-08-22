@@ -71,6 +71,33 @@ class XabarIn(BaseModel):
     agent: str = "sozlash"         # qaysi bo'lim agenti
 
 
+def _agent_ruxsatini_tekshir(agent_kalit: str | None, rol: str) -> None:
+    """Rol bu agentga umuman kira oladimi.
+
+    IKKI QATLAMLI HIMOYANING BIRINCHISI. Ikkinchisi — `ai.suhbat_oqim`
+    ichida asboblarni rol bilan kesishtirish.
+
+    Nega ikkalasi kerak: 034 da to'rt agent bitta «yordamchi» ga
+    birlashtirildi va himoya AGENT darajasidan ASBOB darajasiga
+    ko'chirildi. Lekin eski kalitlar («moliya», «ombor»…) `AGENTLAR`
+    ichida qoldi — ular ko'rsatmani tahrirlash uchun kerak. Natijada
+    yangi filtr faqat «yordamchi» ga tegdi, eski kalitlar esa uni
+    chetlab o'tdi: sklad mudiri `agent: "moliya"` deb yuborsa moliya
+    asboblarini TO'LIQ olardi. Sinov buni ushladi (kod=200, 403 kerak).
+    """
+    if not ai.rolga_asboblar(rol):
+        raise HTTPException(403, "Sizning rolingizga AI yordamchi ochiq emas")
+    kalit = (agent_kalit or "").strip()
+    # Noma'lum yoki bo'sh kalit — birlashgan yordamchiga boradi, uning
+    # asboblari baribir rol bo'yicha filtrlanadi.
+    if not kalit or kalit not in ai.AGENTLAR or kalit == ai.YORDAMCHI_KALIT:
+        return
+    rollar = ai.AGENTLAR[kalit].get("rollar") or []
+    if rol not in rollar:
+        raise HTTPException(403, f"«{ai.AGENTLAR[kalit]['nom']}» sizning "
+                                 f"rolingizga ochiq emas")
+
+
 @router.post("/xabar")
 def xabar(data: XabarIn, db: Session = Depends(get_db),
           user=Depends(get_user)):
@@ -79,12 +106,7 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
     Rol tekshiruvi ASBOB DARAJASIDA: yordamchi bitta, lekin unga
     beriladigan asboblar foydalanuvchi roliga qarab filtrlanadi.
     """
-    # BITTA yordamchi: eski kalitlar («moliya», «ombor»…) ham qabul
-    # qilinadi va hammasi shunga olib boradi. Rol cheklovi endi ASBOB
-    # darajasida (`ai.rolga_asboblar`) — sklad mudiri qarzdorlar
-    # asbobini umuman ko'rmaydi.
-    if not ai.rolga_asboblar(user.role):
-        raise HTTPException(403, "Sizning rolingizga AI yordamchi ochiq emas")
+    _agent_ruxsatini_tekshir(data.agent, user.role)
 
     tayyor, izoh = llm.tayyormi()
     if not tayyor:
@@ -147,12 +169,7 @@ def oqim(data: XabarIn, db: Session = Depends(get_db), user=Depends(get_user)):
     xabar matni kerak (POST). Oddiy qatorli oqimni brauzer
     `response.body.getReader()` bilan hech qanday kutubxonasiz o'qiydi.
     """
-    # BITTA yordamchi: eski kalitlar («moliya», «ombor»…) ham qabul
-    # qilinadi va hammasi shunga olib boradi. Rol cheklovi endi ASBOB
-    # darajasida (`ai.rolga_asboblar`) — sklad mudiri qarzdorlar
-    # asbobini umuman ko'rmaydi.
-    if not ai.rolga_asboblar(user.role):
-        raise HTTPException(403, "Sizning rolingizga AI yordamchi ochiq emas")
+    _agent_ruxsatini_tekshir(data.agent, user.role)
     tayyor, izoh = llm.tayyormi()
     if not tayyor:
         raise HTTPException(400, izoh)

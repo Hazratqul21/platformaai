@@ -1,0 +1,86 @@
+{
+  "kalit": "talim_markazi",
+  "nom": "Ta'lim markazi (kurslar)",
+  "modul": "xizmat",
+  "izoh": "Kurslar, guruhlar, o'quvchilar. Miqdor — O'QUVCHI soni.",
+  "maydonlar": [
+    {
+      "kalit": "kurs",
+      "nom": "Kurs",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Ingliz tili",
+        "Rus tili",
+        "Matematika",
+        "Dasturlash",
+        "Grafik dizayn",
+        "Buxgalteriya",
+        "Haydovchilik",
+        "Tikuvchilik"
+      ]
+    },
+    {
+      "kalit": "daraja",
+      "nom": "Daraja",
+      "tur": "matn",
+      "standart": "Boshlang'ich",
+      "variantlar": ["Boshlang'ich", "O'rta", "Yuqori"]
+    },
+    {
+      "kalit": "shakl",
+      "nom": "Shakl",
+      "tur": "matn",
+      "standart": "Guruh",
+      "variantlar": ["Guruh", "Individual", "Onlayn"]
+    },
+    {
+      "kalit": "davomiylik_oy",
+      "nom": "Davomiyligi",
+      "tur": "butun",
+      "birlik": "oy",
+      "standart": 3,
+      "min": 1,
+      "max": 60
+    },
+    {
+      "kalit": "dars_soni",
+      "nom": "Haftasiga dars",
+      "tur": "butun",
+      "birlik": "marta",
+      "standart": 3,
+      "min": 1,
+      "max": 14
+    },
+    {
+      "kalit": "oquvchi_ismi",
+      "nom": "O'quvchi(lar)",
+      "tur": "matn"
+    },
+    {
+      "kalit": "sertifikat",
+      "nom": "Sertifikat beriladi",
+      "tur": "mantiq",
+      "standart": true
+    }
+  ],
+  "olchov": {
+    "birlik": "o'quvchi",
+    "kasrli": false,
+    "min": "1",
+    "max": "10000"
+  },
+  "narx": {
+    "usul": "qolda",
+    "izoh": "Kurs narxi oldindan belgilanadi. Chegirma va bo'lib to'lash kelishuv bo'yicha."
+  },
+  "retsept": [],
+  "matnlar": {
+    "olcham": "{davomiylik_oy} oy, haftasiga {dars_soni} marta",
+    "tarkib": "{kurs} ({daraja}, {shakl})",
+    "tur": "{kurs}",
+    "tur_zaxira": "kurs",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

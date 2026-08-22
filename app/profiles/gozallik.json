@@ -1,0 +1,73 @@
+{
+  "kalit": "gozallik",
+  "nom": "Go'zallik saloni",
+  "modul": "xizmat",
+  "izoh": "Soch, tirnoq, kosmetologiya. Usta bo'yicha hisob yuritiladi.",
+  "maydonlar": [
+    {
+      "kalit": "xizmat",
+      "nom": "Xizmat",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Soch olish",
+        "Bo'yash",
+        "Kalarirovka",
+        "Manikyur",
+        "Pedikyur",
+        "Kosmetologiya",
+        "Massaj",
+        "Qosh / kiprik"
+      ]
+    },
+    {
+      "kalit": "usta",
+      "nom": "Usta",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "davomiylik_min",
+      "nom": "Davomiyligi",
+      "tur": "butun",
+      "birlik": "daqiqa",
+      "standart": 60,
+      "min": 5,
+      "max": 600
+    },
+    {
+      "kalit": "material_sarfi",
+      "nom": "Material sarflanadi",
+      "tur": "mantiq",
+      "standart": true
+    }
+  ],
+  "olchov": {
+    "birlik": "xizmat",
+    "kasrli": false,
+    "min": "1",
+    "max": "1000"
+  },
+  "narx": {
+    "usul": "retsept",
+    "ish_haqi": "0",
+    "qoshimcha_xarajat_foiz": 10,
+    "izoh": "Usta haqi foiz bilan olinadi (Xodimlar bo'limida), shuning uchun bu yerda 0"
+  },
+  "retsept": [
+    {
+      "material": "Kosmetika sarfi",
+      "birlik": "komplekt",
+      "miqdor": "material_sarfi * qty",
+      "brak_foiz": 3
+    }
+  ],
+  "matnlar": {
+    "olcham": "{davomiylik_min} daqiqa",
+    "tarkib": "{xizmat}, usta: {usta}",
+    "tur": "{xizmat}",
+    "tur_zaxira": "xizmat",
+    "hujjat_mahsulot": "{tarkib}",
+    "nakladnoy_mahsulot": "{tarkib}"
+  }
+}

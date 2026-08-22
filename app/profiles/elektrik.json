@@ -1,0 +1,94 @@
+{
+  "kalit": "elektrik",
+  "nom": "Elektr montaj va xizmati",
+  "modul": "qurilish",
+  "izoh": "Simlash, shchit yig'ish, yoritish, nosozlikni topish.",
+  "maydonlar": [
+    {
+      "kalit": "ish_turi",
+      "nom": "Ish turi",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Ichki simlash",
+        "Shchit yig'ish",
+        "Yoritish montaji",
+        "Rozetka / vyklyuchatel",
+        "Nosozlikni topish",
+        "Yer ulash (zazemleniye)",
+        "Generator / UPS ulash"
+      ]
+    },
+    {
+      "kalit": "obyekt",
+      "nom": "Obyekt",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "nuqta_soni",
+      "nom": "Nuqta soni",
+      "tur": "butun",
+      "birlik": "dona",
+      "standart": 1,
+      "min": 0,
+      "max": 100000
+    },
+    {
+      "kalit": "kabel_kesimi",
+      "nom": "Kabel kesimi",
+      "tur": "matn",
+      "standart": "2.5",
+      "variantlar": ["1.5", "2.5", "4", "6", "10", "16"]
+    },
+    {
+      "kalit": "kuchlanish",
+      "nom": "Kuchlanish",
+      "tur": "matn",
+      "standart": "220 V",
+      "variantlar": ["220 V", "380 V"]
+    },
+    {
+      "kalit": "material_bizdan",
+      "nom": "Material bizdan",
+      "tur": "mantiq",
+      "standart": true
+    }
+  ],
+  "olchov": {
+    "birlik": "nuqta",
+    "kasrli": false,
+    "min": "1",
+    "max": "100000"
+  },
+  "narx": {
+    "usul": "retsept",
+    "ish_haqi": "35000",
+    "qoshimcha_xarajat_foiz": 12,
+    "izoh": "Tannarx = kabel va furnitura (retseptdan) + ish haqi + qo'shimcha xarajat"
+  },
+  "retsept": [
+    {
+      "material": "Elektr kabeli",
+      "birlik": "metr",
+      "miqdor": "material_bizdan * qty * 12",
+      "brak_foiz": 5,
+      "izoh": "Bir nuqtaga o'rtacha 12 metr. Material buyurtmachidan bo'lsa 0 chiqadi"
+    },
+    {
+      "material": "Elektr furniturasi",
+      "birlik": "komplekt",
+      "miqdor": "material_bizdan * qty",
+      "brak_foiz": 2,
+      "izoh": "Rozetka/vyklyuchatel/podrozetnik — nuqtaga bitta komplekt"
+    }
+  ],
+  "matnlar": {
+    "olcham": "{nuqta_soni} nuqta, {kabel_kesimi} mm²",
+    "tarkib": "{ish_turi}, obyekt: {obyekt}",
+    "tur": "{ish_turi}",
+    "tur_zaxira": "elektr ishi",
+    "hujjat_mahsulot": "{tarkib}, {olcham}, {kuchlanish}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

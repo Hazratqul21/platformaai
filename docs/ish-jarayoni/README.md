@@ -91,3 +91,4 @@ Sinalmagan qism «sinalmadi» deb yoziladi.
 | 034 | [Bitta yordamchi](034-bitta-yordamchi.md) | ✅ 4 agent → 1, cheklov asbob darajasiga ko'chdi |
 - [035 — Mobil ko'rinish: o'lchab topilgan 5 ta nuqson](035-mobil-korinish.md)
 - [036 — Yordamchi oynasi: sarlavha, salom va javob ko'rinishi](036-yordamchi-oynasi.md)
+- [037 — Yangi yo'nalishlar, ro'yxatdan o'tish va sinovda topilgan 5 nuqson](037-yonalishlar-va-royxat.md)

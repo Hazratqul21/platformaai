@@ -52,17 +52,48 @@ print("GL ULASH — parallel yozuv eski usulga mos keladimi")
 print("=" * 62 + "\n")
 
 # --- kirish ---
-r = urllib.request.Request(BASE + "/api/auth/login", method="POST",
-                           headers={"Content-Type": "application/json"},
-                           data=json.dumps({"login": "admin",
-                                            "password": PAROL}).encode())
-try:
-    with urllib.request.urlopen(r) as x:
-        TOKEN = json.loads(x.read())["token"]
-except Exception as e:
-    print(f"{QIZIL}Serverga kirib bo'lmadi: {e}{TUGA}")
-    print(f"Server {BASE} da ADMIN_PAROL={PAROL} bilan ishga tushirilsin")
+# YANGI BAZADA ADMIN «1234» BILAN QULFLANGAN.
+# Ilgari bu yerda to'g'ridan-to'g'ri `PAROL` bilan kirilardi va toza
+# bazada har safar 401 chiqardi — ya'ni bu sinov `sinov.sh` ichida
+# UMUMAN YURMAY kelgan, faqat oxirida «muammo bor» deb ko'rsatardi.
+# Endi `profil_test.py` dagi bilan bir xil tartib: avval standart
+# parol, kerak bo'lsa almashtiriladi, bo'lmasa berilgan parol.
+def _kir():
+    def urin(parol):
+        r = urllib.request.Request(
+            BASE + "/api/auth/login", method="POST",
+            headers={"Content-Type": "application/json"},
+            data=json.dumps({"login": "admin", "password": parol}).encode())
+        try:
+            with urllib.request.urlopen(r) as x:
+                return json.loads(x.read())
+        except Exception:
+            return None
+
+    d = urin("1234")
+    if d:
+        if d.get("parol_almashtirilsin"):
+            r = urllib.request.Request(
+                BASE + "/api/auth/change-password", method="POST",
+                headers={"Content-Type": "application/json",
+                         "Authorization": "Bearer " + d["token"]},
+                data=json.dumps({"old_password": "1234",
+                                 "new_password": PAROL}).encode())
+            try:
+                urllib.request.urlopen(r).read()
+            except Exception:
+                pass
+            d = urin(PAROL) or d
+        return d["token"]
+    d = urin(PAROL)
+    if d:
+        return d["token"]
+    print(f"{QIZIL}Serverga kirib bo'lmadi{TUGA}")
+    print(f"Server {BASE} da ishlayaptimi?")
     sys.exit(1)
+
+
+TOKEN = _kir()
 
 print("1. BOSHLANG'ICH HOLAT")
 b0 = so("/api/hisob/balans-tekshiruvi")

@@ -1,0 +1,80 @@
+{
+  "kalit": "hujjat_aylanishi",
+  "nom": "Hujjat aylanishi va konsalting",
+  "modul": "xizmat",
+  "izoh": "Hujjat tayyorlash, ro'yxatdan o'tkazish, buxgalteriya va yuridik xizmat.",
+  "maydonlar": [
+    {
+      "kalit": "hujjat_turi",
+      "nom": "Hujjat / xizmat turi",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Shartnoma tayyorlash",
+        "Firma ro'yxatdan o'tkazish",
+        "Litsenziya / ruxsatnoma",
+        "Soliq hisoboti",
+        "Buxgalteriya yuritish",
+        "Yuridik xulosa",
+        "Tarjima va notarial tasdiq",
+        "Arxivga topshirish"
+      ]
+    },
+    {
+      "kalit": "organ",
+      "nom": "Qaysi organ uchun",
+      "tur": "matn"
+    },
+    {
+      "kalit": "nusxa_soni",
+      "nom": "Nusxa soni",
+      "tur": "butun",
+      "birlik": "dona",
+      "standart": 1,
+      "min": 1,
+      "max": 1000
+    },
+    {
+      "kalit": "muddat_kun",
+      "nom": "Bajarish muddati",
+      "tur": "butun",
+      "birlik": "kun",
+      "standart": 5,
+      "min": 1,
+      "max": 365
+    },
+    {
+      "kalit": "shoshilinch",
+      "nom": "Shoshilinch",
+      "tur": "mantiq",
+      "standart": false
+    },
+    {
+      "kalit": "davlat_boji",
+      "nom": "Davlat boji",
+      "tur": "kasr",
+      "birlik": "so'm",
+      "standart": "0",
+      "min": "0"
+    }
+  ],
+  "olchov": {
+    "birlik": "hujjat",
+    "kasrli": false,
+    "min": "1",
+    "max": "100000"
+  },
+  "narx": {
+    "usul": "qolda",
+    "izoh": "Xizmat haqi kelishuv bo'yicha. Davlat boji alohida maydonda, u bizning daromadimiz emas."
+  },
+  "retsept": [],
+  "matnlar": {
+    "olcham": "{nusxa_soni} nusxa",
+    "tarkib": "{hujjat_turi}",
+    "tur": "{hujjat_turi}",
+    "tur_zaxira": "hujjat",
+    "hujjat_mahsulot": "{tarkib}, {olcham}, muddat {muddat_kun} kun",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}
