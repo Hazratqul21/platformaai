@@ -42,7 +42,7 @@
 <!-- ==================== FON ====================
      Ilgari bu yerda kraft-karton to'qimasi va gofra qutilar chizilgan
      edi — TIZIM faqat karton sexi uchun bo'lganda to'g'ri edi. Endi
-     platforma 22 sohaga xizmat qiladi: nonvoy ham, beton zavodi ham
+     platforma o'nlab sohaga xizmat qiladi: nonvoy ham, beton zavodi ham
      shu ekranni ko'radi, va qutilar ularga begona.
 
      Yangi fon SOHAGA BOG'LIQ EMAS: sovuq oq-siyohrang asos, yengil
@@ -119,6 +119,47 @@
     </div>
   </div>
 
+  <!-- JONLI KADR — mahsulotning o'zi ko'rinadi.
+       Video EMAS: brauzer kadri ichida haqiqiy interfeys elementlari
+       CSS bilan harakatlanadi. Nega shunday:
+         · video fayl ~2-5 MB, mobil internetda sahifani sekinlashtiradi
+         · avtoijro ko'p brauzerda bloklanadi (ovozsiz bo'lsa ham)
+         · video eskiradi — interfeys o'zgarsa qayta yozish kerak
+       Bu yerda esa ranglar palitradan keladi, ya'ni interfeys
+       o'zgarsa kadr ham o'zgaradi.
+       Haqiqiy video qo'yilsa — `.lnd-kadr-ekran` ichiga tushadi. -->
+  <div class="lnd-kadr-orov" data-korin>
+    <div class="lnd-kadr glass">
+      <div class="lnd-kadr-bosh">
+        <span class="lnd-nuqta"></span><span class="lnd-nuqta"></span><span class="lnd-nuqta"></span>
+        <div class="lnd-kadr-manzil">gilamservis.innasoft.uz</div>
+      </div>
+      <div class="lnd-kadr-ekran">
+        <div class="lnd-mock-chap">
+          <div class="lnd-mock-gayka">
+            <svg viewBox="0 0 64 64"><path fill="currentColor" d="M32 4l6 6h10l2 10 8 6-4 8 4 8-8 6-2 10H38l-6 6-6-6H16l-2-10-8-6 4-8-4-8 8-6 2-10h10z"/><circle cx="32" cy="32" r="9" fill="rgba(255,255,255,.9)"/></svg>
+          </div>
+          <div class="lnd-mock-sarlavha">Tizimingiz yig'ilmoqda</div>
+          <div class="lnd-mock-karta k1"><i>✓</i><span>Yo'nalish profili</span></div>
+          <div class="lnd-mock-karta k2"><i>✓</i><span>Maydonlar va narx</span></div>
+          <div class="lnd-mock-karta k3"><i>✓</i><span>Ish bosqichlari</span></div>
+          <div class="lnd-mock-karta k4"><i>✓</i><span>Sinov buyurtmasi</span></div>
+        </div>
+        <div class="lnd-mock-ong">
+          <div class="lnd-mock-chat-bosh">Yordamchi</div>
+          <div class="lnd-mock-pufak meniki">Gilam yuvish xizmati</div>
+          <div class="lnd-mock-pufak agent">
+            <span class="lnd-yoz"></span><span class="lnd-yoz"></span><span class="lnd-yoz"></span>
+          </div>
+          <div class="lnd-mock-pufak agent javob">O'lchov — kv.metr.
+            Bosqichlar: Qabul qilindi → Yuvilmoqda → Quritilmoqda → Tayyor.</div>
+        </div>
+      </div>
+    </div>
+    <div class="lnd-kadr-izoh">Haqiqiy yozuv: ro'yxatda yo'q yo'nalish
+      («gilam yuvish xizmati») matnidan tizim o'zi yig'ildi</div>
+  </div>
+
   <div class="lnd-grid">
     <div class="lnd-card glass">
       <span class="em">◈</span>
@@ -140,7 +181,48 @@
     </div>
   </div>
 
-  <div class="lnd-sec glass" id="lndSohalar">
+  <div class="lnd-sec glass" data-korin>
+    <h3>Uch qadamda</h3>
+    <div class="sub">Ro'yxatdan o'tishdan ishlaydigan tizimgacha — bir necha daqiqa</div>
+    <div class="lnd-qadamlar">
+      <div class="lnd-qadam">
+        <div class="lnd-qadam-raqam">1</div>
+        <div class="lnd-qadam-kadr">
+          <div class="lnd-qadam-qator uzun"></div>
+          <div class="lnd-qadam-inn">3 0 5 8 1 1 7 7 2</div>
+          <div class="lnd-qadam-qator"></div>
+        </div>
+        <h4>INN ni kiriting</h4>
+        <p>Korxona ma'lumoti o'zi to'ladi. Topilmasa o'zingiz yozasiz —
+           bu to'siq emas.</p>
+      </div>
+      <div class="lnd-qadam">
+        <div class="lnd-qadam-raqam">2</div>
+        <div class="lnd-qadam-kadr">
+          <div class="lnd-qadam-chiplar">
+            <span></span><span class="faol"></span><span></span>
+            <span></span><span></span><span class="keng"></span>
+          </div>
+        </div>
+        <h4>Yo'nalishni tanlang</h4>
+        <p>29 tayyor yo'nalish. Ro'yxatda bo'lmasa o'z so'zingiz bilan
+           yozasiz — AI qabul qiladi.</p>
+      </div>
+      <div class="lnd-qadam">
+        <div class="lnd-qadam-raqam">3</div>
+        <div class="lnd-qadam-kadr">
+          <div class="lnd-qadam-qurilish">
+            <span class="q1"></span><span class="q2"></span><span class="q3"></span>
+          </div>
+        </div>
+        <h4>Suhbatda yig'iladi</h4>
+        <p>Ishingizni aytasiz. Maydonlar, narx hisobi va bosqichlar
+           ko'z oldingizda yasaladi.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnd-sec glass" id="lndSohalar" data-korin>
     <h3>Tayyor sohalar</h3>
     <div class="sub">Har biri to'liq sikldan sinovdan o'tgan — buyurtmadan topshirishgacha</div>
     <div class="lnd-chips" id="lndChips"></div>
@@ -149,26 +231,27 @@
   <!-- HALOLLIK: tayyor bo'lmagan narsa va'da qilinmaydi.
        docs/00-STRATEGIYA.md §0.6 — bu ro'yxat o'sha qoidaning
        ekrandagi ko'rinishi. -->
-  <div class="lnd-sec glass">
+  <div class="lnd-sec glass" data-korin>
     <h3>Ochiq gapiramiz</h3>
     <div class="sub">Nima bugun ishlaydi va nima ustida ishlanmoqda</div>
     <div class="lnd-two">
       <ul class="lnd-list">
         <li><span class="mk y">✓</span><span><b>Bugun ishlaydi:</b> buyurtma sikli, smeta va tannarx, retsept bo'yicha ombordan yechish, FIFO partiyalar</span></li>
         <li><span class="mk y">✓</span><span>QQS (stavka buyurtmada qotiriladi), mijoz qarzi va qarz yoshi, pul oqimi prognozi</span></li>
-        <li><span class="mk y">✓</span><span>Kassa, kadrlar va ish haqi, xarid va yetkazib beruvchi qarzi</span></li>
-        <li><span class="mk y">✓</span><span>AI yordamchilari — javobdagi raqam bazadan olinadi, o'ylab topilmaydi</span></li>
+        <li><span class="mk y">✓</span><span>Kassa, kadrlar va ish haqi, xarid va yetkazib beruvchi qarzi, ombor harakati</span></li>
+        <li><span class="mk y">✓</span><span><b>Bosh kitob:</b> ikki yoqlama yozuv, BHMS №21 hisoblar rejasi, balans va foyda-zarar, davr yopish, storno</span></li>
+        <li><span class="mk y">✓</span><span>AI yordamchi — javobdagi raqam bazadan olinadi, o'ylab topilmaydi</span></li>
       </ul>
       <ul class="lnd-list">
-        <li><span class="mk n">○</span><span><b>Hali yo'q:</b> to'liq buxgalteriya (Bosh kitob) — shuning uchun «uchetka» deb aytilmaydi</span></li>
-        <li><span class="mk n">○</span><span>Online to'lov (Payme/Click/Uzum) va elektron hisob-faktura</span></li>
+        <li><span class="mk n">○</span><span><b>Hali yo'q:</b> online to'lov (Payme/Click/Uzum) va elektron hisob-faktura (EHF)</span></li>
         <li><span class="mk n">○</span><span>Fiskal kassa — Davlat reyestridan o'tmaguncha «qonuniy POS» deyilmaydi</span></li>
-        <li><span class="mk n">○</span><span>CRM voronkasi, chuqur ombor (WMS), o'quv markazi (LMS)</span></li>
+        <li><span class="mk n">○</span><span>1C, Bitrix24, amoCRM bilan ulanish va CRM voronkasi</span></li>
+        <li><span class="mk n">○</span><span>O'quv markazi uchun profil bor, lekin darslar/davomat/baho yuritish (LMS) hali yo'q</span></li>
       </ul>
     </div>
   </div>
 
-  <div class="lnd-sec glass">
+  <div class="lnd-sec glass" data-korin>
     <h3>Tariflar</h3>
     <div class="sub">AI xarajati alohida hisoblanadi — sarf mijozdan mijozga o'nlab marta farq qiladi</div>
     <div class="lnd-tarif">

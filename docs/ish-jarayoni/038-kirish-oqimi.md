@@ -111,9 +111,57 @@ Jonli serverda, haqiqiy LLM bilan:
   2 gilam / 12 m². Chapda 6 kartochka paydo bo'ldi, «Tizimga kirish»
   ochildi va ERP shu profil bilan ishga tushdi.
 
+## 4. Intro ekrani
+
+Scroll bilan ochiladigan bo'limlar, jonli kadr, uch qadam ko'rgazmasi.
+
+**VIDEO EMAS, JONLI KADR.** Brauzer kadri ichida haqiqiy interfeys
+elementlari CSS bilan harakatlanadi: gayka aylanadi, kartochkalar
+navbat bilan chiqadi, chatda «yozmoqda» nuqtalari va javob paydo
+bo'ladi. Nega video qo'yilmadi:
+
+- video fayl 2–5 MB, mobil internetda sahifani sekinlashtiradi
+- avtoijro ko'p brauzerda bloklanadi (ovozsiz bo'lsa ham)
+- video ESKIRADI — interfeys o'zgarsa qayta yozish kerak
+
+Kadrdagi ranglar palitra o'zgaruvchilaridan keladi, ya'ni interfeys
+o'zgarsa kadr ham o'zgaradi. Haqiqiy video qo'yilsa
+`.lnd-kadr-ekran` ichiga tushadi.
+
+Kadr ko'rsatayotgan narsa o'ylab topilgan emas: bu aynan
+`gilamservis` akkauntida bo'lgan haqiqiy yozuv.
+
+### Ochilish animatsiyasi — BEZAK, SHART EMAS
+
+Avval `[data-korin]{opacity:0}` deb yozildi va ochilish butunlay
+`IntersectionObserver` ga bog'liq edi. Brauzerda sinovda kuzatuvchi
+**umuman ishga tushmadi** — hatto boshlang'ich chaqiruv ham
+bo'lmadi — va butun intro sahifasi **BO'SH** ko'rindi.
+
+Tuzatildi: kontent standart holatda KO'RINADI. Yashirish faqat JS
+kuzatuvchini muvaffaqiyatli o'rnatgach qo'yiladi (`.korin-yoniq`).
+Ustiga 1.5 soniyalik xavfsizlik taymeri — birorta bo'lim ochilmagan
+bo'lsa, majburan ochiladi.
+
+Qoida: bezak ishlamasa, kontent yo'qolmasligi kerak.
+
+`prefers-reduced-motion` hurmat qilinadi — vestibulyar buzilishi bor
+odam uchun bu tibbiy masala, bezak emas.
+
+### Eskirgan raqamlar tuzatildi
+
+Sarlavhada «22 soha» va chiplar ro'yxati JS da qotirib yozilgan edi
+(izohda «API yopiq» deb asoslangan — lekin `/api/platforma/sohalar`
+endi ochiq). Natijada 29 yo'nalishdan 22 tasi ko'rinardi. Endi
+ikkalasi ham backenddan; qo'ldagi ro'yxat faqat so'rov yiqilganda
+ishlatiladigan zaxira.
+
+«Ochiq gapiramiz» bo'limi ham yangilandi: Bosh kitob va ombor
+harakati endi «bor» tomonda. Halollik ikki tomonlama — yo'q narsani
+va'da qilmaslik ham, bor narsani kamsitmaslik ham.
+
 ## Qoldi
 
-- **Intro ekrani** — animatsiya, kadrlar, video (task 7)
 - INN provayderining haqiqiy manzili va kaliti — siz kiritasiz
 - Admin panelida sozlamalar ekrani (backend tayyor, UI qoldi)
 - `gilamservis` va `sinovijara` — sinov akkauntlari

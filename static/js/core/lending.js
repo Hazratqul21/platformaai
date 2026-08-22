@@ -8,8 +8,14 @@
    tizimga o'tadi).
    ==================================================================== */
 
-/* Tayyor sohalar — app/profiles/*.json dagi nomlar. Ro'yxat qo'lda,
-   chunki lending login BO'LMAGAN holatda ochiladi va API yopiq. */
+/* Tayyor sohalar — ZAXIRA ro'yxat.
+   Asosiy manba backend: `GET /api/platforma/sohalar` (ochiq endpoint).
+   Ilgari bu yerdagi ro'yxat YAGONA manba edi va izohda «API yopiq»
+   deb yozilgan edi — endi u ochiq. Natijada yangi yo'nalish
+   qo'shilganda intro sahifasida ko'rinmasdi: 29 ta bor, 22 tasi
+   yozilgan edi.
+   Bu ro'yxat faqat so'rov yiqilganda ishlatiladi — sahifa bo'sh
+   ko'rinmasin. */
 const LND_SOHALAR = [
   "Non zavodi", "Mebel sexi", "Karton / gofra qutilar", "Beton / temir-beton",
   "Tikuvchilik sexi", "Poyabzal ishlab chiqarish", "Sut mahsulotlari",
@@ -20,11 +26,23 @@ const LND_SOHALAR = [
   "Reklama agentligi", "Transport / logistika", "Maishiy texnika ta'miri"
 ];
 
-function lendingChiplar(){
+async function lendingChiplar(){
   const box = document.getElementById('lndChips');
   if(!box) return;
+  let nomlar = LND_SOHALAR;
+  try{
+    const d = await (await fetch(API+'/api/platforma/sohalar')).json();
+    if(d.sohalar && d.sohalar.length) nomlar = d.sohalar.map(x=>x.nom);
+  }catch(e){ /* zaxira ro'yxat ishlatiladi */ }
+
+  // Sarlavhadagi raqam ham shu yerdan — qo'lda yozilgan «22 soha»
+  // eskirib qolgandi.
+  const kick = document.querySelector('.lnd-hero .kicker');
+  if(kick) kick.textContent =
+    `Konstruktor · ${nomlar.length} yo'nalish · O'zbekiston uchun`;
+
   box.innerHTML = '';
-  LND_SOHALAR.forEach(nom => {
+  nomlar.forEach(nom => {
     const s = document.createElement('span');
     s.className = 'lnd-chip';
     s.textContent = nom;          // matn har doim textContent bilan
@@ -56,6 +74,7 @@ function lendingBoshla(){
   lendingChiplar();
   document.getElementById('lending').classList.add('on');
   document.getElementById('loginScreen').style.display = 'none';
+  lendingKorinish();
 }
 
 /* ================= RO'YXATDAN O'TISH FORMASI ====================
@@ -85,3 +104,51 @@ async function royxatSohalarniOl(){
    Endi u uch qadamli sehrgar: `static/js/core/royxat.js` (rxOch).
    Bu yerda faqat yo'nalishlar ro'yxati funksiyalari qoldi — ular
    sehrgar tomonidan ham ishlatiladi. */
+
+/* --------------------------------------------------------------------
+   SCROLL BILAN OCHILISH
+
+   `data-korin` belgisi qo'yilgan bo'lim ko'rinishga kirganda ochiladi.
+   Nega IntersectionObserver, `scroll` hodisasi emas: scroll hodisasi
+   sekundiga o'nlab marta ishlaydi va har safar `getBoundingClientRect`
+   chaqirsak sahifa qotadi. Observer esa brauzerning o'zi hisoblab
+   beradi.
+
+   Bir marta ochilgach kuzatuvdan chiqariladi — yuqoriga qaytganda
+   qayta animatsiya bo'lmasin, bu bezovta qiladi.
+   -------------------------------------------------------------------- */
+function lendingKorinish(){
+  const nishonlar=document.querySelectorAll('[data-korin]');
+  if(!nishonlar.length) return;
+  if(!('IntersectionObserver' in window)) return;   // kontent baribir ko'rinadi
+
+  const idish=document.getElementById('lending');
+  const hammasini_och=()=>nishonlar.forEach(e=>e.classList.add('kordi'));
+
+  // Yashirishni FAQAT shu yerda yoqamiz. Agar quyidagi kod umuman
+  // ishlamasa, `.korin-yoniq` qo'yilmaydi va kontent ko'rinib turadi.
+  idish.classList.add('korin-yoniq');
+
+  let ku;
+  try{
+    ku=new IntersectionObserver((yozuvlar)=>{
+      yozuvlar.forEach(y=>{
+        if(!y.isIntersecting) return;
+        y.target.classList.add('kordi');
+        ku.unobserve(y.target);
+      });
+    },{threshold:.12, rootMargin:'0px 0px -40px 0px'});
+    nishonlar.forEach(e=>ku.observe(e));
+  }catch(e){ hammasini_och(); return; }
+
+  // XAVFSIZLIK TAYMERI.
+  // Kuzatuvchi ba'zi muhitlarda umuman ishga tushmaydi (brauzerda
+  // sinovda aynan shunday bo'ldi: birorta ham chaqiruv kelmadi).
+  // Bunda kontent abadiy ko'rinmay qolardi. 1.5 soniyadan keyin
+  // ochilmagani qolsa — majburan ochiladi. Odam scroll qilib
+  // ulgurmagan bo'lsa ham, bo'sh ekrandan ko'ra ko'ringani yaxshi.
+  setTimeout(()=>{
+    const qolgan=[...nishonlar].filter(e=>!e.classList.contains('kordi'));
+    if(qolgan.length===nishonlar.length) hammasini_och();
+  }, 1500);
+}

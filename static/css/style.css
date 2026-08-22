@@ -711,3 +711,138 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
   .qur-sarlavha{font-size:19px}
   .qur-chat-tugma{right:16px;bottom:16px}
 }
+
+/* =====================================================================
+   INTRO — scroll bilan ochiladigan bo'limlar va jonli kadr
+   ===================================================================== */
+
+/* Ko'rinishga kirganda ochiladi — LEKIN BEZAK SIFATIDA, SHART EMAS.
+   Kontent standart holatda KO'RINADI. Yashirish faqat JS kuzatuvchini
+   muvaffaqiyatli o'rnatgach qo'shiladi (`.korin-yoniq`).
+
+   NEGA SHUNDAY: avval `[data-korin]{opacity:0}` deb yozilgan edi va
+   ochilish butunlay IntersectionObserver ga bog'liq edi. Brauzerda
+   sinovda kuzatuvchi UMUMAN ishga tushmadi — hatto boshlang'ich
+   chaqiruv ham bo'lmadi — va butun intro sahifasi BO'SH ko'rindi.
+   Bezak ishlamasa kontent yo'qolmasligi kerak.
+
+   Ustiga qo'shimcha himoya: `lending.js` da 1.5 soniyadan keyin
+   qolganlari baribir ochiladi. */
+.korin-yoniq [data-korin]{opacity:0;transform:translateY(22px)}
+[data-korin]{transition:opacity .7s cubic-bezier(.2,.7,.3,1),
+                        transform .7s cubic-bezier(.2,.7,.3,1)}
+.korin-yoniq [data-korin].kordi{opacity:1;transform:none}
+
+/* HARAKAT KAMAYTIRILSIN deganlar uchun hammasi darrov ko'rinadi va
+   aylanmaydi. Vestibulyar buzilishi bor odamlar uchun bu tibbiy
+   masala, bezak emas. */
+@media (prefers-reduced-motion: reduce){
+  .korin-yoniq [data-korin],[data-korin]{opacity:1;transform:none;transition:none}
+  .lnd-mock-gayka svg,.lnd-mock-karta,.lnd-yoz,.lnd-mock-pufak.javob,
+  .lnd-qadam-inn,.lnd-qadam-qurilish span,.qur-g1,.qur-g2,.qur-nur{
+    animation:none !important}
+  .lnd-mock-karta,.lnd-mock-pufak.javob{opacity:1 !important;transform:none !important}
+}
+
+/* ---------- Jonli kadr ---------- */
+.lnd-kadr-orov{margin:4px 0 2px}
+.lnd-kadr{padding:0;overflow:hidden}
+.lnd-kadr-bosh{display:flex;align-items:center;gap:6px;padding:11px 14px;
+  border-bottom:1px solid var(--hair)}
+.lnd-nuqta{width:9px;height:9px;border-radius:50%;background:rgba(59,63,191,.2)}
+.lnd-kadr-manzil{margin-left:10px;font-size:11px;color:var(--ink-3);
+  padding:3px 12px;border-radius:9px;background:rgba(59,63,191,.07)}
+.lnd-kadr-ekran{display:grid;grid-template-columns:1.15fr 1fr;gap:1px;
+  background:var(--hair);min-height:250px}
+.lnd-mock-chap,.lnd-mock-ong{padding:16px;background:rgba(255,255,255,.5)}
+
+.lnd-mock-gayka{width:34px;height:34px;margin:0 auto 8px;color:var(--primary)}
+.lnd-mock-gayka svg{width:100%;height:100%;animation:qurAylan 6s linear infinite}
+.lnd-mock-sarlavha{text-align:center;font-family:var(--serif);font-size:14px;
+  font-weight:700;margin-bottom:12px}
+
+/* Kartochkalar navbat bilan chiqadi va takrorlanadi — yaratilish
+   ekranining aynan o'zi. */
+.lnd-mock-karta{display:flex;align-items:center;gap:8px;padding:8px 11px;
+  border-radius:11px;margin-bottom:7px;font-size:11.5px;font-weight:600;
+  background:linear-gradient(150deg,rgba(255,255,255,.85),rgba(236,238,255,.65));
+  border:1px solid rgba(59,63,191,.13);opacity:0;
+  animation:lndKarta 9s ease-in-out infinite}
+.lnd-mock-karta i{width:17px;height:17px;border-radius:50%;flex:none;color:#fff;
+  display:grid;place-items:center;font-size:9px;font-style:normal;
+  background:var(--accent)}
+.lnd-mock-karta.k1{animation-delay:1.6s}
+.lnd-mock-karta.k2{animation-delay:2.6s}
+.lnd-mock-karta.k3{animation-delay:3.6s}
+.lnd-mock-karta.k4{animation-delay:4.6s}
+@keyframes lndKarta{
+  0%,14%{opacity:0;transform:translateY(9px)}
+  22%,88%{opacity:1;transform:none}
+  100%{opacity:0;transform:translateY(9px)}}
+
+.lnd-mock-chat-bosh{font-size:11px;font-weight:700;color:var(--ink-3);
+  padding-bottom:9px;margin-bottom:10px;border-bottom:1px solid var(--hair)}
+.lnd-mock-pufak{font-size:11.5px;line-height:1.5;padding:8px 11px;
+  border-radius:12px;margin-bottom:8px;max-width:92%}
+.lnd-mock-pufak.meniki{margin-left:auto;color:#fff;background:var(--accent)}
+.lnd-mock-pufak.agent{background:rgba(59,63,191,.08)}
+.lnd-mock-pufak.javob{opacity:0;animation:lndJavob 9s ease-in-out infinite;
+  animation-delay:1.4s}
+@keyframes lndJavob{0%,12%{opacity:0}18%,88%{opacity:1}100%{opacity:0}}
+
+/* «Yozmoqda…» uchta nuqta */
+.lnd-yoz{display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--primary);margin-right:3px;animation:lndYoz 1.3s ease-in-out infinite}
+.lnd-yoz:nth-child(2){animation-delay:.18s}
+.lnd-yoz:nth-child(3){animation-delay:.36s}
+@keyframes lndYoz{0%,60%,100%{opacity:.28;transform:translateY(0)}
+                  30%{opacity:1;transform:translateY(-3px)}}
+
+.lnd-kadr-izoh{text-align:center;font-size:11.5px;color:var(--ink-3);
+  margin-top:10px;line-height:1.5}
+
+/* ---------- Uch qadam ---------- */
+.lnd-qadamlar{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.lnd-qadam{position:relative;padding:16px 15px;border-radius:16px;
+  background:rgba(255,255,255,.45);border:1px solid var(--hair)}
+.lnd-qadam-raqam{position:absolute;top:-9px;left:15px;width:24px;height:24px;
+  border-radius:50%;color:#fff;display:grid;place-items:center;font-size:12px;
+  font-weight:700;background:var(--accent);
+  box-shadow:0 7px 16px -7px var(--primary-glow)}
+.lnd-qadam-kadr{height:74px;border-radius:11px;padding:12px;margin:10px 0 12px;
+  background:rgba(255,255,255,.6);border:1px solid var(--hair);overflow:hidden}
+.lnd-qadam h4{font-size:13.5px;margin-bottom:4px}
+.lnd-qadam p{font-size:11.5px;color:var(--ink-3);line-height:1.55}
+
+.lnd-qadam-qator{height:7px;border-radius:4px;background:rgba(59,63,191,.1);
+  margin-bottom:8px;width:60%}
+.lnd-qadam-qator.uzun{width:88%}
+.lnd-qadam-inn{font-size:12px;font-weight:700;letter-spacing:2px;
+  color:var(--primary-deep);margin-bottom:8px;
+  animation:lndInn 5s steps(9,end) infinite;
+  white-space:nowrap;overflow:hidden;width:0}
+@keyframes lndInn{0%{width:0}45%,85%{width:9.4em}100%{width:0}}
+
+.lnd-qadam-chiplar{display:flex;flex-wrap:wrap;gap:5px}
+.lnd-qadam-chiplar span{height:13px;width:34px;border-radius:8px;
+  background:rgba(59,63,191,.1)}
+.lnd-qadam-chiplar span.keng{width:52px}
+.lnd-qadam-chiplar span.faol{background:var(--accent);width:44px;
+  animation:lndChip 4s ease-in-out infinite}
+@keyframes lndChip{0%,100%{opacity:.55}50%{opacity:1}}
+
+.lnd-qadam-qurilish{display:flex;flex-direction:column;gap:7px}
+.lnd-qadam-qurilish span{height:13px;border-radius:7px;
+  background:linear-gradient(90deg,rgba(91,95,230,.28),rgba(154,160,255,.18));
+  opacity:0;animation:lndQur 4.5s ease-in-out infinite}
+.lnd-qadam-qurilish .q1{width:80%;animation-delay:.2s}
+.lnd-qadam-qurilish .q2{width:62%;animation-delay:.9s}
+.lnd-qadam-qurilish .q3{width:71%;animation-delay:1.6s}
+@keyframes lndQur{0%,8%{opacity:0;transform:translateX(-7px)}
+                  20%,85%{opacity:1;transform:none}100%{opacity:0}}
+
+@media(max-width:860px){
+  .lnd-kadr-ekran{grid-template-columns:1fr}
+  .lnd-mock-ong{display:none}      /* telefonda chap qism yetarli */
+  .lnd-qadamlar{grid-template-columns:1fr}
+}
