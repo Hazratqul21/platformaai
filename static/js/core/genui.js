@@ -202,7 +202,7 @@ const GENUI_CHIZUVCHI = {
       holat.textContent = 'bajarilmoqda…';
       try {
         const j = await post('/api/agent/amal', { amal: k.amal, kirish: k.kirish });
-        holat.textContent = '✓ ' + (j.xabar || 'bajarildi');
+        holat.innerHTML = icon('tick', 13) + ' ' + esc(j.xabar || 'bajarildi');
         holat.className = 'genui-holat genui-t-ok';
         tugma.remove();
         // Amal tizimni o'zgartirgan bo'lishi mumkin (profil, maqom) —
@@ -223,7 +223,7 @@ const GENUI_CHIZUVCHI = {
           _renderPage(PAGE);
         }
       } catch (e) {
-        holat.textContent = '✕ ' + (e.message || e);
+        holat.innerHTML = icon('x', 13) + ' ' + esc(String(e.message || e));
         holat.className = 'genui-holat genui-t-dn';
         tugma.disabled = false;
       }
@@ -239,7 +239,7 @@ const GENUI_CHIZUVCHI = {
     const karta = genuiKarta(k.sarlavha);
     const qator = el('div', 'genui-tugmalar');
     for (const h of (k.havolalar || [])) {
-      const a = el('button', 'btn sm', '📄 ' + h.nom);
+      const a = el('button', 'btn sm', h.nom);
       // `download()` tokenni qo'shib yuklab beradi — oddiy havola
       // 401 bilan qaytardi, chunki hujjat endpointlari himoyalangan.
       a.onclick = () => download(h.havola);

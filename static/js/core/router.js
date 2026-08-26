@@ -85,13 +85,13 @@ function renderNav(){
 // zakaz yaratish 68, yangi mijoz 43, pul berish 40, xarajat 39, to'lov 34,
 // ish qaydi 0, xomashyo kirim 0 marta. Eng ko'p ishlatilgani yuqorida turadi.
 const QUICK=[
-  {t:'Янги заказ',d:'смета ҳисоблаш',i:'🧮',roles:['Rahbar','Menejer'],run:()=>{closeModal();go('calc')}},
-  {t:'Янги мижоз',d:'мижоз қўшиш',i:'👤',roles:['Rahbar','Menejer'],run:()=>qaClient()},
-  {t:'Пул бериш',d:'ходимга аванс',i:'🤝',roles:['Rahbar','Buxgalter',"Sex boshlig'i"],run:()=>qaPayEmp()},
-  {t:'Харажат ёзиш',d:'клей, скотч…',i:'🧾',roles:['Rahbar','Buxgalter',"Sex boshlig'i"],run:()=>{closeModal();go('exp');setTimeout(()=>{if(window.expAddModal)expAddModal()},350)}},
-  {t:"Тўлов олиш",d:'мижоздан пул',i:'💵',roles:['Rahbar','Menejer','Buxgalter'],run:()=>qaPay()},
-  {t:'Иш қайди',d:'ходим нечта қути кесди',i:'✂️',roles:['Rahbar',"Sex boshlig'i"],run:()=>qaWork()},
-  {t:'Хомашё кирим',d:'қоғоз келди',i:'📥',roles:['Rahbar','Sklad mudiri'],run:()=>qaLot()},
+  {t:'Янги заказ',d:'смета ҳисоблаш',i:'calc',roles:['Rahbar','Menejer'],run:()=>{closeModal();go('calc')}},
+  {t:'Янги мижоз',d:'мижоз қўшиш',i:'user',roles:['Rahbar','Menejer'],run:()=>qaClient()},
+  {t:'Пул бериш',d:'ходимга аванс',i:'cash',roles:['Rahbar','Buxgalter',"Sex boshlig'i"],run:()=>qaPayEmp()},
+  {t:'Харажат ёзиш',d:'клей, скотч…',i:'receipt',roles:['Rahbar','Buxgalter',"Sex boshlig'i"],run:()=>{closeModal();go('exp');setTimeout(()=>{if(window.expAddModal)expAddModal()},350)}},
+  {t:"Тўлов олиш",d:'мижоздан пул',i:'cash',roles:['Rahbar','Menejer','Buxgalter'],run:()=>qaPay()},
+  {t:'Иш қайди',d:'ходим нечта қути кесди',i:'scissors',roles:['Rahbar',"Sex boshlig'i"],run:()=>qaWork()},
+  {t:'Хомашё кирим',d:'қоғоз келди',i:'download',roles:['Rahbar','Sklad mudiri'],run:()=>qaLot()},
 ];
 function quickActions(){return QUICK.filter(q=>ME.role==='Rahbar'||q.roles.includes(ME.role));}
 function quickSheet(){

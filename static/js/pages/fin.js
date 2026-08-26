@@ -26,18 +26,18 @@ PAGES.fin=async()=>{
       <td><b>${mshort(x.debt)}</b></td>
       ${['0-15','15-30','30-60','60+'].map(k=>`<td>${x.aging[k]>0?`<span class="tag ${agColor(k,x.aging[k])}">${mshort(x.aging[k])}</span>`:'<span class="muted">—</span>'}</td>`).join('')}
       <td>${dl('/api/reports/sverka/'+x.client_id+'.xlsx','Сверка')}
-      ${['Rahbar','Buxgalter','Menejer'].includes(ME.role)?`<button class="btn sm pri" onclick="payForm(${x.client_id})">Тўлов</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">Qarzdorlar yo\'q 🎉</td></tr>'}
+      ${['Rahbar','Buxgalter','Menejer'].includes(ME.role)?`<button class="btn sm pri" onclick="payForm(${x.client_id})">Тўлов</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">Qarzdorlar yo\'q</td></tr>'}
     </tbody></table>
   </div>
   <div class="glass card mb">
     <h2 class="sec">Ҳисоботлар — 1 босишда юклаб олиш</h2>
     <div class="sec-sub">Excel formatida, hisob-kitob ishlariga tayyor</div>
     <div class="row" style="flex-wrap:wrap;gap:8px">
-      ${dl('/api/reports/warehouse.xlsx','📦 Омбор қолдиқлари')}
-      ${dl('/api/reports/cash.xlsx','💵 Ходим кассаси')}
-      ${dl('/api/reports/payroll.xlsx','👷 Ойлик ведомость')}
-      ${dl('/api/reports/purchases.xlsx','🛒 Харидлар (закуп)')}
-      ${dl('/api/kassa/export.xlsx','📒 Kassa jurnali')}
+      ${dl('/api/reports/warehouse.xlsx',icon('box',14)+' Омбор қолдиқлари')}
+      ${dl('/api/reports/cash.xlsx',icon('cash',14)+' Ходим кассаси')}
+      ${dl('/api/reports/payroll.xlsx',icon('hr',14)+' Ойлик ведомость')}
+      ${dl('/api/reports/purchases.xlsx',icon('cart',14)+' Харидлар (закуп)')}
+      ${dl('/api/kassa/export.xlsx',icon('book',14)+' Kassa jurnali')}
     </div>
     <div class="muted" style="font-size:11px;margin-top:8px">Сверка — ҳар мижознинг қаторида · Акт ва Юк хати — буюртма картасида</div>
   </div>

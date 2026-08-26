@@ -2,7 +2,7 @@
    Balans, aylanma qaydnoma, foyda-zarar, provodkalar, hisoblar rejasi,
    provodka qoidalari, davrlar.
 
-   ⚠️ HALOL KO'RSATISH: GL hozircha eski hisob-kitob bilan PARALLEL
+   DIQQAT — HALOL KO'RSATISH: GL hozircha eski hisob-kitob bilan PARALLEL
    ishlaydi. Ekranning boshida shu yozilgan — mijoz «to'liq buxgalteriya
    tayyor» deb o'ylab qolmasin (docs/00-STRATEGIYA.md §0.6).
    ==================================================================== */
@@ -66,7 +66,7 @@ async function hisobBalans() {
   // amallardan boshlanadi.
   if(!b.aktiv.length && !b.passiv.length){
     return `<div class="glass card" style="text-align:center;padding:40px 24px">
-      <div style="font-size:34px;margin-bottom:12px">📖</div>
+      <div class="bosh-belgi">${icon('book',34)}</div>
       <h2 class="sec" style="margin-bottom:8px">Бош китоб ҳали бўш</h2>
       <div class="muted" style="font-size:13px;line-height:1.65;max-width:520px;margin:0 auto">
         Баланс <b>янги амаллардан</b> тўлади: буюртма топширилганда,

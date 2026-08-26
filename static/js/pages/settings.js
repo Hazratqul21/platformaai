@@ -39,19 +39,19 @@ PAGES.set = async () => {
                 
                 <div class="grid g3" style="gap: 12px; margin-bottom: 20px;">
                     <div class="glass card ${curLang === 'uz_lat' ? 'border-pri' : ''}" style="cursor:pointer; padding: 16px; text-align: center;" onclick="changeLang('uz_lat')">
-                        <div style="font-size:24px; margin-bottom: 8px;">🇺🇿</div>
+                        <div class="til-belgi">UZ</div>
                         <b>O'zbek (Lotin)</b>
                         <div class="muted" style="font-size: 11px; margin-top: 4px;">Standart</div>
                     </div>
                     
                     <div class="glass card ${curLang === 'uz_cyr' ? 'border-pri' : ''}" style="cursor:pointer; padding: 16px; text-align: center;" onclick="changeLang('uz_cyr')">
-                        <div style="font-size:24px; margin-bottom: 8px;">🇺🇿</div>
+                        <div class="til-belgi">UZ</div>
                         <b>Ўзбек (Кирил)</b>
                         <div class="muted" style="font-size: 11px; margin-top: 4px;">Кирилл алифбоси</div>
                     </div>
                     
                     <div class="glass card ${curLang === 'ru' ? 'border-pri' : ''}" style="cursor:pointer; padding: 16px; text-align: center;" onclick="changeLang('ru')">
-                        <div style="font-size:24px; margin-bottom: 8px;">🇷🇺</div>
+                        <div class="til-belgi">РУ</div>
                         <b>Русский</b>
                         <div class="muted" style="font-size: 11px; margin-top: 4px;">Кириллица</div>
                     </div>
@@ -148,7 +148,7 @@ async function catalogAdmin(){
     api('/api/catalog/units'),api('/api/catalog/positions'),api('/api/catalog/categories'),
     api('/api/catalog/services'),api('/api/catalog/formulas')]);
   const chipList=(items,kind)=>items.map(x=>`<span class="tag mut" style="font-size:11.5px;padding:4px 10px">${esc(x.name)}
-    <span style="cursor:pointer;color:var(--danger);margin-left:4px" onclick="delCatalog('${kind}',${x.id})">✕</span></span>`).join(' ')||'<span class="muted" style="font-size:12px">бўш</span>';
+    <span style="cursor:pointer;color:var(--danger);margin-left:4px" onclick="delCatalog('${kind}',${x.id})">${icon('x',12)}</span></span>`).join(' ')||'<span class="muted" style="font-size:12px">бўш</span>';
   return `
   <div class="glass card mb">
     <h2 class="sec mb">Bo'limlar (materiallar uchun)</h2>
@@ -177,8 +177,8 @@ async function catalogAdmin(){
     <table><thead><tr><th>Хизмат</th><th>Нарх</th><th>Бирлик</th><th>Формула</th><th></th></tr></thead><tbody>
     ${services.map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${money(s.price)}</td><td>${esc(s.unit)}</td>
       <td class="muted" style="font-family:monospace;font-size:11px">${esc(s.formula)}</td>
-      <td class="row" style="gap:4px"><button class="btn sm ghost" onclick='serviceForm(${JSON.stringify(s).replace(/'/g,"&#39;")})'>✎</button>
-      <button class="btn sm dngr" onclick="delService(${s.id})">✕</button></td></tr>`).join('')}
+      <td class="row" style="gap:4px"><button class="btn sm ghost" onclick='serviceForm(${JSON.stringify(s).replace(/'/g,"&#39;")})'>${icon('pencil',13)}</button>
+      <button class="btn sm dngr" onclick="delService(${s.id})">${icon('x',13)}</button></td></tr>`).join('')}
     </tbody></table>
   </div>
   <div class="glass card">
@@ -189,7 +189,7 @@ async function catalogAdmin(){
     ${formulas.map(fo=>`<tr><td><b>${esc(fo.name)}</b></td>
       <td class="muted" style="font-family:monospace;font-size:12px">${esc(fo.expression)}</td>
       <td class="hide-m muted" style="font-size:11px">${esc(fo.description)}</td>
-      <td><button class="btn sm ghost" onclick='formulaForm(${JSON.stringify(fo).replace(/'/g,"&#39;")})'>✎</button></td></tr>`).join('')}
+      <td><button class="btn sm ghost" onclick='formulaForm(${JSON.stringify(fo).replace(/'/g,"&#39;")})'>${icon('pencil',13)}</button></td></tr>`).join('')}
     </tbody></table>
   </div>`;
 }
@@ -293,9 +293,9 @@ function formulaTekshir(key){
       const r=await post('/api/finance/formula-check',{key,expr});
       if(!box)return;
       box.innerHTML=r.ok
-        ? `<span style="color:var(--ok)">✅ Тўғри. Синов: ${esc(r.izoh)} → <b>${r.natija}</b></span>`
-        : `<span style="color:var(--danger)">❌ ${esc(r.xato)}</span>`;
-    }catch(e){ if(box)box.innerHTML=`<span style="color:var(--danger)">❌ ${esc(e.message)}</span>`; }
+        ? `<span style="color:var(--ok)">${icon('tick',13)} Тўғри. Синов: ${esc(r.izoh)} → <b>${r.natija}</b></span>`
+        : `<span style="color:var(--danger)">${icon('x',13)} ${esc(r.xato)}</span>`;
+    }catch(e){ if(box)box.innerHTML=`<span style="color:var(--danger)">${icon('x',13)} ${esc(e.message)}</span>`; }
   },500);
 }
 
@@ -386,13 +386,13 @@ async function renderConstructor(){
   </div>
   <div class="grid g3">
   ${ss.map(s=>`<div class="glass card" style="cursor:pointer" onclick="openSection(${s.id})">
-    <div style="font-size:30px">${esc(s.icon)}</div>
+    <div class="bosh-belgi">${bolimIkon(s.icon,28)}</div>
     <b style="display:block;margin:8px 0 3px;font-size:15px">${esc(s.name)}</b>
     <div class="muted" style="font-size:11.5px">${s.records_count} ta yozuv · ${s.fields.length} ustun</div>
     <div class="row" style="margin-top:10px" onclick="event.stopPropagation()">
       <button class="btn sm" onclick="openSection(${s.id})">Очиш</button>
       ${dl('/api/sections/'+s.id+'/export.xlsx','Excel')}
-      <button class="btn sm dngr" onclick="delSection(${s.id},'${esc(s.name)}')">✕</button>
+      <button class="btn sm dngr" onclick="delSection(${s.id},'${esc(s.name)}')">${icon('x',13)}</button>
     </div>
   </div>`).join('')||'<div class="glass card muted" style="grid-column:1/-1;text-align:center;padding:36px">Hozircha bo\'lim yo\'q — «Yangi bo\'lim» tugmasini bosing</div>'}
   </div></div>`;
@@ -409,7 +409,7 @@ function sectionForm(){
   modal(`<h2 class="sec mb">Янги бўлим яратиш</h2>
   <label class="fl">Бўлим номи</label><input class="fld" id="sc_name" placeholder="масалан: Транспорт харажатлари"/>
   <label class="fl">Белгиси</label>
-  <select class="fld" id="sc_icon">${['📋','🚚','⚙️','🧾','📦','💰','🛠','📁'].map(e=>`<option>${e}</option>`).join('')}</select>
+  <select class="fld" id="sc_icon">${BOLIM_IKON.map(([k,nom])=>`<option value="${k}">${nom}</option>`).join('')}</select>
   <label class="fl">Устунлар</label>
   <div id="fieldsBox">${fieldRow(1)}${fieldRow(2)}</div>
   <button class="btn sm ghost" onclick="window._fcount++;document.getElementById('fieldsBox').insertAdjacentHTML('beforeend',fieldRow(window._fcount))">+ Ustun qo'shish</button>
@@ -434,12 +434,12 @@ async function delSection(id,name){
 async function openSection(id){
   const d=await api('/api/sections/'+id+'/records');
   const s=d.section;window._cursec=s;
-  document.getElementById('ptitle').textContent=s.icon+' '+s.name;
+  document.getElementById('ptitle').textContent=s.name;
   document.getElementById('psub').textContent='Konstruktor bo\'limi · '+d.records.length+' ta yozuv';
   const fmt=(fld,v)=>fld.type==='pul'&&v!==''?money(+v):(v??'');
   document.getElementById('content').innerHTML=`<div class="page show">
     <div class="between mb">
-      <button class="btn sm" onclick="go('set')">← Orqaga</button>
+      <button class="btn sm" onclick="go('set')">${icon('arrowLeft',14)} Orqaga</button>
       <div class="row">
         <button class="btn pri sm" onclick="recordForm()">${icon('plus',13)} Yozuv qo'shish</button>
         ${dl('/api/sections/'+s.id+'/export.xlsx','Excel')}
@@ -449,13 +449,13 @@ async function openSection(id){
       <table><thead><tr><th>Сана</th>${s.fields.map(fl=>`<th>${esc(fl.label)}</th>`).join('')}<th></th></tr></thead><tbody>
       ${d.records.map(r=>`<tr><td class="muted" style="font-size:11px">${r.created_at.slice(0,10)}</td>
         ${s.fields.map(fl=>`<td>${esc(fmt(fl,r.data[fl.key]))}</td>`).join('')}
-        <td>${ME.role==='Rahbar'?`<button class="btn sm ghost" onclick="delRecord(${s.id},${r.id})">✕</button>`:''}</td></tr>`).join('')||`<tr><td colspan="${s.fields.length+2}" class="muted">Ёзув йўқ</td></tr>`}
+        <td>${ME.role==='Rahbar'?`<button class="btn sm ghost" onclick="delRecord(${s.id},${r.id})">${icon('x',13)}</button>`:''}</td></tr>`).join('')||`<tr><td colspan="${s.fields.length+2}" class="muted">Ёзув йўқ</td></tr>`}
       </tbody></table>
     </div></div>`;
 }
 function recordForm(){
   const s=window._cursec;
-  modal(`<h2 class="sec mb">${esc(s.icon)} ${esc(s.name)} — yangi yozuv</h2>
+  modal(`<h2 class="sec mb">${bolimIkon(s.icon,16)} ${esc(s.name)} — yangi yozuv</h2>
   ${s.fields.map(fl=>`<label class="fl">${esc(fl.label)}</label>
     <input class="fld" id="rf_${fl.key}" type="${fl.type==='sana'?'date':fl.type==='matn'?'text':'number'}"/>`).join('')}
   <div class="row" style="margin-top:16px;justify-content:flex-end">
@@ -488,8 +488,8 @@ async function usersAdmin(){
       <span><b>${esc(u.name)}</b>${u.is_me?' <span class="tag pri">siz</span>':''}
         <div class="muted" style="font-size:10.5px">${esc(u.login)} · ${kir(u.role)}</div></span>
       <span class="row" style="gap:4px">
-        <button class="btn sm ghost" title="Parol" onclick="pwForm(${u.id},'${esc(u.login)}')">🔑</button>
-        ${u.is_me?'':`<button class="btn sm dngr" onclick="delUser(${u.id},'${esc(u.login)}')">✕</button>`}
+        <button class="btn sm ghost" title="Parol" onclick="pwForm(${u.id},'${esc(u.login)}')">${icon('key',13)}</button>
+        ${u.is_me?'':`<button class="btn sm dngr" onclick="delUser(${u.id},'${esc(u.login)}')">${icon('x',13)}</button>`}
       </span></div>`).join('')}
     </div>
     <button class="btn pri" style="margin-top:12px" onclick="userForm()">+ Янги фойдаланувчи</button>

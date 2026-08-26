@@ -52,10 +52,19 @@ document.getElementById('content').innerHTML=`<div class="page show">
     <button class="fchip">THE BILLIARD</button>
   </div>
   <div class="row">
-    <button class="btn pri sm">↓ Кирим</button>
-    <button class="btn sm dngr">↑ Чиқим</button>
+    <button class="btn pri sm">${icon('arrowDown',14)} Кирим</button>
+    <button class="btn sm dngr">${icon('arrowUp',14)} Чиқим</button>
     <button class="btn sm">${icon('doc',15)} Excel</button>
   </div>
+</div>
+<div class="row mb" style="gap:8px">
+  <input class="fld qidir" style="margin:0;flex:1" placeholder="Мижозни қидириш — номи, телефон ёки СТИР бўйича…"/>
+  <button class="btn">${icon('dash',14)} Жадвал</button>
+  <button class="btn sm ghost">${icon('pencil',13)}</button>
+  <button class="btn sm dngr">${icon('x',13)}</button>
+  <button class="btn sm">${icon('camera',15)} Расм</button>
+  <button class="btn sm">${icon('truck',14)} Етказиш</button>
+  <button class="btn sm">${icon('cash',14)} Пул бериш</button>
 </div>
 <div class="glass card">
 ${rows.map(([day,sum,list])=>`<div style="padding:6px 0">

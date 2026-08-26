@@ -7,12 +7,12 @@ PAGES.wh=async()=>{
   ${raw.alerts.length?`<div class="mb" style="display:flex;flex-direction:column;gap:8px">${raw.alerts.map(a=>alertBox('d','alertic','Минимал қолдиқ!',`${a.grade} (${a.grammage} g): ${a.stock_kg.toFixed(1)} кг — тахминан ${a.days_left} кунга етади`)).join('')}</div>`:''}
   <div class="between mb"><h2 class="sec">Хомашё омбори — партиялар</h2>
     ${['Rahbar','Sklad mudiri'].includes(ME.role)?`<div class="row" style="flex-wrap:wrap"><button class="btn pri sm" onclick="lotForm()">${icon('plus',13)} Кирим</button>
-    <button class="btn sm" onclick="supForm()">🚚 Етказиб берувчи</button>
-    <button class="btn sm" onclick="invForm()">📋 Саноқ</button>${dl('/api/reports/warehouse.xlsx','Excel')}</div>`:dl('/api/reports/warehouse.xlsx','Excel')}</div>
+    <button class="btn sm" onclick="supForm()">${icon('truck',14)} Етказиб берувчи</button>
+    <button class="btn sm" onclick="invForm()">${icon('clipboard',14)} Саноқ</button>${dl('/api/reports/warehouse.xlsx','Excel')}</div>`:dl('/api/reports/warehouse.xlsx','Excel')}</div>
   ${!raw.groups.length?`<div class="glass card mb" style="text-align:center;padding:30px">
-    <div style="font-size:30px">📦</div><b style="display:block;margin:8px 0 4px">Омбор ҳали бўш</b>
+    <div class="bosh-belgi">${icon('box',30)}</div><b style="display:block;margin:8px 0 4px">Омбор ҳали бўш</b>
     <div class="muted" style="font-size:12px;margin-bottom:12px">Аввал етказиб берувчи қўшинг, кейин қоғоз киримини киритинг</div>
-    ${['Rahbar','Sklad mudiri'].includes(ME.role)?`<button class="btn pri sm" onclick="supForm()">🚚 Етказиб берувчи қўшиш</button>`:''}
+    ${['Rahbar','Sklad mudiri'].includes(ME.role)?`<button class="btn pri sm" onclick="supForm()">${icon('truck',14)} Етказиб берувчи қўшиш</button>`:''}
   </div>`:''}
   <div class="grid g2 mb">
   ${raw.groups.map(g=>`<div class="glass card">
@@ -39,17 +39,17 @@ PAGES.wh=async()=>{
   <div class="grid g3">
   ${sups.map(sp=>`<div class="glass card">
     <div class="between"><b>${esc(sp.name)}</b>
-      <span class="tag ${sp.kind==='Pechat'?'pri':'mut'}" style="font-size:9.5px">${sp.kind==='Pechat'?'🖨 Печат':sp.kind==='Boshqa'?'Бошқа':'📄 Қоғоз'}</span></div>
+      <span class="tag ${sp.kind==='Pechat'?'pri':'mut'}" style="font-size:9.5px">${sp.kind==='Pechat'?icon('printer',11)+' Печат':sp.kind==='Boshqa'?'Бошқа':icon('doc',11)+' Қоғоз'}</span></div>
     <div class="muted" style="font-size:11px;margin:2px 0 8px">${esc(sp.phone)}
-      ${['Rahbar','Sklad mudiri','Buxgalter'].includes(ME.role)?`<span style="cursor:pointer;float:right" title="Таҳрирлаш" onclick='supForm(${JSON.stringify(sp).replace(/'/g,"&#39;")})'>✎</span>`:''}</div>
+      ${['Rahbar','Sklad mudiri','Buxgalter'].includes(ME.role)?`<span style="cursor:pointer;float:right" title="Таҳрирлаш" onclick='supForm(${JSON.stringify(sp).replace(/'/g,"&#39;")})'>${icon('pencil',13)}</span>`:''}</div>
     <div class="between" style="font-size:12px"><span class="muted">Мол олдик</span><b>${mshort(sp.got)}</b></div>
     <div class="between" style="font-size:12px"><span class="muted">Пул бердик</span><b style="color:var(--ok)">${mshort(sp.paid)}</b></div>
     <div class="between" style="font-size:13px;border-top:1px solid var(--hair);padding-top:5px;margin-top:5px">
       <span><b>${sp.avans>0?'Аванcимиз':'Қарзимиз'}</b></span>
       <b style="color:${sp.debt>0?'var(--danger)':sp.avans>0?'var(--primary-deep)':'var(--ok)'}">${sp.avans>0?mshort(sp.avans):mshort(sp.debt)}</b></div>
     ${sp.avans>0?`<div class="muted" style="font-size:10.5px;margin-top:3px">Ортиқча берилган пул — кейинги молдан чегирилади</div>`:''}
-    ${sp.schedule.map(sc=>`<div class="between" style="font-size:11px;margin-top:5px"><span class="muted">📅 ${sc.due_date}</span><span>${mshort(sc.amount)} ${['Rahbar','Buxgalter'].includes(ME.role)?`<button class="btn sm ghost" onclick="paySup(${sp.id},${sc.amount},${sc.id})">тўлаш</button>`:''}</span></div>`).join('')}
-    ${['Rahbar','Buxgalter','Sklad mudiri'].includes(ME.role)?`<button class="btn sm pri" style="width:100%;justify-content:center;margin-top:8px" onclick='supPayForm(${JSON.stringify(sp).replace(/'/g,"&#39;")})'>💵 Пул бериш</button>`:''}
+    ${sp.schedule.map(sc=>`<div class="between" style="font-size:11px;margin-top:5px"><span class="muted">${icon('calendar',12)} ${sc.due_date}</span><span>${mshort(sc.amount)} ${['Rahbar','Buxgalter'].includes(ME.role)?`<button class="btn sm ghost" onclick="paySup(${sp.id},${sc.amount},${sc.id})">тўлаш</button>`:''}</span></div>`).join('')}
+    ${['Rahbar','Buxgalter','Sklad mudiri'].includes(ME.role)?`<button class="btn sm pri" style="width:100%;justify-content:center;margin-top:8px" onclick='supPayForm(${JSON.stringify(sp).replace(/'/g,"&#39;")})'>${icon('cash',14)} Пул бериш</button>`:''}
   </div>`).join('')||'<div class="glass card muted" style="grid-column:1/-1;text-align:center">Етказиб берувчи йўқ</div>'}
   </div>`;
 };

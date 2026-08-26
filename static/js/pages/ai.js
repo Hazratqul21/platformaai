@@ -37,7 +37,7 @@ PAGES.ai = async () => {
             ${tayyor ? `${esc(holat.provayder)} · ${esc(holat.model)}` : esc(holat.izoh)}
           </div>
         </div>
-        <button class="btn sm" onclick="aiYangiSuhbat()">✎ Янги суҳбат</button>
+        <button class="btn sm" onclick="aiYangiSuhbat()">${icon('pencil',14)} Янги суҳбат</button>
       </div>
 
       <div class="ai-oqim" id="aiOqim"></div>
@@ -132,7 +132,7 @@ function aiXabar(kim, matn, asboblar, komponentlar) {
   if (asboblar && asboblar.length) {
     const iz = document.createElement('div');
     iz.className = 'ai-iz';
-    iz.textContent = '⚙ ' + asboblar.join(' · ');
+    iz.innerHTML = icon('gear', 12) + ' ' + esc(asboblar.join(' · '));
     div.appendChild(iz);
   }
   if (komponentlar && komponentlar.length) {
@@ -348,7 +348,7 @@ function aiFaoliyatChiz(f) {
       bosh.appendChild(el('span', 'muted ai-vaqt', (a.vaqt || '').slice(0, 16).replace('T', ' ')));
       q.appendChild(bosh);
       q.appendChild(el('div', 'ai-amal-izoh', a.tafsilot));
-      q.appendChild(el('div', 'muted ai-vaqt', '👤 ' + a.kim));
+      q.appendChild(el('div', 'muted ai-vaqt', a.kim));
       quti.appendChild(q);
     }
   }

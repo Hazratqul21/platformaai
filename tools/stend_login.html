@@ -1,0 +1,60 @@
+<!doctype html><html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login stendi</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/brand.css">
+<link rel="stylesheet" href="/static/css/platform-theme.css">
+<link rel="stylesheet" href="/static/css/onboarding-premium.css">
+<link rel="stylesheet" href="/static/css/quality.css">
+<link rel="stylesheet" href="/static/css/liquid-glass.css">
+<link rel="stylesheet" href="/static/css/liquid-glass-refinement.css">
+</head><body>
+<div class="login-screen" id="loginScreen" >
+  <div class="login-layout">
+    <section class="login-card" aria-labelledby="loginTitle">
+      <a class="login-wordmark" href="/" aria-label="INNASOFT bosh sahifasi">INNASOFT<span>®</span></a>
+      <div class="login-workspace" id="loginWorkspace" aria-live="polite">
+        <span class="login-workspace-mark" id="loginWorkspaceMark">◈</span>
+        <span><b id="loginWorkspaceName">INNASOFT</b><small id="loginWorkspaceDomain">Xavfsiz ish maydoni</small></span>
+      </div>
+      <div class="login-form-wrap">
+        <div class="logo-xl" id="loginLogo"></div>
+        <h1 id="loginTitle">Tizimga kirish</h1>
+        <div class="kicker" id="loginKicker">INNASOFT · boshqaruv platformasi</div>
+        <p class="login-intro" id="loginIntro">Ish joyingizga kirish uchun ma'lumotlaringizni yozing.</p>
+        <div class="login-fields">
+          <label class="fl">Login</label>
+          <input class="fld" id="lg" placeholder="telefon yoki email" autocomplete="username"/>
+          <label class="fl">Parol</label>
+          <div class="login-password">
+            <input class="fld" id="pw" type="password" placeholder="Parolingizni kiriting" autocomplete="current-password"/>
+            <button class="login-password-toggle" id="loginPasswordToggle" type="button" aria-label="Parolni ko'rsatish" aria-pressed="false">Ko'rsatish</button>
+          </div>
+        </div>
+        <button class="btn pri login-submit" onclick="doLogin()">Kirish <span aria-hidden="true">↗</span></button>
+        <button class="btn ghost login-back" id="loginBack" onclick="lendingOrqaga()">← Platforma haqida</button>
+        <div class="login-security"><span>◌</span> Ma'lumotlaringiz himoyalangan</div>
+      </div>
+      <div class="muted login-foot">© INNASOFT MChJ · v1.0 · 2026</div>
+    </section>
+
+    <aside class="login-showcase" aria-label="INNA Business Platform preview">
+      <div class="login-showcase-head"><span>INNA / BUSINESS OS</span><span><i></i> Product preview</span></div>
+      <div class="login-preview">
+        <div class="preview-sidebar"><b>INNA</b><span class="preview-active"></span><span></span><span></span><span></span><span></span></div>
+        <div class="preview-main">
+          <div class="preview-greeting"><div><small>Bugun</small><strong>Boshqaruv markazi</strong></div><span>◉</span></div>
+          <div class="preview-kpis"><article><small>Savdo</small><b>24.8M</b><i></i></article><article><small>Buyurtmalar</small><b>18</b><i></i></article><article><small>AI tavsiya</small><b>03</b><i></i></article></div>
+          <div class="preview-grid"><article class="preview-chart"><small>Operatsion oqim</small><div class="chart-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article><article class="preview-ai"><span>✦</span><small>AI yordamchi</small><b>Bugungi muhim ishlarni ko‘rib chiqdim.</b></article></div>
+        </div>
+      </div>
+      <div class="login-showcase-caption"><b>Sizning biznesingiz uchun yig‘ilgan boshqaruv tizimi.</b><span>Konseptual interfeys</span></div>
+    </aside>
+  </div>
+</div>
+
+<script src="/static/js/core/globals.js"></script>
+<script>
+ var el=document.getElementById('loginLogo'); if(el) el.innerHTML=boxLogo(36);
+</script>
+</body></html>

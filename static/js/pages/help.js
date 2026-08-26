@@ -13,10 +13,10 @@ PAGES.help = () => {
 
   const warn = txt => `<div style="display:flex;gap:8px;padding:10px 12px;border-radius:9px;
     background:rgba(180,71,42,.10);color:var(--danger,#b4472a);font-size:13.5px;line-height:1.55;margin-top:6px">
-    <span>⚠️</span><span>${txt}</span></div>`;
+    <span>${icon('alertic',14)}</span><span>${txt}</span></div>`;
   const ok = txt => `<div style="display:flex;gap:8px;padding:10px 12px;border-radius:9px;
     background:rgba(47,143,91,.12);color:var(--ok,#2f8f5b);font-size:13.5px;line-height:1.55;margin-top:6px">
-    <span>✓</span><span>${txt}</span></div>`;
+    <span>${icon('tick',14)}</span><span>${txt}</span></div>`;
 
   content.innerHTML = `
   <div class="glass card mb">
@@ -33,12 +33,12 @@ PAGES.help = () => {
         <th>Нима қилдингиз</th><th>Қаерга ёзилади</th>
         <th>Кўринади</th><th>КЎРИНМАЙДИ</th></tr></thead>
       <tbody>
-        <tr><td><b>Ходимга пул бердим</b></td><td>Ходимлар → 💵 Пул бериш</td>
+        <tr><td><b>Ходимга пул бердим</b></td><td>Ходимлар → Пул бериш</td>
           <td style="color:var(--ok)">Ходим картаси, Ойлик</td>
           <td style="color:var(--danger)">Кассада йўқ</td></tr>
         <tr><td><b>Сех харажати</b></td><td>Харажатлар → + Янги харажат</td>
           <td style="color:var(--ok)">Харажатлар ва Касса</td><td>—</td></tr>
-        <tr><td><b>Мижоздан тўлов</b></td><td>Мижозлар → Деталлари → 💰 Тўлов</td>
+        <tr><td><b>Мижоздан тўлов</b></td><td>Мижозлар → Деталлари → Тўлов</td>
           <td style="color:var(--ok)">Мижоз қарзи, Молия</td>
           <td style="color:var(--danger)">Кассада йўқ</td></tr>
         <tr><td><b>Кассага қўлда</b></td><td>Касса → Кирим/Чиқим</td>
@@ -49,7 +49,7 @@ PAGES.help = () => {
   </div>
 
   ${card('1','Ходимга пул бердингиз',
-    `<p class="muted" style="font-size:13.5px;line-height:1.6">«Ходимлар» → <b>💵 Пул бериш</b>.
+    `<p class="muted" style="font-size:13.5px;line-height:1.6">«Ходимлар» → <b>Пул бериш</b>.
      Бу сумма <b>ходимнинг картасида</b> ва «Ойлик» ҳисобида кўринади.` +
     warn('Касса журналида кўринмайди — бу хато эмас, тартиб шундай.'))}
 
@@ -60,7 +60,7 @@ PAGES.help = () => {
 
   ${card('3','Мижоздан тўлов қабул қилдингиз',
     `<p class="muted" style="font-size:13.5px;line-height:1.6">«Мижозлар» → мижоз → <b>Деталлари</b> →
-     <b>💰 Тўлов қабул қилиш</b>. Бу пул <b>мижознинг қарз-дафтарида</b> кўринади.` +
+     <b>Тўлов қабул қилиш</b>. Бу пул <b>мижознинг қарз-дафтарида</b> кўринади.` +
     warn('Кассада йўқлигини кўриб қўлда яна ёзманг — дубликат (икки марта санаш) бўлади.'))}
 
   ${card('4','Касса — алоҳида дафтар',

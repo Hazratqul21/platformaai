@@ -14,9 +14,9 @@ PAGES.orders=async()=>{
   const tabs=window._ordArchive?['Hammasi']:['Hammasi',...sohaFiltrStatuslari()];
   return `
   <div class="between mb" style="align-items:center">
-    <b style="font-size:13px">${window._ordArchive?'📦 Архив — тугалланган ва бекор қилинган':'Фаол буюртмалар'}</b>
+    <b style="font-size:13px">${window._ordArchive?icon('box',13)+' Архив — тугалланган ва бекор қилинган':'Фаол буюртмалар'}</b>
     <button class="btn sm ${window._ordArchive?'pri':''}" onclick="ordToggleArchive()">
-      ${window._ordArchive?'← Фаол буюртмалар':'📦 Архив'}</button>
+      ${window._ordArchive?icon('arrowLeft',13)+' Фаол буюртмалар':icon('box',13)+' Архив'}</button>
   </div>
   <div class="chips">${tabs.map(s=>{
     const label=s==='Hammasi'?'Ҳаммаси':kir(s);
@@ -48,13 +48,13 @@ function renderOrders(){
         onerror="this.style.display='none'"
         onclick="rasmniKatta('${esc(o.photo_url)}')"/>`:''}
       <div style="font-size:12.5px;margin-top:4px"><b>${esc(o.company)}</b></div>
-      ${o.product_name ? `<div style="font-size:12px;margin-top:2px;color:var(--text-main)">📦 ${esc(o.product_name)}</div>` : ''}
+      ${o.product_name ? `<div style="font-size:12px;margin-top:2px;color:var(--text-main)">${icon('box',12)} ${esc(o.product_name)}</div>` : ''}
       <div class="muted" style="font-size:11.5px;margin-top:2px">${esc(o.size||'')}${o.tur?` · <b>${esc(o.tur)}</b>`:''}${o.tarkib?` · ${esc(o.tarkib)}`:''}</div>
-      ${o.note?`<div class="muted" style="font-size:11px;margin-top:3px;font-style:italic">📝 ${esc(o.note)}</div>`:''}
+      ${o.note?`<div class="muted" style="font-size:11px;margin-top:3px;font-style:italic">${icon('doc',12)} ${esc(o.note)}</div>`:''}
       <div class="between" style="margin-top:8px;font-size:13px">
         <span>${new Intl.NumberFormat('ru-RU').format(o.qty)} ${esc(o.qty_birlik||'')}</span><b>${money(o.total)}</b></div>
       ${o.delivered_qty>0&&o.qolgan_qty>0?`<div class="between" style="font-size:11px;margin-top:2px"><span class="muted">Топширилди: ${new Intl.NumberFormat('ru-RU').format(o.delivered_qty)}</span><span class="tag warn" style="font-size:9.5px">қолди ${new Intl.NumberFormat('ru-RU').format(o.qolgan_qty)}</span></div>`:''}
-      ${o.tolanmadi?`<div class="between" style="font-size:11px;margin-top:2px"><span class="muted">Топширилган мол пули</span><span class="tag dn" style="font-size:9.5px">💸 Тўланмади</span></div>`:''}
+      ${o.tolanmadi?`<div class="between" style="font-size:11px;margin-top:2px"><span class="muted">Топширилган мол пули</span><span class="tag dn" style="font-size:9.5px">${icon('cash',10)} Тўланмади</span></div>`:''}
       <div class="between muted" style="font-size:10.5px;margin-top:3px">
         <span>Тўлов: ${o.payment_due_date ? o.payment_due_date : 'номаълум'}</span>
         <span>Тайёр бўлиши: ${o.due_date ? o.due_date : 'номаълум'}</span>
@@ -62,16 +62,16 @@ function renderOrders(){
       ${['Rahbar','Menejer'].includes(ME.role)?`<div class="between" style="font-size:10.5px;margin-top:3px"><span class="muted">Фойда улуши</span><span class="tag ${o.margin>=15?'ok':'warn'}" style="font-size:9.5px">${o.margin}%</span></div>`:''}
       ${tracker}
       <div class="row" style="flex-wrap:wrap;gap:5px;margin-top:8px">
-        <button class="btn sm" onclick="orderCard(${o.id})">${o.photo_url?'🖼':'📷'} Ичини кўриш</button>
+        <button class="btn sm" onclick="orderCard(${o.id})">${o.photo_url?icon('image',14):icon('camera',14)} Ичини кўриш</button>
         ${sohaKeyingi(o.status).filter(s=>!['bekor','boshlanish'].includes(sohaMano(s))).map(s=>sohaMano(s)==='topshirildi'
-          ?`<button class="btn sm pri" onclick='deliverForm(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📤 ${o.delivered_qty>0?'Яна топшириш':'Мижозга топшириш'}</button>`
+          ?`<button class="btn sm pri" onclick='deliverForm(${JSON.stringify(o).replace(/'/g,"&#39;")})'>${icon('upload',14)} ${o.delivered_qty>0?'Яна топшириш':'Мижозга топшириш'}</button>`
           :`<button class="btn sm ${sohaMano(s)==='muzokara'?'':'pri'}" onclick="setStatus(${o.id},'${esc(s)}',this)">${esc(sohaTugmaMatni(s))}</button>`).join('')}
         ${o.delivered_qty>0&&!['topshirildi','bekor'].includes(sohaMano(o.status))&&['Rahbar','Menejer','Sklad mudiri'].includes(ME.role)
-          ?`<button class="btn sm${o.qolgan_qty<=0?' pri':''}" onclick="yakunla(${o.id},${o.delivered_qty},${o.qty},this)" title="${o.qolgan_qty<=0?'Ҳаммаси берилган — архивга ўтказиш':'Тираж кам чиққан бўлса — шу берилган миқдор билан ёпиш'}">🏁 Якунлаш</button>`:''}
-        ${sohaKeyingi(o.status).some(s=>sohaMano(s)==='bekor')&&['Rahbar','Menejer'].includes(ME.role)?`<button class="btn sm dngr" onclick="if(confirm('№${o.id} буюртма бекор қилинсинми? Материал омборга қайтади.'))setStatus(${o.id},'${esc(sohaKeyingi(o.status).find(s=>sohaMano(s)==='bekor')||'')}',this)">✕ Бекор</button>`:''}
+          ?`<button class="btn sm${o.qolgan_qty<=0?' pri':''}" onclick="yakunla(${o.id},${o.delivered_qty},${o.qty},this)" title="${o.qolgan_qty<=0?'Ҳаммаси берилган — архивга ўтказиш':'Тираж кам чиққан бўлса — шу берилган миқдор билан ёпиш'}">${icon('flag',13)} Якунлаш</button>`:''}
+        ${sohaKeyingi(o.status).some(s=>sohaMano(s)==='bekor')&&['Rahbar','Menejer'].includes(ME.role)?`<button class="btn sm dngr" onclick="if(confirm('№${o.id} буюртма бекор қилинсинми? Материал омборга қайтади.'))setStatus(${o.id},'${esc(sohaKeyingi(o.status).find(s=>sohaMano(s)==='bekor')||'')}',this)">${icon('x',13)} Бекор</button>`:''}
         ${!['boshlanish','bekor'].includes(sohaMano(o.status))?dl('/api/reports/act/'+o.id+'.pdf','Акт'):''}
         ${['tayyor','topshirildi'].includes(sohaMano(o.status))?`<span class="muted" style="font-size:10.5px;width:100%;margin-top:2px">Юк хати:</span>${dl('/api/reports/nakladnoy/'+o.id+'.pdf','PDF')}${dl('/api/reports/nakladnoy/'+o.id+'.xlsx','Excel')}${dl('/api/reports/nakladnoy/'+o.id+'.docx','Word')}`:''}
-        ${o.accepted_stamp?'<span class="tag ok" style="font-size:9.5px">✔ мижоз қабул қилган</span>':''}
+        ${o.accepted_stamp?'<span class="tag ok" style="font-size:9.5px">'+icon('tick',10)+' мижоз қабул қилган</span>':''}
       </div>
     </div>`;}).join('')||'<div class="glass card muted" style="grid-column:1/-1;text-align:center">Бу ҳолатда буюртма йўқ</div>';
 }
@@ -99,12 +99,12 @@ function orderCard(id){
   <div class="between muted" style="font-size:11.5px;margin-top:8px">
     <span>Тайёр бўлиши: <b>${o.due_date||'—'}</b></span>
     <span>Тўлов: <b>${o.payment_due_date||'—'}</b></span></div>
-  ${o.note?`<div class="glass card" style="padding:8px;margin-top:8px;font-size:12px;font-style:italic">📝 ${esc(o.note)}</div>`:''}
+  ${o.note?`<div class="glass card" style="padding:8px;margin-top:8px;font-size:12px;font-style:italic">${icon('doc',12)} ${esc(o.note)}</div>`:''}
   ${o.delivered_qty>0?`<div id="ord_topshir" class="glass card" style="padding:10px;margin-top:8px;font-size:12px">
     <div class="muted">Топшириш тарихи юкланмоқда…</div></div>`:''}
   <div class="row" style="margin-top:14px;justify-content:space-between">
     ${['Rahbar','Menejer','Buxgalter'].includes(ME.role)&&!['Yetkazib berildi','Bekor qilindi'].includes(o.status)
-      ?`<button class="btn" onclick='orderEdit(${JSON.stringify(o).replace(/'/g,"&#39;")})'>✎ Таҳрирлаш</button>`:'<span></span>'}
+      ?`<button class="btn" onclick='orderEdit(${JSON.stringify(o).replace(/'/g,"&#39;")})'>${icon('pencil',14)} Таҳрирлаш</button>`:'<span></span>'}
     <button class="btn pri" onclick="closeModal()">Ёпиш</button></div>`);
   ordRetsept(o.id);
   if(o.delivered_qty>0) ordTopshirishlar(o.id);
@@ -137,7 +137,7 @@ async function ordRetsept(id){
     if(!d.retsept_bor){ el.remove(); return; }   // ретцептсиз соҳа — блок керак эмас
     const n=v=>new Intl.NumberFormat('ru-RU').format(v);
     el.innerHTML=`
-      <div style="font-weight:700;margin-bottom:6px">🧾 Хомашё (шу буюртмага)</div>
+      <div style="font-weight:700;margin-bottom:6px">${icon('receipt',14)} Хомашё (шу буюртмага)</div>
       ${d.qatorlar.map(q=>`
         <div class="between" style="padding:5px 0;border-top:1px solid var(--hair)">
           <span>${esc(q.material)} <span class="muted">${n(q.kerak_material_birligida??q.kerak)} ${esc(q.material_birligi||q.birlik)}</span></span>
@@ -170,7 +170,7 @@ async function ordTopshirishlar(id){
     const yigindi=d.topshirishlar.reduce((a,t)=>a+(t.dona||0),0);
     const farq = yigindi!==d.delivered_qty;
     el.innerHTML=`
-      <div style="font-weight:700;margin-bottom:6px">📦 Мол қачон берилган</div>
+      <div style="font-weight:700;margin-bottom:6px">${icon('box',14)} Мол қачон берилган</div>
       ${d.topshirishlar.map(t=>`
         <div class="between" style="padding:5px 0;border-top:1px solid var(--hair)">
           <span><b>${t.sana}</b> <span class="muted">соат ${t.vaqt}</span></span>
@@ -179,7 +179,7 @@ async function ordTopshirishlar(id){
       <div class="between" style="border-top:1px solid var(--ink-2);margin-top:6px;padding-top:6px;font-weight:700">
         <span>Ҳозирги ҳисоб</span><span>${n(d.delivered_qty)} / ${n(d.qty)} дона</span></div>
       ${farq?`<div class="muted" style="font-size:11px;margin-top:5px;line-height:1.45">
-        ⚠️ Тарихдаги йиғинди (${n(yigindi)} дона) ҳозирги ҳисобдан фарқ қилади —
+        ${icon('alertic',12)} Тарихдаги йиғинди (${n(yigindi)} дона) ҳозирги ҳисобдан фарқ қилади —
         топширилган миқдор кейинчалик тузатилган. Тўғри рақам: <b>${n(d.delivered_qty)} дона</b>.</div>`:''}`;
   }catch(e){
     const el=box(); if(el)el.innerHTML=`<div class="muted">Топшириш тарихини олиб бўлмади</div>`;
@@ -201,7 +201,7 @@ function orderEdit(o){
   <div class="between" style="font-size:14px;padding:6px 0"><span>Жами (ҚҚСсиз)</span>
     <b id="oe_total" style="color:var(--primary-deep)">${money(o.qqssiz_summa??o.total)}</b></div>
   <label class="fl">Изоҳ</label><input class="fld" id="oe_note" value="${esc(o.note||'')}"/>
-  ${o.delivered_qty>0?`<div class="muted" style="font-size:11px;margin-top:4px;color:var(--warn)">⚠️ ${new Intl.NumberFormat('ru-RU').format(o.delivered_qty)} ${birlik} аллақачон топширилган — миқдор ундан кам бўлмасин</div>`:''}
+  ${o.delivered_qty>0?`<div class="muted" style="font-size:11px;margin-top:4px;color:var(--warn)">${icon('alertic',11)} ${new Intl.NumberFormat('ru-RU').format(o.delivered_qty)} ${birlik} аллақачон топширилган — миқдор ундан кам бўлмасин</div>`:''}
   <div class="row" style="margin-top:16px;justify-content:flex-end">
     <button class="btn" onclick="closeModal()">Бекор</button>
     <button class="btn pri" onclick="orderEditSave(${o.id})">Сақлаш</button></div>`);
@@ -228,7 +228,7 @@ function ordPhotoGallery(o){
   const ph=(o.photos&&o.photos.length)?o.photos:(o.photo_url?[{url:o.photo_url,filename:o.photo}]:[]);
   window._ordPh={id:o.id,list:ph,idx:0};
   if(!ph.length){
-    return `<button class="btn pri" style="width:100%;justify-content:center" onclick="document.getElementById('ord_photo_file').click()">📷 Расмга олиш</button>
+    return `<button class="btn pri" style="width:100%;justify-content:center" onclick="document.getElementById('ord_photo_file').click()">${icon('camera',15)} Расмга олиш</button>
       <div class="muted" style="font-size:10.5px;margin-top:5px;text-align:center">Цехда маҳсулотни расмга олинг — бир нечта бўлса ҳам бўлади</div>`;
   }
   return `<div style="position:relative">
@@ -240,8 +240,8 @@ function ordPhotoGallery(o){
       <span id="ord_ph_num" style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px">1 / ${ph.length}</span>`:''}
   </div>
   <div class="row" style="gap:6px;margin-top:6px">
-    <button class="btn sm" style="flex:1;justify-content:center" onclick="document.getElementById('ord_photo_file').click()">➕ Яна расм</button>
-    <button class="btn sm dngr" onclick="ordRasmOchir(${o.id})">✕ Шу расмни ўчириш</button></div>`;
+    <button class="btn sm" style="flex:1;justify-content:center" onclick="document.getElementById('ord_photo_file').click()">${icon('plus',14)} Яна расм</button>
+    <button class="btn sm dngr" onclick="ordRasmOchir(${o.id})">${icon('x',13)} Шу расмни ўчириш</button></div>`;
 }
 function ordPhNav(dir){
   const p=window._ordPh; if(!p||!p.list.length)return;
@@ -318,7 +318,7 @@ function deliverForm(o){
   <div class="muted" style="font-size:10.5px;margin-top:3px">Мол олдинроқ берилиб, кейин киритилаётган бўлса — ҳақиқий санани танланг.</div>
   <div class="row" style="margin-top:16px;justify-content:flex-end">
     <button class="btn" onclick="closeModal()">Бекор</button>
-    <button class="btn pri" onclick="deliverSave(${o.id},${o.unit_price},${qolgan})">📤 Топшириш</button></div>`);
+    <button class="btn pri" onclick="deliverSave(${o.id},${o.unit_price},${qolgan})">${icon('upload',14)} Топшириш</button></div>`);
 }
 function dlQtyChange(price,qolgan){
   let q=+f('dl_qty')||0;
@@ -331,7 +331,7 @@ async function deliverSave(id,price,qolgan){
   if(!(qty>0))return toast('w','alertic','Дона киритилмади','Нечта топширилаётганини ёзинг');
   if(qty>qolgan)return toast('w','alertic','Кўп','Фақат '+qolgan+' дона қолган');
   // butun buyurtma yopilishidan oldin tasdiq — noto'g'ri to'liq yopib qo'ymaslik uchun
-  if(qty===qolgan&&!confirm('⚠️ '+new Intl.NumberFormat('ru-RU').format(qty)+' дона — БУТУН қолган мол топширилади, заказ ёпилади.\n\nАгар фақат бир қисмини бермоқчи бўлсангиз — «Бекор» босиб, камроқ рақам ёзинг.\n\nҲаммасини топширасизми?'))return;
+  if(qty===qolgan&&!confirm(''+new Intl.NumberFormat('ru-RU').format(qty)+' дона — БУТУН қолган мол топширилади, заказ ёпилади.\n\nАгар фақат бир қисмини бермоқчи бўлсангиз — «Бекор» босиб, камроқ рақам ёзинг.\n\nҲаммасини топширасизми?'))return;
   const jami=qty*price;
   if(amount>jami&&!confirm('Киритилган пул топширилаётган мол суммасидан катта. Давом этасизми?'))return;
   try{
@@ -395,7 +395,7 @@ async function setStatus(id,st,btn){
         if(r.retsept_bor&&!r.yetadi){
           const kam=r.qatorlar.filter(q=>!q.yetadi)
             .map(q=>`${q.material}: керак ${q.kerak_material_birligida??q.kerak}, бор ${q.omborda}`).join('\n');
-          if(!confirm('⚠️ Омборда хомашё етмайди:\n\n'+kam+'\n\nБарибир давом эттирасизми? (Қолдиқ минусга ўтади)'))return;
+          if(!confirm('Омборда хомашё етмайди:\n\n'+kam+'\n\nБарибир давом эттирасизми? (Қолдиқ минусга ўтади)'))return;
         }
       }catch(e){ console.error(e); }
     }

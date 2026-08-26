@@ -22,8 +22,8 @@ async function kassaView(firm){
     </div>
     <div class="row">
       ${['Rahbar','Buxgalter'].includes(ME.role)?`
-        <button class="btn pri sm" onclick="kassaForm('Kirim')">↓ Кирим</button>
-        <button class="btn sm dngr" onclick="kassaForm('Chiqim')">↑ Чиқим</button>`:''}
+        <button class="btn pri sm" onclick="kassaForm('Kirim')">${icon('arrowDown',14)} Кирим</button>
+        <button class="btn sm dngr" onclick="kassaForm('Chiqim')">${icon('arrowUp',14)} Чиқим</button>`:''}
       ${dl('/api/kassa/export.xlsx'+(firm?'?firm='+encodeURIComponent(firm):''),'Excel')}
     </div>
   </div>
@@ -41,9 +41,9 @@ async function kassaView(firm){
           ${e.note?`<div class="muted" style="font-size:10.5px">${esc(e.note)}</div>`:''}</span>
         <b style="color:${e.direction==='Kirim'?'var(--ok)':'var(--danger)'};font-variant-numeric:tabular-nums;white-space:nowrap">
           ${e.direction==='Kirim'?'+':'−'}${e.currency==='USD'?e.amount+' $':money(e.amount)}</b>
-        ${ME.role==='Rahbar'?`<button class="btn sm ghost" onclick="delKassa(${e.id})">✕</button>`:''}
+        ${ME.role==='Rahbar'?`<button class="btn sm ghost" onclick="delKassa(${e.id})">${icon('x',13)}</button>`:''}
       </div>`).join('')}</div>`;}).join('')||`<div class="muted" style="text-align:center;padding:30px">
-      <div style="font-size:28px">💵</div><b style="display:block;margin:6px 0">Журнал бўш</b>
+      <div class="bosh-belgi">${icon('cash',30)}</div><b style="display:block;margin:6px 0">Журнал бўш</b>
       <div style="font-size:12px">«Kirim» yoki «Chiqim» tugmasi bilan birinchi yozuvni kiriting</div></div>`}
   </div>`;
 }
@@ -55,7 +55,7 @@ async function switchFirm(fm){
 function kassaForm(dir){
   const firms=window._kassaFirms&&window._kassaFirms.length?window._kassaFirms:['Asosiy'];
   const defFirm=FIRM||window._kassaFirm||firms[0];
-  modal(`<h2 class="sec mb">${dir==='Kirim'?'↓ Кирим (pul keldi)':'↑ Чиқим (pul ketdi)'}</h2>
+  modal(`<h2 class="sec mb">${dir==='Kirim'?icon('arrowDown',17)+' Кирим (pul keldi)':icon('arrowUp',17)+' Чиқим (pul ketdi)'}</h2>
   <label class="fl">${dir==='Kirim'?'Kimdan':'Kimga - nimaga'}</label>
   <input class="fld" id="k_who" placeholder="${dir==='Kirim'?'mijoz/manba nomi':'masalan: Remont, Avans, Kley...'}"/>
   <label class="fl">Изоҳ (ixtiyoriy)</label><input class="fld" id="k_note"/>

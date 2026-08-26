@@ -25,7 +25,7 @@ PAGES.calc = async () => {
       <input class="fld" id="q_qty" type="number"${qadam} value="${soha.kasrli ? 1 : 1000}"/>
     </div>
     <label class="fl">Мижоз (номи ёки телефони бўйича қидиринг)</label>
-    <input class="fld" id="q_client_search" list="clientList" placeholder="🔍 масалан: Хос ёки 90 123..."
+    <input class="fld qidir" id="q_client_search" list="clientList" placeholder="масалан: Хос ёки 90 123..."
       oninput="clientTanlandi()" autocomplete="off"/>
     <datalist id="clientList">${cs.map(c => `<option value="${esc(c.company)}${c.phone ? ' · ' + esc(c.phone) : ''}">`).join('')}</datalist>
     <input type="hidden" id="q_client"/>
@@ -39,7 +39,7 @@ PAGES.calc = async () => {
       <div id="q_photo_grid" class="row" style="flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
       <div class="row" style="gap:6px">
         <button class="btn sm pri" style="flex:1;justify-content:center"
-          onclick="document.getElementById('q_photo_file').click()">📷 Расм қўшиш</button>
+          onclick="document.getElementById('q_photo_file').click()">${icon('camera',15)} Расм қўшиш</button>
       </div>
       <div class="muted" style="font-size:10.5px;margin-top:5px">
         Бир нечта расм қўшса бўлади. Телефонда камера очилади.</div>
@@ -71,7 +71,7 @@ async function clientTanlandi() {
       return;
     }
     box.innerHTML = `<div class="glass card" style="padding:8px;margin:6px 0;background:var(--hair)">
-      <div class="muted" style="font-size:10.5px;margin-bottom:4px">🔁 ${esc(c.company)}нинг олдинги буюртмалари — босса, майдонлар тўлади</div>
+      <div class="muted" style="font-size:10.5px;margin-bottom:4px">${icon('repeat',13)} ${esc(c.company)}нинг олдинги буюртмалари — босса, майдонлар тўлади</div>
       ${mine.map(o => `<div class="between" style="font-size:11.5px;padding:4px 0;border-top:1px solid var(--hair);cursor:pointer"
         onclick='povtorTanla(${JSON.stringify(o).replace(/'/g, "&#39;")})'>
         <span><b>#${o.id}</b> ${esc(o.product_name || o.tur)} <span class="muted">${esc(o.size)}</span></span>
@@ -111,9 +111,9 @@ function calcRasmGrid() {
   const g = document.getElementById('q_photo_grid'); if (!g) return;
   g.innerHTML = CALC_RASMLAR.map((src, i) => `<div style="position:relative">
     <img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:8px"/>
-    <span onclick="calcRasmOchir(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;cursor:pointer;font-size:12px">✕</span>
+    <span onclick="calcRasmOchir(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;cursor:pointer;font-size:12px">${icon('x',12)}</span>
     </div>`).join('')
-    + (CALC_RASMLAR.length ? `<div class="muted" style="font-size:10.5px;width:100%;margin-top:2px">✅ ${CALC_RASMLAR.length} та расм тайёр</div>` : '');
+    + (CALC_RASMLAR.length ? `<div class="muted" style="font-size:10.5px;width:100%;margin-top:2px">${icon('tick',13)} ${CALC_RASMLAR.length} та расм тайёр</div>` : '');
 }
 function calcRasmOchir(i) { CALC_RASMLAR.splice(i, 1); calcRasmGrid(); }
 
@@ -182,7 +182,7 @@ function smetaHtml(q, body) {
     ${q.need_m2_total != null ? `
       <div class="between" style="padding:5px 0;font-size:13px"><span class="muted">Жами керак</span><b>${q.need_m2_total.toFixed(1)} м²</b></div>
       <div class="between" style="padding:5px 0;font-size:13px"><span class="muted">Омборда бор</span>
-        <b style="color:${q.enough_material ? 'var(--ok)' : 'var(--danger)'}">${q.stock_m2.toFixed(1)} м² ${q.enough_material ? '✓' : '— ЕТМАЙДИ!'}</b></div>` : ''}
+        <b style="color:${q.enough_material ? 'var(--ok)' : 'var(--danger)'}">${q.stock_m2.toFixed(1)} м² ${q.enough_material ? icon('tick',13) : '— ЕТМАЙДИ!'}</b></div>` : ''}
     ${ogoh.map(x => alertBox('d', 'alertic', 'ДИҚҚАТ', esc(x))).join('')}
     ${ichki}
     <div class="between" style="font-size:15px;padding:6px 0"><span>Таклиф нархи / ${birlik}</span><b>${money(q.unit_price)}</b></div>

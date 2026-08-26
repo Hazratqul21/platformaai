@@ -133,11 +133,12 @@ const MANO_RANG = {
 };
 function sohaTag(nom) { return MANO_RANG[sohaMano(nom)] || stTag(nom); }
 
-/** Ma'noga qarab tugma matni — soha nomlari har xil bo'lgani uchun. */
+/** Ma'noga qarab tugma belgisi — soha nomlari har xil bo'lgani uchun.
+    Qiymatlar ikonka NOMI: belgilar emoji edi, endi bitta oiladan. */
 const MANO_TUGMA = {
-  muzokara: '💬', ishlab_chiqarish: '▶', tayyor: '✓', topshirildi: '📤',
+  muzokara: 'chat', ishlab_chiqarish: 'play', tayyor: 'tick', topshirildi: 'upload',
 };
 function sohaTugmaMatni(nom) {
-  const belgi = MANO_TUGMA[sohaMano(nom)] || '→';
-  return `${belgi} ${kir(nom)}`;
+  const belgi = MANO_TUGMA[sohaMano(nom)] || 'arrowRight';
+  return `${icon(belgi, 14)} ${kir(nom)}`;
 }

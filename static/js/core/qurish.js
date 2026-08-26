@@ -105,13 +105,13 @@ function qurBoshla(){
       </div>
       <div class="qur-past">
         <button class="btn ghost sm" onclick="qurOvozAlmash()" id="qurOvozBtn"
-          title="Ovoz">🔊 Ovoz yoniq</button>
+          title="Ovoz">${icon('sound',14)} Ovoz yoniq</button>
         <button class="btn pri" id="qurKirBtn" onclick="qurTizimgaKir()" disabled>
           Tizimga kirish</button>
       </div>
     </div>
     <button class="qur-chat-tugma" id="qurChatTugma" onclick="qurChatAlmash()"
-      title="Suhbatni ko'rsatish/yashirish">✦</button>`;
+      title="Suhbatni ko'rsatish/yashirish">${icon('ai',15)}</button>`;
   ek.classList.add('on');
 
   // AI paneli o'ngda — ERP dagi bilan BIR XIL panel. Ikkinchi chat
@@ -145,7 +145,7 @@ function qurRejimKorsat(){
   if(!s) return;
   const nishon=document.createElement('span');
   nishon.className='qur-rejim-nishon';
-  nishon.textContent = QUR.rejim==='plan' ? '◎ Plan' : '⚡ Agent';
+  nishon.textContent = QUR.rejim==='plan' ? 'Plan' : 'Agent';
   s.appendChild(document.createTextNode(' '));
   s.appendChild(nishon);
 }
@@ -159,7 +159,7 @@ function qurChatAlmash(){
 function qurOvozAlmash(){
   QUR.ovoz=!QUR.ovoz;
   document.getElementById('qurOvozBtn').textContent =
-    QUR.ovoz ? '🔊 Ovoz yoniq' : '🔇 Ovoz o\'chiq';
+    QUR.ovoz ? icon('sound',14)+' Ovoz yoniq' : icon('mute',14)+' Ovoz o\'chiq';
   if(QUR.ovoz) qurDing(false);
 }
 
@@ -193,7 +193,9 @@ function qurTekshir(oqim){
     const kalit = i+'|'+iz.textContent;
     if(QUR_KORILGAN.has(kalit)) return;
     QUR_KORILGAN.add(kalit);
-    iz.textContent.replace(/^⚙\s*/,'').split('·').forEach(nom=>{
+    // `.agent-iz` ichida endi SVG ikonka turadi — `textContent` da
+    // belgi qolmaydi, faqat bo'shliqlar. Eski matnli prefiks kerak emas.
+    iz.textContent.split('·').forEach(nom=>{
       qurBolimQosh(nom.trim());
     });
   });
@@ -210,7 +212,7 @@ function qurBolimQosh(asbob){
 
   const k=document.createElement('div');
   k.className='qur-karta';
-  k.innerHTML=`<div class="qur-karta-belgi">✓</div>
+  k.innerHTML=`<div class="qur-karta-belgi">${icon('tick',13)}</div>
     <div><div class="qur-karta-nom">${esc(nom)}</div>
     <div class="qur-karta-izoh">${esc(izoh)}</div></div>`;
   document.getElementById('qurTasma').appendChild(k);

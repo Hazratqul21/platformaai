@@ -9,7 +9,7 @@ PAGES.zakup=async()=>{
     ${kpi('flag','Етказиб берувчига қарз',mshort(data.total_debt)+" сўм",data.total_debt>0?'тўланиши керак':'қарз йўқ',data.total_debt>0?'dn':'up')}
     <div class="glass card" style="display:flex;flex-direction:column;justify-content:center;gap:8px">
       ${['Rahbar','Sklad mudiri','Buxgalter'].includes(ME.role)?`<button class="btn pri" onclick="zakupForm()">${icon('plus',15)} Янги харид</button>`:''}
-      ${dl('/api/reports/purchases.xlsx','📊 Excel ҳисобот')}
+      ${dl('/api/reports/purchases.xlsx',icon('chart',14)+' Excel ҳисобот')}
     </div>
   </div>
   <div class="glass card">
@@ -24,7 +24,7 @@ PAGES.zakup=async()=>{
       <td><b>${mshort(p.total)}</b></td>
       <td><span class="tag ${p.payment_type==='Naqd'?'ok':'warn'}">${kir(p.payment_type)}</span></td>
       <td>${p.debt>0?`<span class="tag dn">${mshort(p.debt)}</span> ${['Rahbar','Buxgalter','Sklad mudiri'].includes(ME.role)?`<button class="btn sm ghost" onclick="zakupPay(${p.id},${p.debt})">тўлаш</button>`:''}`:'<span class="tag ok">ёпиқ</span>'}</td>
-      <td>${['Rahbar','Buxgalter','Sklad mudiri'].includes(ME.role)?`<button class="btn sm ghost" title="Тузатиш" onclick='zakupEdit(${JSON.stringify(p).replace(/'/g,"&#39;")})'>✎</button>${ME.role==='Rahbar'?`<button class="btn sm ghost" style="color:var(--danger)" title="Ўчириш" onclick="zakupDel(${p.id})">✕</button>`:''}`:''}</td>
+      <td>${['Rahbar','Buxgalter','Sklad mudiri'].includes(ME.role)?`<button class="btn sm ghost" title="Тузатиш" onclick='zakupEdit(${JSON.stringify(p).replace(/'/g,"&#39;")})'>${icon('pencil',13)}</button>${ME.role==='Rahbar'?`<button class="btn sm ghost" style="color:var(--danger)" title="Ўчириш" onclick="zakupDel(${p.id})">${icon('x',13)}</button>`:''}`:''}</td>
     </tr>`).join('')||'<tr><td colspan="9" class="muted">Ҳали харид йўқ</td></tr>'}
     </tbody></table>
   </div>`;

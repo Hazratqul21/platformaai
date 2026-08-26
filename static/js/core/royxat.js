@@ -115,7 +115,7 @@ function rxQadam1(){
 
   <div class="rx-tugmalar">
     <button class="btn ghost" onclick="closeModal()">Bekor</button>
-    <button class="btn pri" onclick="rxKeyingi1()">Keyingi →</button>
+    <button class="btn pri" onclick="rxKeyingi1()">Keyingi ${icon('arrowRight',14)}</button>
   </div>`;
 }
 
@@ -189,8 +189,8 @@ function rxQadam2(){
   <div class="muted rx-kichik" id="rx_soha_holat"></div>
 
   <div class="rx-tugmalar">
-    <button class="btn ghost" onclick="RX.qadam=1;rxChiz()">← Orqaga</button>
-    <button class="btn pri" onclick="rxKeyingi2()">Keyingi →</button>
+    <button class="btn ghost" onclick="RX.qadam=1;rxChiz()">${icon('arrowLeft',14)} Orqaga</button>
+    <button class="btn pri" onclick="rxKeyingi2()">Keyingi ${icon('arrowRight',14)}</button>
   </div>`;
 }
 
@@ -254,7 +254,7 @@ function rxQadam3(){
 
   <div class="rx-rejimlar">
     <button class="rx-rejim ${RX.rejim!=='plan'?'tanlangan':''}" onclick="rxRejim('agent')">
-      <span class="rx-rejim-nom">⚡ Agent</span>
+      <span class="rx-rejim-nom">${icon('bolt',13)} Agent</span>
       <span class="rx-rejim-izoh">Darrov qilishga kirishadi</span></button>
     <button class="rx-rejim ${RX.rejim==='plan'?'tanlangan':''}" onclick="rxRejim('plan')">
       <span class="rx-rejim-nom">◎ Plan</span>
@@ -264,7 +264,7 @@ function rxQadam3(){
   <div id="rx_natija" class="rx-natija"></div>
 
   <div class="rx-tugmalar">
-    <button class="btn ghost" onclick="RX.qadam=2;rxChiz()">← Orqaga</button>
+    <button class="btn ghost" onclick="RX.qadam=2;rxChiz()">${icon('arrowLeft',14)} Orqaga</button>
     <button class="btn pri" id="rx_btn" onclick="rxYubor()">Tizimni yaratish</button>
   </div>`;
 }

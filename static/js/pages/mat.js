@@ -6,8 +6,8 @@ PAGES.mat=async()=>{
   return `
   <div class="glass card mb" style="padding:12px">
     <div class="row" style="gap:8px;align-items:center">
-      <input class="fld" id="matSearch" style="margin:0;flex:1"
-        placeholder="🔍 Маҳсулотни қидириш — номи, марка ёки граммаж бўйича…" oninput="renderMats()"/>
+      <input class="fld qidir" id="matSearch" style="margin:0;flex:1"
+        placeholder="Маҳсулотни қидириш — номи, марка ёки граммаж бўйича…" oninput="renderMats()"/>
       <button class="btn pri" onclick="renderMats()">${icon('boxIn',15)} Қидириш</button>
       ${['Rahbar','Sklad mudiri'].includes(ME.role)?`<button class="btn" onclick="matForm()">${icon('plus',15)} Янги материал</button>`:''}
     </div>
@@ -37,9 +37,9 @@ function renderMats(){
       <b style="color:${x.min_stock>0&&x.stock_qty<=x.min_stock?'var(--danger)':'var(--ink)'}">${new Intl.NumberFormat('ru-RU').format(x.stock_qty)} ${esc(x.unit)}</b></div>
     <div class="between" style="font-size:11.5px"><span class="muted">Охирги нарх</span><span>${money(x.last_price)}/${esc(x.unit)}</span></div>
     ${['Rahbar','Sklad mudiri'].includes(ME.role)?`<div class="row" style="margin-top:8px;gap:5px">
-      <button class="btn sm ghost" onclick='matForm(${JSON.stringify(x).replace(/'/g,"&#39;")})'>✎</button>
-      <button class="btn sm pri" onclick="zakupForm(${x.id})">📥 Харид</button></div>`:''}
-  </div>`).join('')||'<div class="glass card muted" style="grid-column:1/-1;text-align:center;padding:30px"><div style="font-size:28px">📦</div><b style="display:block;margin:6px 0">Материал йўқ</b><div style="font-size:12px">«Янги материал» тугмаси билан қоғоз, картон, клей... қўшинг</div></div>';
+      <button class="btn sm ghost" onclick='matForm(${JSON.stringify(x).replace(/'/g,"&#39;")})'>${icon('pencil',13)}</button>
+      <button class="btn sm pri" onclick="zakupForm(${x.id})">${icon('download',14)} Харид</button></div>`:''}
+  </div>`).join('')||'<div class="glass card muted" style="grid-column:1/-1;text-align:center;padding:30px"><div class="bosh-belgi">'+icon('box',30)+'</div><b style="display:block;margin:6px 0">Материал йўқ</b><div style="font-size:12px">«Янги материал» тугмаси билан қоғоз, картон, клей... қўшинг</div></div>';
 }
 function matForm(x){
   x=x||{};

@@ -6,10 +6,10 @@ PAGES.hr = async () => {
     <div class="flx" style="justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h3>${t('hr') || 'Ходимлар'}</h3>
         <div class="row" style="flex-wrap:wrap;gap:6px">
-            <button class="btn pri sm" onclick="hrWorkModal()">✂️ Иш қайди</button>
-            <button class="btn sm" onclick="hrSalaryModal()">💰 Оклад ёзиш</button>
-            <button class="btn sm" onclick="hrPayModal()">💵 Пул бериш</button>
-            <button class="btn sm" onclick="hrPayrollModal()">📋 Ойлик</button>
+            <button class="btn pri sm" onclick="hrWorkModal()">${icon('scissors',14)} Иш қайди</button>
+            <button class="btn sm" onclick="hrSalaryModal()">${icon('cash',14)} Оклад ёзиш</button>
+            <button class="btn sm" onclick="hrPayModal()">${icon('cash',14)} Пул бериш</button>
+            <button class="btn sm" onclick="hrPayrollModal()">${icon('clipboard',14)} Ойлик</button>
             ${dl('/api/reports/payroll.xlsx','Excel')}
             <button class="btn sm" onclick="hrAddModal()">+ Янги ходим</button>
         </div>
@@ -133,9 +133,9 @@ window.openEmployee = async (id) => {
         "қути сонига қараб ишласа «Иш қайди». Шундан кейин олган пуллари ўша ойликдан айрилади.")
     : ''}
   <div class="row mb" style="flex-wrap:wrap;gap:6px;margin-top:8px">
-    ${['Rahbar','Buxgalter',"Sex boshlig'i"].includes(ME.role)?`<button class="btn sm pri" onclick="closeModal();hrSalaryModal()">💰 Оклад ёзиш</button>
-    <button class="btn sm" onclick="closeModal();hrWorkModal()">✂️ Иш қайди</button>
-    <button class="btn sm" onclick="closeModal();hrPayModal()">💵 Пул бериш</button>`:''}
+    ${['Rahbar','Buxgalter',"Sex boshlig'i"].includes(ME.role)?`<button class="btn sm pri" onclick="closeModal();hrSalaryModal()">${icon('cash',14)} Оклад ёзиш</button>
+    <button class="btn sm" onclick="closeModal();hrWorkModal()">${icon('scissors',14)} Иш қайди</button>
+    <button class="btn sm" onclick="closeModal();hrPayModal()">${icon('cash',14)} Пул бериш</button>`:''}
   </div>
   <div style="overflow-x:auto">
   <table style="font-size:11px;min-width:640px">

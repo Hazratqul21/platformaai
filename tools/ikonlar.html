@@ -1,0 +1,22 @@
+<!doctype html><html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ikonka varag'i</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/liquid-glass.css">
+<style>
+ body{padding:28px;background:#EEF0FF}
+ .sheet{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px}
+ .cell{background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.8);
+   border-radius:18px;padding:16px 8px;text-align:center;color:#17182B}
+ .cell small{display:block;margin-top:9px;font-size:10.5px;color:#6D708C;
+   font-family:ui-monospace,Menlo,monospace}
+ .cell .big{color:#5B5BEF}
+ h1{font:600 20px Inter,system-ui;color:#17182B;margin:0 0 18px}
+</style></head><body>
+<h1>Ikonka oilasi — 24×24, chiziqli, 1.7</h1>
+<div class="sheet" id="sheet"></div>
+<script src="/static/js/core/globals.js"></script>
+<script>
+document.getElementById('sheet').innerHTML=Object.keys(I).map(k=>
+ `<div class="cell"><span class="big">${icon(k,26)}</span><small>${k}</small></div>`).join('');
+</script></body></html>

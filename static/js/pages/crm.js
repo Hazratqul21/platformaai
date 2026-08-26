@@ -9,11 +9,11 @@ PAGES.crm = async () => {
     return `
     <div class="glass card mb" style="padding:12px">
       <div class="row" style="gap:8px;align-items:center">
-        <input class="fld" id="crmSearch" style="margin:0;flex:1"
-          placeholder="🔍 Мижозни қидириш — номи, телефон ёки СТИР бўйича…"
+        <input class="fld qidir" id="crmSearch" style="margin:0;flex:1"
+          placeholder="Мижозни қидириш — номи, телефон ёки СТИР бўйича…"
           oninput="crmRender()" />
         <button class="btn ${window._crmView==='table'?'pri':''}" onclick="crmToggleView()" title="Жадвал/карта">
-          ${window._crmView==='table'?'▦ Жадвал':'▤ Карта'}</button>
+          ${window._crmView==='table'?icon('dash',14)+' Жадвал':icon('list',14)+' Карта'}</button>
         ${['Rahbar','Menejer'].includes(ME.role)?`<button class="btn" onclick="crmAddModal()">${icon('plus',15)} Янги мижоз</button>`:''}
       </div>
       <div class="muted" style="font-size:11.5px;margin-top:6px" id="crmCount"></div>
@@ -58,7 +58,7 @@ window.crmRender = () => {
           <td>${c.firm?'<span class="tag mut" style="font-size:9.5px">'+esc(c.firm)+'</span>':'<span class="muted" style="font-size:10px">—</span>'}</td>
           <td style="text-align:right">${c.orders_count}</td>
           <td style="text-align:right;color:${c.debt>0?'var(--danger)':'var(--ok)'}"><b>${mshort(c.debt)}</b></td>
-          <td>${['Rahbar','Menejer','Buxgalter'].includes(ME.role)?`<button class="btn sm ghost" title="Таҳрирлаш" onclick='event.stopPropagation();crmAddModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>✎</button>`:''}</td>
+          <td>${['Rahbar','Menejer','Buxgalter'].includes(ME.role)?`<button class="btn sm ghost" title="Таҳрирлаш" onclick='event.stopPropagation();crmAddModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>${icon('pencil',13)}</button>`:''}</td>
         </tr>`).join('')||'<tr><td colspan="7" class="muted" style="text-align:center;padding:20px">Мижоз топилмади</td></tr>'}</tbody>
       </table>`;
       return;
@@ -72,8 +72,8 @@ window.crmRender = () => {
         </div>
         <div class="muted" style="font-size:11px;margin:4px 0">${esc(c.contact||'')}${c.phone ? ' · '+esc(c.phone) : ''}</div>
         <div style="font-size:10.5px;margin-bottom:4px">${c.firm
-            ? '<span class="tag mut">🏭 '+esc(c.firm)+'</span>'
-            : '<span class="tag warn" title="Фирмаси белгиланмаган — иккала фирмада кўринади">⚠️ фирма белгиланмаган</span>'}</div>
+            ? '<span class="tag mut">'+icon('factory',11)+' '+esc(c.firm)+'</span>'
+            : '<span class="tag warn" title="Фирмаси белгиланмаган — иккала фирмада кўринади">'+icon('alertic',11)+' фирма белгиланмаган</span>'}</div>
         <div class="between" style="margin-top:6px;font-size:12.5px;cursor:pointer" onclick="openClient(${c.id})">
             <span class="muted">Қарз</span>
             <b style="color:${c.debt>0?'var(--danger)':'var(--ok)'}">${mshort(c.debt)}</b>
@@ -82,11 +82,11 @@ window.crmRender = () => {
             <span class="muted">Буюртмалар</span><span>${c.orders_count} та</span>
         </div>
         <div class="row" style="gap:5px;margin-top:8px">
-          <button class="btn sm pri" style="flex:1;justify-content:center" onclick="openClient(${c.id})">📋 Деталлари</button>
-          ${['Rahbar','Menejer','Buxgalter'].includes(ME.role)?`<button class="btn sm ghost" title="Таҳрирлаш" onclick='crmAddModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>✎</button>`:''}
+          <button class="btn sm pri" style="flex:1;justify-content:center" onclick="openClient(${c.id})">${icon('clipboard',14)} Деталлари</button>
+          ${['Rahbar','Menejer','Buxgalter'].includes(ME.role)?`<button class="btn sm ghost" title="Таҳрирлаш" onclick='crmAddModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>${icon('pencil',13)}</button>`:''}
         </div>
     </div>`).join('') || `<div class="glass card muted" style="grid-column:1/-1;text-align:center;padding:26px">
-        <div style="font-size:26px">🔍</div><b style="display:block;margin:6px 0">Мижоз топилмади</b>
+        <div class="bosh-belgi">${icon('search',30)}</div><b style="display:block;margin:6px 0">Мижоз топилмади</b>
         <div style="font-size:12px">Бошқа ном, телефон ёки СТИР билан қидириб кўринг</div></div>`;
 };
 
@@ -106,7 +106,7 @@ window.crmAddModal = (c) => {
     <label class="fl">Қайси фирма мижози</label>
     <select class="fld" id="crm_firm">
       <option value="">— белгиланмаган (иккала фирмада кўринади) —</option>
-      ${firms.map(x=>`<option value="${esc(x)}" ${(c.firm||window.FIRM)===x?'selected':''}>🏭 ${esc(x)}</option>`).join('')}
+      ${firms.map(x=>`<option value="${esc(x)}" ${(c.firm||window.FIRM)===x?'selected':''}>${esc(x)}</option>`).join('')}
     </select>
     <label class="fl">Тоифа (нархга таъсир қилади)</label>
     <select class="fld" id="crm_cat">
@@ -174,10 +174,10 @@ async function openClient(id){
   </div>
   <div class="row mb" style="flex-wrap:wrap;gap:6px">
     ${dl('/api/reports/sverka/'+d.client_id+'.xlsx','Сверка акти')}
-    ${['Rahbar','Buxgalter','Menejer'].includes(ME.role)?`<button class="btn sm pri" onclick="payForm(${d.client_id})">💵 Тўлов қабул қилиш</button>`:''}
+    ${['Rahbar','Buxgalter','Menejer'].includes(ME.role)?`<button class="btn sm pri" onclick="payForm(${d.client_id})">${icon('cash',14)} Тўлов қабул қилиш</button>`:''}
   </div>
   ${(d.tayyor&&d.tayyor.length)?`<div class="glass card mb" style="padding:10px;border:1px solid var(--primary-deep)">
-    <div class="between" style="margin-bottom:6px"><b style="font-size:12.5px">📦 Топширишга тайёр (${d.tayyor.length} та)</b>
+    <div class="between" style="margin-bottom:6px"><b style="font-size:12.5px">${icon('box',13)} Топширишга тайёр (${d.tayyor.length} та)</b>
       <span class="muted" style="font-size:10.5px">белгилаб бирга топширинг</span></div>
     ${d.tayyor.map(o=>`<label class="between" style="font-size:12px;padding:5px 0;border-top:1px solid var(--hair);cursor:pointer">
       <span><input type="checkbox" class="tp_chk" value="${o.id}" data-sum="${o.summa}" onchange="tpUpdate()"/>
@@ -185,7 +185,7 @@ async function openClient(id){
       <b>${mshort(o.summa)}</b></label>`).join('')}
     <div class="between" style="margin-top:8px">
       <span class="muted" style="font-size:11.5px">Танланган: <b id="tp_count">0</b> та · <b id="tp_sum">0</b></span>
-      <button class="btn sm pri" onclick="topshirBatch(${d.client_id})">📤 Бирга топшириш</button></div>
+      <button class="btn sm pri" onclick="topshirBatch(${d.client_id})">${icon('upload',14)} Бирга топшириш</button></div>
   </div>`:''}
   <div style="overflow-x:auto">
   <table style="font-size:11px;min-width:660px">
@@ -237,7 +237,7 @@ async function topshirBatch(cid){
   <select class="fld" id="tb_method"><option value="Naqd">Нақд</option><option value="Karta">Карта</option><option value="O'tkazma">Ўтказма</option></select>
   <div class="row" style="margin-top:16px;justify-content:flex-end">
     <button class="btn" onclick="closeModal()">Бекор</button>
-    <button class="btn pri" onclick='tbSave(${cid},${JSON.stringify(ids)})'>📤 Топшириш</button></div>`);
+    <button class="btn pri" onclick='tbSave(${cid},${JSON.stringify(ids)})'>${icon('upload',14)} Топшириш</button></div>`);
 }
 async function tbSave(cid,ids){
   try{

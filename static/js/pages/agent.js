@@ -25,8 +25,8 @@ function agentPanelYasa() {
         <div class="agent-sub" id="agentHolat">tekshirilmoqda…</div>
       </div>
       <div class="agent-head-btns">
-        <button class="agent-icon" id="agentYangi" title="Yangi suhbat">✎</button>
-        <button class="agent-icon" id="agentYop" title="Yopish">✕</button>
+        <button class="agent-icon" id="agentYangi" title="Yangi suhbat">${icon('pencil',15)}</button>
+        <button class="agent-icon" id="agentYop" title="Yopish">${icon('x',15)}</button>
       </div>
     </div>
     <div class="agent-oqim" id="agentOqim"></div>
@@ -41,7 +41,7 @@ function agentPanelYasa() {
   tugma.id = 'agentOch';
   tugma.className = 'agent-och';
   tugma.title = 'Sozlash yordamchisi';
-  tugma.textContent = '✦';
+  tugma.innerHTML = icon('ai', 24);
   document.body.appendChild(tugma);
 
   tugma.onclick = () => agentOchYop(true);
@@ -182,7 +182,7 @@ function agentXabarQosh(kim, matn, asboblar, komponentlar, suhbatId) {
   if (asboblar && asboblar.length) {
     const iz = document.createElement('div');
     iz.className = 'agent-iz';
-    iz.textContent = '⚙ ' + asboblar.join(' · ');
+    iz.innerHTML = icon('gear', 12) + ' ' + esc(asboblar.join(' · '));
     div.appendChild(iz);
   }
   oqim.appendChild(div);

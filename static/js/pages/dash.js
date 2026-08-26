@@ -55,6 +55,6 @@ PAGES.dash=async()=>{
       <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;flex:none">${esc(x.company[0])}</div>
       <div style="flex:1"><b style="font-size:13px">${esc(x.company)}</b>
         <div class="muted" style="font-size:10.5px"><span class="tag ${cls}" style="font-size:9.5px;padding:1px 7px">${days}</span>${x.blacklisted?' <span class="tag dn" style="font-size:9.5px;padding:1px 7px">блокланган</span>':''}</div></div>
-      <b style="font-variant-numeric:tabular-nums">${mshort(x.debt)}</b></div>`;}).join('')||'<div class="muted">Қарздор йўқ 🎉</div>'}`)}`;
+      <b style="font-variant-numeric:tabular-nums">${mshort(x.debt)}</b></div>`;}).join('')||'<div class="muted">Қарздор йўқ</div>'}`)}`;
 };
 
