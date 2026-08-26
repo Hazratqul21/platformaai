@@ -1,7 +1,12 @@
 /* ================= Navigatsiya (rolga qarab) ================= */
 // Tartib foydalanish statistikasiga qarab: amallarning ~75% i — yangi zakaz va
 // mijoz qo'shish. Shuning uchun eng ko'p ishlatiladigan bo'limlar boshida turadi.
-const NAV=[
+/* BO'LIMLAR SERVERDAN KELADI.
+   Quyidagi ro'yxat — ZAXIRA: server javob bermasa yoki eski versiya
+   bo'lsa menyu baribir chiziladi (avvalgi xatti-harakat).
+   Haqiqiy ro'yxat `GET /api/soha/bolimlar` dan olinadi va u AKKAUNTGA
+   xos: bilyard klubi «Ombor»ni ko'rmaydi, karton sexi ko'radi. */
+let NAV=[
   {p:'calc',t:t('smeta'),i:'calc',roles:['Rahbar','Menejer']},
   {p:'orders',t:t('orders'),i:'cart',roles:['Rahbar','Menejer',"Sex boshlig'i",'Sklad mudiri','Buxgalter']},
   {p:'crm',t:t('clients'),i:'users',roles:['Rahbar','Menejer','Buxgalter']},
@@ -42,11 +47,30 @@ const META={
   help:['Йўриқнома', 'Пул киритилса — қаерда кўринади']
 };
 let PAGE='dash';
+/* Server kalitini frontend tarjimasiga bog'laydi. Tarjima kaliti
+   bo'lmasa serverning nomi ishlatiladi — yangi bo'lim qo'shilsa JS ga
+   tegmasdan ham to'g'ri nom bilan chiqadi. */
+const NAV_TARJIMA={calc:'smeta',orders:'orders',crm:'clients',dash:'dash',
+  wh:'wh',mat:'mats',zakup:'zakup',hr:'hr',fin:'fin',kassa:'kassa',
+  exp:'exp',set:'set'};
+
+async function navYukla(){
+  try{
+    const d=await api('/api/soha/bolimlar');
+    const faol=(d.bolimlar||[]).filter(b=>b.faol);
+    if(!faol.length) return;                 // bo'sh javob — zaxirada qolamiz
+    NAV=faol.map(b=>({
+      p:b.kalit,
+      t:NAV_TARJIMA[b.kalit]?t(NAV_TARJIMA[b.kalit]):b.nom,
+      i:b.ikonka, roles:b.rollar}));
+  }catch(e){ /* zaxira NAV bilan ishlayveramiz */ }
+}
+
 function allowedNav(){return NAV.filter(n=>ME.role==='Rahbar'||n.roles.includes(ME.role));}
 function renderNav(){
   const items=allowedNav();
   document.getElementById('nav').innerHTML=items.map(n=>
-    `<a class="${n.p===PAGE?'active':''}" onclick="go('${n.p}')"><span class="ic">${icon(n.i)}</span><span>${n.t}</span></a>`).join('');
+    `<a class="${n.p===PAGE?'active':''}" data-label="${n.t}" onclick="go('${n.p}')"><span class="ic">${icon(n.i)}</span><span>${n.t}</span></a>`).join('');
   const main3=items.slice(0,3);
   const rest=items.slice(3);
   const link=n=>`<a class="${n.p===PAGE?'active':''}" onclick="go('${n.p}')">${icon(n.i,19)}<span>${n.t.split(' ')[0]}</span></a>`;
@@ -117,7 +141,7 @@ window.addEventListener('hashchange', () => {
   _renderPage(p);
 });
 
-function enterApp(){
+async function enterApp(){
   // YANGI AKKAUNT — avval QURISH ekrani, ERP emas.
   // Ro'yxatdan o'tgan odam `?qur=1` bilan keladi. Unga darrov bo'sh
   // ERP ni ko'rsatish noto'g'ri: u nimadan boshlashni bilmaydi va
@@ -127,6 +151,7 @@ function enterApp(){
     qurBoshla();
     return;
   }
+  await navYukla();      // menyu SHU akkauntniki bo'lsin
   document.getElementById('loginScreen').style.display='none';
   // Lending ham yashirilishi SHART. Ilgari faqat login oynasi
   // yashirilardi va lending (z-index 140) ilova ustida qolib ketardi —

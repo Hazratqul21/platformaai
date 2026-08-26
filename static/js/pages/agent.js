@@ -61,6 +61,11 @@ function agentPanelYasa() {
 
 function agentOchYop(ochiq) {
   document.getElementById('agentPanel').classList.toggle('ochiq', ochiq);
+  // Panel holati BODY ga ham chiqariladi: layout (sidebar yig'ilishi,
+  // kontentning qayta joylashuvi) shu sinfga tayanadi. `:has()` ga
+  // tayanib bo'lmadi — panel qayta ochilganda brauzer `.main` uchun
+  // uslubni qayta hisoblamadi (o'lchab tekshirildi: 438px -> 0px).
+  document.body.classList.toggle('ai-ochiq', ochiq);
   document.getElementById('agentOch').classList.toggle('yashir', ochiq);
   if (ochiq) {
     agentHolatniOl();

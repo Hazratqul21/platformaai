@@ -1,0 +1,561 @@
+/* =====================================================================
+   LIQUID GLASS — INNASOFT design system qatlami
+   =====================================================================
+
+   NEGA ALOHIDA FAYL. Mavjud CSS fayllari (style.css, brand.css,
+   platform-theme.css, onboarding-premium.css, quality.css) EGASIDA
+   faol ish holatida. Ularni qayta yozish uning ishini yo'q qilardi.
+   Shuning uchun bu qatlam ENG OXIRIDA ulanadi va faqat vizual
+   qiymatlarni ustidan yozadi.
+
+   O'ZGARMAYDI: DOM tuzilishi, sinf nomlari, JS, marshrutlar, biznes
+   mantiq. Faqat surface, rang, radius, soya, blur, tipografika,
+   responsive va harakat.
+
+   MATERIAL IERARXIYASI — beshta daraja. Har biri o'z shaffofligi,
+   blur kuchi va soyasiga ega. Bir xil qiymatni hamma joyga qo'ymaslik
+   ATAYLAB: chuqurlik shu farqdan tug'iladi.
+
+     L1  fon            eng shaffof, blur yo'q
+     L2  card           asosiy ish yuzasi
+     L3  floating       tugma, chip, dropdown
+     L4  modal          eng kuchli blur, chuqur soya
+     L5  AI panel       eng balandda turadigan yuza
+   ===================================================================== */
+
+:root{
+  /* ---- FON ---- */
+  --lg-paper:#F7F6F2;              /* iliq off-white */
+  --lg-atmos:#EEF0FF;              /* lavender-blue nafas */
+
+  /* ---- ASOSIY RANG ---- */
+  --lg-primary:#5B5BEF;
+  --lg-primary-light:#7B7CF6;
+  --lg-primary-soft:rgba(91,91,239,.10);
+  --lg-primary-ring:rgba(91,91,239,.28);
+
+  /* ---- IKKINCHI DARAJALI URG'U (lime) ----
+     ATAYLAB faqat success / ijobiy holat / AI insight uchun.
+     Asosiy UI rangiga aylanmaydi. */
+  --lg-lime:#8FBF00;
+  --lg-lime-soft:rgba(143,191,0,.14);
+
+  /* ---- MATN ---- */
+  --lg-text:#17182B;
+  --lg-text-2:#6D708C;
+  --lg-text-3:#83869E;
+
+  /* ---- SEMANTIK ---- */
+  --lg-neg:#E5484D;
+  --lg-neg-soft:rgba(229,72,77,.12);
+  --lg-warn:#C98A14;
+  --lg-warn-soft:rgba(201,138,20,.14);
+
+  /* ---- RADIUS ---- */
+  --lg-r-lg:28px;                  /* asosiy card */
+  --lg-r-md:18px;                  /* ikkinchi darajali */
+  --lg-r-sm:14px;                  /* input, kichik control */
+  --lg-r-pill:999px;
+
+  /* ---- MATERIAL DARAJALARI ---- */
+  --lg-l2-bg:rgba(255,255,255,.55);
+  --lg-l2-blur:blur(24px) saturate(140%);
+  --lg-l2-line:rgba(255,255,255,.65);
+  --lg-l2-shadow:0 12px 40px rgba(70,70,150,.08),
+                 inset 0 1px 0 rgba(255,255,255,.75);
+
+  --lg-l3-bg:rgba(255,255,255,.68);
+  --lg-l3-blur:blur(18px) saturate(150%);
+  --lg-l3-shadow:0 6px 18px rgba(70,70,150,.10),
+                 inset 0 1px 0 rgba(255,255,255,.85);
+
+  --lg-l4-bg:rgba(255,255,255,.78);
+  --lg-l4-blur:blur(40px) saturate(160%);
+  --lg-l4-shadow:0 32px 80px rgba(40,42,110,.20),
+                 inset 0 1px 0 rgba(255,255,255,.9);
+
+  --lg-l5-bg:rgba(255,255,255,.72);
+  --lg-l5-blur:blur(32px) saturate(150%);
+  --lg-l5-shadow:-18px 0 60px rgba(60,62,140,.14),
+                 inset 1px 0 0 rgba(255,255,255,.8);
+
+  /* ---- HARAKAT ---- */
+  --lg-fast:180ms;
+  --lg-mid:240ms;
+  --lg-slow:300ms;
+  --lg-ease:cubic-bezier(.22,1,.36,1);   /* ease-out, spring hissi */
+
+  /* Mavjud tokenlarni ham yangi palitraga bog'laymiz — eski
+     komponentlar avtomat moslashadi, ular uchun alohida qoida
+     yozilmaydi. */
+  --primary:var(--lg-primary);
+  --primary-soft:var(--lg-primary-light);
+  --primary-deep:#4A4ADB;
+  --primary-glow:var(--lg-primary-ring);
+  --ink:var(--lg-text);
+  --ink-2:var(--lg-text-2);
+  --ink-3:var(--lg-text-3);
+  --danger:var(--lg-neg);
+  --warn:var(--lg-warn);
+  --ok:var(--lg-lime);
+  --hair:rgba(23,24,43,.08);
+  --radius:var(--lg-r-lg);
+}
+
+/* =====================================================================
+   L1 — FON
+   Ikki qatlamli atmosfera: iliq qog'oz + lavender nur. Gradient
+   ko'zga tashlanmaydi, faqat chuqurlik beradi.
+   ===================================================================== */
+body{
+  background:
+    radial-gradient(1100px 700px at 12% -10%, var(--lg-atmos) 0%, transparent 62%),
+    radial-gradient(900px 600px at 100% 0%, rgba(123,124,246,.10) 0%, transparent 58%),
+    var(--lg-paper);
+  color:var(--lg-text);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* =====================================================================
+   TIPOGRAFIKA — bitta ierarxiya, butun loyihada
+   ===================================================================== */
+body,.btn,.fld,input,select,textarea,button{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+.page-title{
+  font-size:22px;font-weight:680;letter-spacing:-.02em;color:var(--lg-text);
+}
+.page-sub{font-size:12.5px;color:var(--lg-text-2);font-weight:500}
+.sec{font-size:16px;font-weight:660;letter-spacing:-.015em;color:var(--lg-text)}
+.sec-sub{font-size:12.5px;color:var(--lg-text-2)}
+.muted{color:var(--lg-text-3)}
+/* Raqamlar — katta, qalin, yuqori kontrast (talab 11) */
+.kpi b,.kpi strong,.genui-plita-qiymat{
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:var(--lg-text);
+}
+
+/* =====================================================================
+   L2 — GLASS YUZALAR (card, topbar, sidebar)
+   ===================================================================== */
+.glass,.card,.ccard{
+  background:var(--lg-l2-bg);
+  -webkit-backdrop-filter:var(--lg-l2-blur);
+  backdrop-filter:var(--lg-l2-blur);
+  border:1px solid var(--lg-l2-line);
+  box-shadow:var(--lg-l2-shadow);
+  border-radius:var(--lg-r-lg);
+}
+/* Ish yuzasi fondan zichroq: matn va forma maydonlari qattiqroq
+   yuzada turadi, shaffoflik esa saqlanadi. */
+.card,.ccard{padding:22px;background:rgba(255,255,255,.66)}
+/* Cardlar bir-biriga yopishmasin — nafas oladigan masofa */
+.grid,.g2,.g3,.g4{gap:18px}
+
+/* Kichik boshqaruv yuzalari — kichikroq radius */
+.chip,.fchip,.genui-maydon,.genui-plita{border-radius:var(--lg-r-md)}
+
+/* =====================================================================
+   SIDEBAR — kengaygan va yig'ilgan holat
+   ===================================================================== */
+.side{
+  border-radius:0 var(--lg-r-lg) var(--lg-r-lg) 0;
+  border-left:none;
+  transition:width var(--lg-mid) var(--lg-ease),
+             padding var(--lg-mid) var(--lg-ease);
+}
+.side .nav a{
+  border-radius:var(--lg-r-md);
+  color:var(--lg-text-2);font-weight:560;
+  transition:background-color var(--lg-fast) var(--lg-ease),
+             color var(--lg-fast) var(--lg-ease),
+             transform var(--lg-fast) var(--lg-ease);
+}
+.side .nav a:hover{background:rgba(91,91,239,.07);color:var(--lg-text)}
+.side .nav a.active{
+  background:var(--lg-primary-soft);
+  color:var(--lg-primary);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),
+             0 2px 10px rgba(91,91,239,.10);
+}
+.side .nav a.active .ic{color:var(--lg-primary)}
+
+/* --- YIG'ILGAN HOLAT ---
+   AI paneli ochilganda sidebar avtomat ikonkalarga yig'iladi.
+   `:has()` bilan — JS ga tegilmaydi. Brauzer qo'llab-quvvatlamasa
+   sidebar kengaygan holicha qoladi (buzilmaydi). */
+/* ASOSIY SELEKTOR — `body.ai-ochiq` (agent.js qo'yadi). Ishonchli:
+   sinf o'zgarishi uslubni har doim qayta hisoblatadi. */
+@supports (backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px)){
+  body.ai-ochiq .side{
+    width:78px;padding-left:10px;padding-right:10px;
+  }
+  /* Yorliq `display:none` bilan olib tashlanadi, `opacity:0` bilan
+     EMAS: shaffof element ham joy egallaydi va matn tor ustunga
+     tik bo'lib o'ralib qolardi — ikonka ko'rinmay ketardi. */
+  body.ai-ochiq .side .brand div:last-child,
+  body.ai-ochiq .side .nav a span:not(.ic),
+  body.ai-ochiq .side-foot{
+    display:none;
+  }
+  /* Yig'ilganda ikonka YAGONA ko'rsatkich bo'lib qoladi — shuning
+     uchun u kattaroq va kontrastliroq bo'lishi kerak. Yorliqsiz xira
+     ikonka «qayerni bosishni tushunmayapman» holatini keltiradi. */
+  body.ai-ochiq .side .nav a{
+    height:44px;                    /* barmoq uchun yetarli nishon */
+    color:var(--lg-text);
+  }
+  body.ai-ochiq .side .nav a .ic{
+    display:flex;width:21px;height:21px;opacity:1;color:inherit;
+  }
+  body.ai-ochiq .side .nav a svg{width:21px;height:21px;stroke-width:1.9}
+  body.ai-ochiq .side .nav a:not(.active){color:var(--lg-text-2)}
+  body.ai-ochiq .side .nav a.active{color:var(--lg-primary)}
+  body.ai-ochiq .side .nav a{
+    justify-content:center;padding-left:0;padding-right:0;
+  }
+  /* LAYOUT-AWARE PANEL. Panel `position:fixed` — ya'ni o'zi joy
+     egallamaydi va kontent uning ostiga kirib ketardi (karta o'ng
+     chetidan kesilardi). Panel ochilganda asosiy ustunga o'ng
+     to'ldirma beriladi. */
+  body.ai-ochiq .main{
+    padding-right:calc(min(420px,100vw) + 18px);
+    transition:padding-right var(--lg-slow) var(--lg-ease);
+  }
+
+  /* Yig'ilganda tooltip — label hover bilan ko'rinadi */
+  body.ai-ochiq .side .nav a{position:relative}
+  body.ai-ochiq .side .nav a:hover::after{
+    content:attr(data-label);
+    position:absolute;left:calc(100% + 10px);top:50%;
+    transform:translateY(-50%);
+    background:var(--lg-l4-bg);
+    -webkit-backdrop-filter:var(--lg-l3-blur);
+    backdrop-filter:var(--lg-l3-blur);
+    border:1px solid var(--lg-l2-line);
+    box-shadow:var(--lg-l3-shadow);
+    color:var(--lg-text);font-size:12px;font-weight:560;
+    padding:6px 10px;border-radius:var(--lg-r-sm);
+    white-space:nowrap;z-index:60;
+  }
+}
+
+/* =====================================================================
+   TOPBAR
+   ===================================================================== */
+.topbar{
+  border-radius:var(--lg-r-lg);
+  border:1px solid var(--lg-l2-line);
+}
+.userchip{
+  background:var(--lg-l3-bg);
+  border:1px solid var(--lg-l2-line);
+  border-radius:var(--lg-r-pill);
+  box-shadow:var(--lg-l3-shadow);
+}
+.userchip .av{
+  background:linear-gradient(135deg,var(--lg-primary-light),var(--lg-primary));
+  color:#fff;
+}
+
+/* =====================================================================
+   TUGMALAR — L3 floating material
+   ===================================================================== */
+.btn{
+  border-radius:var(--lg-r-pill);
+  font-weight:600;letter-spacing:-.01em;
+  border:1px solid var(--lg-l2-line);
+  background:var(--lg-l3-bg);
+  -webkit-backdrop-filter:var(--lg-l3-blur);
+  backdrop-filter:var(--lg-l3-blur);
+  box-shadow:var(--lg-l3-shadow);
+  color:var(--lg-text);
+  transition:background-color var(--lg-fast) var(--lg-ease),
+             box-shadow var(--lg-fast) var(--lg-ease),
+             transform var(--lg-fast) var(--lg-ease),
+             color var(--lg-fast) var(--lg-ease);
+}
+.btn:hover{
+  background:rgba(255,255,255,.82);
+  box-shadow:0 10px 26px rgba(70,70,150,.14),
+             inset 0 1px 0 rgba(255,255,255,.9);
+  transform:translateY(-1px);
+}
+.btn:active{transform:translateY(0) scale(.985)}
+.btn:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 3px var(--lg-primary-ring),var(--lg-l3-shadow);
+}
+
+.btn.pri{
+  background:linear-gradient(180deg,var(--lg-primary-light),var(--lg-primary));
+  color:#fff;border-color:rgba(255,255,255,.35);
+  box-shadow:0 10px 26px rgba(91,91,239,.28),
+             inset 0 1px 0 rgba(255,255,255,.40);
+}
+.btn.pri:hover{
+  background:linear-gradient(180deg,#8788F8,#6265F1);
+  box-shadow:0 14px 34px rgba(91,91,239,.34),
+             inset 0 1px 0 rgba(255,255,255,.5);
+}
+.btn.dngr{
+  background:linear-gradient(180deg,#EC6A6E,var(--lg-neg));
+  color:#fff;border-color:rgba(255,255,255,.3);
+  box-shadow:0 10px 24px rgba(229,72,77,.26),
+             inset 0 1px 0 rgba(255,255,255,.35);
+}
+.btn.ok,.btn.success{
+  background:linear-gradient(180deg,#A6D42B,var(--lg-lime));
+  color:#1B2400;border-color:rgba(255,255,255,.4);
+}
+.btn.ghost{background:transparent;box-shadow:none;border-color:var(--hair)}
+.btn.ghost:hover{background:rgba(91,91,239,.07);box-shadow:none}
+.btn.sm{padding:7px 13px;font-size:12.5px}
+
+/* =====================================================================
+   INPUTLAR — glass, oq quti emas
+   ===================================================================== */
+.fld,input[type=text],input[type=number],input[type=date],
+input[type=password],select,textarea{
+  background:rgba(255,255,255,.62);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(23,24,43,.10);
+  border-radius:var(--lg-r-sm);
+  color:var(--lg-text);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  transition:border-color var(--lg-fast) var(--lg-ease),
+             box-shadow var(--lg-fast) var(--lg-ease),
+             background-color var(--lg-fast) var(--lg-ease);
+}
+.fld::placeholder,input::placeholder,textarea::placeholder{color:var(--lg-text-3)}
+.fld:focus,input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:var(--lg-primary-light);
+  background:rgba(255,255,255,.86);
+  box-shadow:0 0 0 4px var(--lg-primary-ring),
+             inset 0 1px 0 rgba(255,255,255,.9);
+}
+/* FORMA YORLIG'I. Ilgari u `--lg-text-3` ga tushib qolardi (oq
+   ustida ~2.3:1 kontrast — o'qib bo'lmasdi). Selektor kuchaytirildi
+   va rang `--lg-text-2` ga qotirildi: ~4.9:1.
+   Qoida: o'qilishi vizual effektdan ustun. */
+.fl,.card .fl,.glass .fl,label.fl{
+  color:var(--lg-text-2);font-size:11px;font-weight:660;
+  letter-spacing:.04em;opacity:1;
+}
+
+/* =====================================================================
+   JADVAL / RO'YXAT
+   O'QILISHI effektdan USTUN: container glass, qatorlar minimal.
+   ===================================================================== */
+table{border-collapse:separate;border-spacing:0}
+th{
+  color:var(--lg-text-2);font-size:11px;font-weight:660;
+  letter-spacing:.05em;text-transform:uppercase;
+  border-bottom:1px solid rgba(23,24,43,.10);
+  background:transparent;
+}
+td{
+  border-bottom:1px solid rgba(23,24,43,.055);
+  color:var(--lg-text);font-size:13px;
+}
+tbody tr{transition:background-color 140ms var(--lg-ease)}
+tbody tr:hover{background:rgba(91,91,239,.045)}
+/* Semantik ranglar — faqat ma'noli holatlarda */
+.t-ok,.genui-t-ok{color:#5C8A00}
+.t-dn,.genui-t-dn{color:var(--lg-neg)}
+.t-warn,.genui-t-warn{color:var(--lg-warn)}
+
+/* =====================================================================
+   MODAL — L4
+   Orqa fon qora emas, nozik tusli shaffof qatlam.
+   ===================================================================== */
+.overlay{
+  background:rgba(30,32,70,.22);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+}
+.modal{
+  background:var(--lg-l4-bg);
+  -webkit-backdrop-filter:var(--lg-l4-blur);
+  backdrop-filter:var(--lg-l4-blur);
+  border:1px solid rgba(255,255,255,.7);
+  border-radius:30px;
+  box-shadow:var(--lg-l4-shadow);
+}
+.overlay.on .modal{animation:lgModal var(--lg-mid) var(--lg-ease)}
+@keyframes lgModal{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+
+/* =====================================================================
+   DROPDOWN / POPOVER — L3
+   ===================================================================== */
+select option{background:#fff;color:var(--lg-text)}
+.popover,.dropdown,.menu-pop{
+  background:var(--lg-l3-bg);
+  -webkit-backdrop-filter:var(--lg-l3-blur);
+  backdrop-filter:var(--lg-l3-blur);
+  border:1px solid var(--lg-l2-line);
+  border-radius:var(--lg-r-md);
+  box-shadow:var(--lg-l3-shadow);
+}
+
+/* =====================================================================
+   TOAST — suzuvchi glass kapsula
+   ===================================================================== */
+.toasts .toast,.alert{
+  background:var(--lg-l3-bg);
+  -webkit-backdrop-filter:var(--lg-l3-blur);
+  backdrop-filter:var(--lg-l3-blur);
+  border:1px solid var(--lg-l2-line);
+  border-radius:var(--lg-r-md);
+  box-shadow:0 14px 40px rgba(60,62,140,.16),
+             inset 0 1px 0 rgba(255,255,255,.85);
+  color:var(--lg-text);
+}
+.toast.ok{border-left:3px solid var(--lg-lime)}
+.toast.w,.toast.warn{border-left:3px solid var(--lg-warn)}
+.toast.d,.toast.dngr{border-left:3px solid var(--lg-neg)}
+.toast.i,.toast.info{border-left:3px solid var(--lg-primary)}
+
+/* =====================================================================
+   AI PANEL — L5, eng balandda turadigan yuza
+   ===================================================================== */
+.agent-panel{
+  background:var(--lg-l5-bg);
+  -webkit-backdrop-filter:var(--lg-l5-blur);
+  backdrop-filter:var(--lg-l5-blur);
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:30px 0 0 30px;
+  box-shadow:var(--lg-l5-shadow);
+  transition:transform var(--lg-slow) var(--lg-ease),
+             opacity var(--lg-mid) var(--lg-ease);
+}
+.agent-head{border-bottom:1px solid rgba(23,24,43,.07)}
+.agent-title{font-weight:660;letter-spacing:-.015em;color:var(--lg-text)}
+.agent-sub{color:var(--lg-text-3);font-size:11.5px}
+.agent-xabar.meniki .agent-matn{
+  background:linear-gradient(180deg,var(--lg-primary-light),var(--lg-primary));
+  color:#fff;border-radius:18px 18px 6px 18px;
+}
+.agent-xabar.agentniki .agent-matn{
+  background:rgba(255,255,255,.72);
+  border:1px solid var(--lg-l2-line);
+  border-radius:18px 18px 18px 6px;
+  color:var(--lg-text);
+}
+.agent-kirish{border-top:1px solid rgba(23,24,43,.07)}
+.agent-icon{
+  border-radius:var(--lg-r-pill);
+  background:rgba(255,255,255,.6);
+  border:1px solid var(--lg-l2-line);
+  color:var(--lg-text-2);
+}
+.agent-icon:hover{background:rgba(91,91,239,.10);color:var(--lg-primary)}
+
+/* --- Suzuvchi AI tugmasi --- */
+.agent-och,.fab{
+  background:linear-gradient(160deg,var(--lg-primary-light),var(--lg-primary));
+  color:#fff;border:1px solid rgba(255,255,255,.34);
+  border-radius:var(--lg-r-pill);
+  box-shadow:0 14px 34px rgba(91,91,239,.34),
+             inset 0 1px 0 rgba(255,255,255,.45);
+  transition:transform var(--lg-fast) var(--lg-ease),
+             box-shadow var(--lg-fast) var(--lg-ease);
+}
+.agent-och:hover,.fab:hover{
+  transform:translateY(-2px);
+  box-shadow:0 20px 44px rgba(91,91,239,.42),
+             inset 0 1px 0 rgba(255,255,255,.55);
+}
+.agent-och:active,.fab:active{transform:translateY(0) scale(.97)}
+
+/* =====================================================================
+   GENUI — AI chizadigan komponentlar bir xil materialda
+   ===================================================================== */
+.genui-karta{
+  background:rgba(255,255,255,.58);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  backdrop-filter:blur(16px) saturate(140%);
+  border:1px solid var(--lg-l2-line);
+  border-radius:var(--lg-r-md);
+  box-shadow:var(--lg-l3-shadow);
+}
+.genui-sarlavha{color:var(--lg-text);font-weight:640}
+.genui-plita{
+  background:rgba(255,255,255,.5);
+  border:1px solid var(--lg-l2-line);
+  border-radius:var(--lg-r-md);
+}
+.genui-bar{background:linear-gradient(90deg,var(--lg-primary-light),var(--lg-primary))}
+.genui-b-ok{background:linear-gradient(90deg,#A6D42B,var(--lg-lime))}
+.genui-b-dn{background:linear-gradient(90deg,#EC6A6E,var(--lg-neg))}
+.genui-tasdiq{border-color:rgba(91,91,239,.28);background:rgba(91,91,239,.05)}
+.genui-xavfli{border-color:rgba(229,72,77,.30);background:rgba(229,72,77,.05)}
+
+/* =====================================================================
+   HOLATLAR — bo'sh, yuklanmoqda, xato
+   ===================================================================== */
+.bosh-holat,.empty-state{
+  color:var(--lg-text-3);text-align:center;padding:44px 20px;
+}
+.yuklanmoqda,.loading{color:var(--lg-text-3)}
+
+/* =====================================================================
+   PASTKI NAVIGATSIYA (mobil)
+   ===================================================================== */
+.bottom-nav{
+  background:var(--lg-l4-bg);
+  -webkit-backdrop-filter:var(--lg-l4-blur);
+  backdrop-filter:var(--lg-l4-blur);
+  border-top:1px solid var(--lg-l2-line);
+  box-shadow:0 -10px 34px rgba(60,62,140,.12);
+}
+.bottom-nav a{color:var(--lg-text-2);transition:color var(--lg-fast) var(--lg-ease)}
+.bottom-nav a.active{color:var(--lg-primary)}
+.bottom-nav .fab{border-radius:var(--lg-r-pill)}
+
+/* =====================================================================
+   RESPONSIVE — bitta ekran uchun emas
+   ===================================================================== */
+/* O'rta desktop: sidebar ixchamlashadi */
+@media (max-width:1400px){
+  .card,.ccard{padding:18px}
+  .grid,.g2,.g3,.g4{gap:14px}
+}
+/* Tor desktop: sidebar faqat ikonka */
+@media (max-width:1180px){
+  .side{width:78px;padding-left:10px;padding-right:10px}
+  .side .brand div:last-child,.side .nav a span:not(.ic),.side-foot{
+    display:none;
+  }
+  .side .nav a{
+    justify-content:center;padding-left:0;padding-right:0;
+    height:44px;color:var(--lg-text-2);
+  }
+  .side .nav a.active{color:var(--lg-primary)}
+  .side .nav a svg{width:21px;height:21px;stroke-width:1.9}
+  .page-title{font-size:19px}
+}
+/* Planshet va telefon: AI paneli to'liq balandlikdagi qatlam */
+@media (max-width:900px){
+  .agent-panel{
+    border-radius:26px 26px 0 0;
+    inset:auto 0 0 0;width:100%;max-height:88vh;
+  }
+  .card,.ccard{border-radius:22px;padding:16px}
+  .modal{border-radius:24px}
+  .topbar{border-radius:var(--lg-r-md)}
+}
+
+/* =====================================================================
+   HARAKATNI KAMAYTIRISH
+   `quality.css` da global himoya bor; bu yerda shu qatlamdagi
+   ko'chish va masshtab aniq nomlanadi — mazmun beruvchi rang va
+   shaffoflik qoladi.
+   ===================================================================== */
+@media (prefers-reduced-motion:reduce){
+  .btn:hover,.btn:active,.agent-och:hover,.agent-och:active,
+  .fab:hover,.fab:active,.side .nav a{transform:none!important}
+  .overlay.on .modal{animation:none}
+  .side,.agent-panel{transition:none}
+}
