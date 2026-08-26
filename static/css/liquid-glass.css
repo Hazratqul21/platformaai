@@ -182,46 +182,135 @@ body,.btn,.fld,input,select,textarea,button{
 }
 
 /* =====================================================================
-   MASOFA VA IERARXIYA — premium hissining ASOSIY manbai
+   SHKALA — masofa va o'lcham TASODIFIY emas
    =====================================================================
-   Ikki urinishdan keyin ma'lum bo'ldi: rang bilan ishlash natija
-   bermadi (kuchli — loyqa, kuchsiz — sezilmaydi). Interfeys «oddiy
-   admin panel»dek ko'rinishining sababi boshqa edi: matn mayda,
-   qatorlar zich, hamma element bir xil vaznda.
+   Apple darajasidagi hissiyot bezakdan emas, IZCHILLIKDAN keladi.
+   Har masofa 4px ning karrasi, har o'lcham shkaladagi qadam.
+   Ko'z buni ongsiz o'qiydi: "bu narsa puxta yig'ilgan".
 
-   Apple darajasidagi hissiyot BO'SH JOY va ISHONCHLI TIPOGRAFIKAdan
-   keladi, bezakdan emas.
+   Ilgari qiymatlar ko'zga qarab qo'yilgandi (22, 26, 13.5, 29...) —
+   ular yaxshi ko'rinardi, lekin o'zaro bog'liq emas edi. Endi
+   bittasini o'zgartirsangiz qolgani bilan mos qoladi.
    ===================================================================== */
+:root{
+  /* Masofa — 4px qadam */
+  --s1:4px;   --s2:8px;   --s3:12px;  --s4:16px;
+  --s5:20px;  --s6:24px;  --s7:32px;  --s8:40px;
 
-/* --- Sarlavhalar: ishonchli, lekin ulkan emas --- */
-.page-title{font-size:26px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
-.page-sub{font-size:13px;margin-top:3px}
-.sec{font-size:17px;font-weight:670;letter-spacing:-.02em}
-.sec-sub{font-size:13px;margin-top:2px}
+  /* Tipografika — 1.2 ga yaqin nisbat, aniq qadamlar */
+  --t-xs:11px;   /* yorliq, belgi */
+  --t-sm:12.5px; /* ikkinchi darajali matn */
+  --t-md:13.5px; /* asosiy matn */
+  --t-lg:15px;   /* kuchli matn */
+  --t-xl:17px;   /* bo'lim sarlavhasi */
+  --t-2xl:21px;  /* sahifa ichidagi katta sarlavha */
+  --t-3xl:27px;  /* sahifa sarlavhasi */
+  --t-num:30px;  /* KPI raqami — hukmron */
 
-/* --- Raqamlar HUKMRON bo'lsin (talab 11) --- */
-.kpi b,.kpi strong,.kpi .val,.genui-plita-qiymat{
-  font-size:29px;font-weight:700;letter-spacing:-.03em;line-height:1.1;
+  /* Vazn — uchtadan ortiq ishlatilmaydi (talab 11) */
+  --w-nor:450; --w-mid:600; --w-bold:700;
 }
-.kpi{padding:22px 24px}
+
+/* --- SARLAVHALAR --- */
+.page-title{
+  font-size:var(--t-3xl);font-weight:var(--w-bold);
+  letter-spacing:-.026em;line-height:1.14;
+}
+.page-sub{font-size:var(--t-md);margin-top:var(--s1);font-weight:var(--w-nor)}
+.sec{font-size:var(--t-xl);font-weight:var(--w-mid);letter-spacing:-.02em}
+.sec-sub{font-size:var(--t-md);margin-top:var(--s1)}
+h2.sec,h3{letter-spacing:-.02em}
+
+/* --- RAQAM HUKMRON --- */
+.kpi b,.kpi strong,.kpi .val,.genui-plita-qiymat{
+  font-size:var(--t-num);font-weight:var(--w-bold);
+  letter-spacing:-.03em;line-height:1.08;
+}
+.kpi{padding:var(--s5) var(--s6)}
 .kpi .ic-box,.kpi .ic{width:38px;height:38px;border-radius:12px}
+.kpi small,.kpi .lbl{font-size:var(--t-sm);margin-top:var(--s1)}
 
-/* --- Yorliqlar: kichik, lekin nafas oladigan --- */
-.fl{margin-bottom:7px;display:block}
+/* --- YORLIQ VA MATN --- */
+.fl{font-size:var(--t-xs);margin-bottom:var(--s2);display:block;
+    font-weight:var(--w-mid);letter-spacing:.045em}
+.muted,.sec-sub,.page-sub{font-weight:var(--w-nor)}
 
-/* --- RO'YXAT RITMI: qatorlar zich emas, o'qishga qulay --- */
-.content tbody tr td,.content .row-item,.content li{line-height:1.5}
-.content td{padding-top:13px;padding-bottom:13px}
-.content th{padding-top:11px;padding-bottom:11px}
+/* --- RITM: ro'yxat va jadval --- */
+.content td{padding:var(--s3) var(--s3);line-height:1.5;font-size:var(--t-md)}
+.content th{padding:var(--s3) var(--s3);font-size:var(--t-xs)}
+.content tbody tr td:first-child,.content th:first-child{padding-left:var(--s5)}
+.content tbody tr td:last-child,.content th:last-child{padding-right:var(--s5)}
 
-/* --- Yon menyu: nafas --- */
-.side .nav a{padding:10px 12px;margin-bottom:3px;font-size:13.5px}
-.side .brand{padding-bottom:16px;margin-bottom:6px}
+/* --- YON MENYU --- */
+.side .nav a{
+  padding:var(--s3) var(--s3);margin-bottom:var(--s1);
+  font-size:var(--t-md);font-weight:var(--w-mid);gap:var(--s3);
+}
+.side .brand{padding-bottom:var(--s4);margin-bottom:var(--s2)}
 
-/* --- Umumiy masofa --- */
-.content{padding-top:4px}
-.card+.card,.ccard+.ccard{margin-top:20px}
-.row,.between{gap:12px}
+/* --- BOSHQARUV ELEMENTLARI: haqiqiy borliq --- */
+.btn{padding:11px var(--s5);font-size:var(--t-md)}
+.btn.sm{padding:var(--s2) var(--s4);font-size:var(--t-sm)}
+.fld,input,select,textarea{
+  padding:12px var(--s4);font-size:var(--t-md);
+}
+
+/* --- UMUMIY MASOFA --- */
+.card,.ccard{padding:var(--s6)}
+.grid,.g2,.g3,.g4{gap:var(--s5)}
+.card+.card,.ccard+.ccard{margin-top:var(--s5)}
+.row,.between{gap:var(--s3)}
+.content{padding-top:var(--s1)}
+
+/* --- YON MENYU: yorliq BIR QATORDA ---
+   «Янги буюртма (смета)» ikki qatorga bo'linib, qatorlar balandligi
+   turlicha bo'lib qolgandi — ritm buzilardi. Uzun nom endi bir
+   qatorda qoladi va sig'masa uchi bilan qisqaradi. */
+.side .nav a>span:not(.ic){
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+}
+.side .nav a{align-items:center;min-height:40px}
+
+/* Qisqargan yorliq ma'no yo'qotmasin: hover'da to'liq nomi chiqadi.
+   `data-label` ni `router.js` qo'yadi. Yig'ilgan holatda ham xuddi
+   shu mexanizm ishlaydi. */
+.side .nav a{position:relative}
+.side .nav a:hover::after{
+  content:attr(data-label);
+  position:absolute;left:calc(100% + 10px);top:50%;
+  transform:translateY(-50%);
+  background:rgba(255,255,255,.92);
+  -webkit-backdrop-filter:var(--lg-l3-blur);
+  backdrop-filter:var(--lg-l3-blur);
+  border:1px solid var(--lg-l2-line);
+  box-shadow:var(--lg-l3-shadow);
+  color:var(--lg-text);font-size:var(--t-sm);font-weight:var(--w-mid);
+  padding:var(--s2) var(--s3);border-radius:10px;
+  white-space:nowrap;z-index:60;pointer-events:none;
+}
+
+/* --- RO'YXAT: SANA GURUHI aniq ajralsin ---
+   Sana sarlavhasi asosiy matn bilan bir vaznda edi va ko'z qayerda
+   yangi kun boshlanganini ilg'amasdi. Endi u kichik, tinch va
+   yuqorida ko'proq bo'sh joy bilan turadi. */
+.content tr.sana td,.content .sana-qator,.content .group-head{
+  font-size:var(--t-xs);font-weight:var(--w-mid);
+  letter-spacing:.05em;color:var(--lg-text-3);
+  padding-top:var(--s5);padding-bottom:var(--s2);
+  border-bottom:none;
+}
+
+/* --- KATTA RO'YXATDA nafas ---
+   Kassa jurnali kabi uzun ro'yxatlarda qator balandligi o'qishni
+   belgilaydi. Chegara o'rniga masofa ishlatiladi. */
+.content tbody tr{border-bottom:1px solid rgba(23,24,43,.05)}
+.content tbody tr:last-child{border-bottom:none}
+
+/* --- SHOVQINNI KAMAYTIRISH ---
+   Chegara o'rniga MASOFA ajratsin. Ortiqcha chiziq interfeysni
+   "hujjat"ga o'xshatadi; bo'sh joy esa premium hissini beradi. */
+.content hr,.content .divider{border:none;height:1px;
+  background:rgba(23,24,43,.06);margin:var(--s5) 0}
 
 /* =====================================================================
    L2 — GLASS YUZALAR (card, topbar, sidebar)
