@@ -168,13 +168,39 @@ body,.btn,.fld,input,select,textarea,button{
   font-size:22px;font-weight:680;letter-spacing:-.02em;color:var(--lg-text);
 }
 .page-sub{font-size:12.5px;color:var(--lg-text-2);font-weight:500}
+/* Sarlavha HAR QANDAY enda bitta qatorda qoladi.
+   Nuqson: 1100px da «Касса журнали» ikki qatorga, izohi esa TO'RT
+   qatorga bo'linib ketardi va topbar ikki barobar balandlashardi —
+   chunki o'ng tomondagi tanlov va foydalanuvchi belgisi qat'iy joy
+   egallaydi, sarlavha esa qolganiga siqilardi. Ekranda ko'rildi. */
+/* Sarlavha ustunligi bor: o'ng tomondagi boshqaruv elementlari
+   siqiladi, sarlavha emas. Faqat `min-width:0` qo'yilganda teskarisi
+   bo'lardi — sarlavha «Кас…» ga aylanib, tanlov to'liq turardi. */
+.topbar > div:first-child{flex:1 1 auto;min-width:min(46%,320px)}
+.topbar .userchip{min-width:0}
+.topbar .userchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar #firmSel{min-width:0;max-width:190px}
+.page-title,.page-sub{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .sec{font-size:16px;font-weight:660;letter-spacing:-.015em;color:var(--lg-text)}
 .sec-sub{font-size:12.5px;color:var(--lg-text-2)}
 .muted{color:var(--lg-text-3)}
-/* Raqamlar — katta, qalin, yuqori kontrast (talab 11) */
-.kpi b,.kpi strong,.genui-plita-qiymat{
+/* Raqamlar — katta, qalin, yuqori kontrast (talab 11).
+   `.kpi b` va `.kpi strong` YO'Q edi: kartochka qiymati `.val`
+   sinfida yoziladi, ya'ni bu qoida hech qachon ishlamagan. */
+.kpi .val,.genui-plita-qiymat{
   font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:var(--lg-text);
+  /* Suyuq o'lcham: tor ustunda o'ralib ketmasin, keng ekranda
+     mayda bo'lib qolmasin. Nuqta emas, oraliq. */
+  font-size:clamp(18px,1.55vw,27px);
+  line-height:1.15;
 }
+.kpi .lab{color:var(--lg-text-2)}
+/* Kartochkalar joyiga qarab tizilsin: joy bo'lsa uchtadan, siqilsa
+   ikkitadan. Ilgari qat'iy uch ustun edi va AI paneli ochilganda
+   1100px da qiymatlar ikki qatorga sinardi. */
+.grid.g3{grid-template-columns:repeat(auto-fit,minmax(208px,1fr))}
 
 /* =====================================================================
    L2 — GLASS YUZALAR (card, topbar, sidebar)
@@ -196,6 +222,25 @@ body,.btn,.fld,input,select,textarea,button{
   background:linear-gradient(160deg,rgba(255,255,255,.62),rgba(255,255,255,.34));
   border-color:rgba(255,255,255,.9);
 }
+/* =====================================================================
+   TASHQI KARKAS — ustun kengligi sidebar kengligiga ERGASHADI
+
+   Nuqson: sidebar yig'ilganda (`width:78px`) grid ustuni `250px`
+   bo'lib qolardi va kapsula bilan kontent orasida 174px o'lik joy
+   paydo bo'lardi (o'lchandi). Ustunni ham yig'amiz.
+   ===================================================================== */
+/* YAGONA CHET O'LCHOVI. Sidebar, topbar, kontent va AI paneli —
+   hammasi shu bitta qiymatdan yashaydi. Ilgari har biri o'z sonini
+   ishlatardi (14 / 12 / 0) va yuzalar bir chiziqqa tushmasdi. */
+:root{--lg-chet:18px}
+.app.on{
+  grid-template-columns:250px 1fr;
+  padding:var(--lg-chet);
+  gap:var(--lg-chet);
+  transition:grid-template-columns var(--lg-mid) var(--lg-ease);
+}
+body.ai-ochiq .app.on{grid-template-columns:78px 1fr}
+
 /* Cardlar bir-biriga yopishmasin — nafas oladigan masofa */
 .grid,.g2,.g3,.g4{gap:22px}
 
@@ -209,7 +254,10 @@ body,.btn,.fld,input,select,textarea,button{
   /* Suzuvchi kapsula: fondan ajralib tursin. */
   border-radius:26px;
   border-left:1px solid var(--lg-l2-line);
-  margin:12px 0 12px 12px;
+  /* Ichkarilashni `.app` ning `padding:14px` i beradi. Bu yerda yana
+     margin qo'yilsa ikki qavat bo'lardi: kapsula chapdan 26px, asosiy
+     ustun esa 14px da turardi va tepalari bir chiziqqa tushmasdi. */
+  margin:0;
   background:rgba(255,255,255,.42);
   transition:width var(--lg-mid) var(--lg-ease),
              padding var(--lg-mid) var(--lg-ease);
@@ -295,7 +343,7 @@ body,.btn,.fld,input,select,textarea,button{
      chetidan kesilardi). Panel ochilganda asosiy ustunga o'ng
      to'ldirma beriladi. */
   body.ai-ochiq .main{
-    padding-right:calc(min(420px,100vw) + 18px);
+    padding-right:calc(min(420px,100vw) + var(--lg-chet));
     transition:padding-right var(--lg-slow) var(--lg-ease);
   }
 
@@ -323,7 +371,8 @@ body,.btn,.fld,input,select,textarea,button{
   border-radius:22px;
   border:1px solid var(--lg-l2-line);
   background:rgba(255,255,255,.46);
-  margin-top:12px;
+  /* `margin-top` yo'q: u topbarni sidebar kapsulasidan 12px pastga
+     surib qo'yardi va ikki yuzaning tepasi bir chiziqda turmasdi. */
 }
 .userchip{
   background:var(--lg-l3-bg);
@@ -530,7 +579,17 @@ select option{background:#fff;color:var(--lg-text)}
   -webkit-backdrop-filter:var(--lg-l5-blur);
   backdrop-filter:var(--lg-l5-blur);
   border:1px solid rgba(255,255,255,.72);
-  border-radius:30px 0 0 30px;
+  /* SUZUVCHI KARTA, ekranga yopishgan panel emas.
+     Ilgari `top:0;right:0;height:100vh` va bir tomoni to'g'ri burchak
+     edi — panel uch chetga tegib turardi va boshqa yuzalardan boshqa
+     qonun bo'yicha yashardi. Endi u ham qolgan yuzalar kabi 14px
+     ichkarida suzadi. */
+  top:var(--lg-chet);right:var(--lg-chet);
+  height:calc(100dvh - var(--lg-chet)*2);
+  border-radius:30px;
+  /* Yopiq holat: o'z kengligi + chetdagi 14px + soya uchun zaxira.
+     Aks holda o'ng chekkada ingichka tilim ko'rinib qolardi. */
+  transform:translateX(calc(100% + var(--lg-chet) + 12px));
   box-shadow:var(--lg-l5-shadow);
   transition:transform var(--lg-slow) var(--lg-ease),
              opacity var(--lg-mid) var(--lg-ease);
@@ -640,6 +699,7 @@ select option{background:#fff;color:var(--lg-text)}
 }
 /* Tor desktop: sidebar faqat ikonka */
 @media (max-width:1180px){
+  .app.on{grid-template-columns:78px 1fr}
   .side{width:78px;padding-left:10px;padding-right:10px}
   .side .brand div:last-child,.side .nav a span:not(.ic),.side-foot{
     display:none;
@@ -652,12 +712,39 @@ select option{background:#fff;color:var(--lg-text)}
   .side .nav a svg{width:21px;height:21px;stroke-width:1.7}
   .page-title{font-size:19px}
 }
+/* TELEFON — bitta ustun.
+   MUHIM: bu blok `.app.on{grid-template-columns:250px 1fr}` ni qaytarib
+   oladi. Qatlam eng oxirida ulanadi, shuning uchun uning ustun qoidasi
+   `style.css` dagi mobil qoidani ham bosib qo'yardi: telefonda yon
+   menyu yashiringan bo'lsa ham 250px lik ustun turaverib, kontent
+   ~125px ga siqilardi. Ekranda ko'rildi va o'lchandi. */
+@media (max-width:860px){
+  /* `body.ai-ochiq .app.on` selektori kuchliroq (0,3,1), shuning uchun
+     uni ham aniq nomlash SHART: aks holda telefonda ustun 78px
+     bo'lib qolardi va yon menyu yashiringani uchun asosiy ustun
+     o'sha 78px ga tushib qolardi (o'lchandi: kontent eni 78px). */
+  .app.on,
+  body.ai-ochiq .app.on{
+    grid-template-columns:1fr;
+    padding:var(--lg-chet);gap:var(--lg-chet);
+  }
+}
+
 /* Planshet va telefon: AI paneli to'liq balandlikdagi qatlam */
 @media (max-width:900px){
+  :root{--lg-chet:10px}
+  /* Telefonda panel pastdan chiqadi — yonidan emas. Shuning uchun
+     asosiy ustunga o'ng to'ldirma BERILMAYDI. Berilsa 375px lik
+     ekranda to'ldirma 385px bo'lib, kontent nolga siqilardi va
+     ekranda bo'sh joy qolardi (ko'rildi). */
+  body.ai-ochiq .main{padding-right:0}
   .agent-panel{
-    border-radius:26px 26px 0 0;
-    inset:auto 0 0 0;width:100%;max-height:88vh;
+    border-radius:26px;
+    inset:auto var(--lg-chet) var(--lg-chet) var(--lg-chet);
+    width:auto;height:auto;max-height:86vh;
+    transform:translateY(calc(100% + 16px));
   }
+  .agent-panel.ochiq{transform:translateY(0)}
   .card,.ccard{border-radius:22px;padding:16px}
   .modal{border-radius:24px}
   .topbar{border-radius:var(--lg-r-md)}

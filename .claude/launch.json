@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "platforma",
-      "runtimeExecutable": "./run.sh",
-      "runtimeArgs": [],
-      "port": 8000
+      "name": "stend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/stend_server.mjs"],
+      "port": 8777
     }
   ]
 }
