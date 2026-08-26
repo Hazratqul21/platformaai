@@ -1,0 +1,92 @@
+/* =====================================================================
+   INNASOFT PLATFORM THEME
+
+   Corporate brand ranglarini mavjud ERP interfaciga xavfsiz qo'llaydi.
+   Bu faqat CSS token va surface qatlami: JavaScript, API, route, forma
+   IDlari, baza va biznes hisob-kitobiga mutlaqo tegmaydi.
+   ===================================================================== */
+:root{
+  --primary:var(--brand-violet,#5520cf);
+  --primary-soft:#8d6ee8;
+  --primary-deep:var(--brand-violet-deep,#3d11a2);
+  --primary-glow:rgba(85,32,207,.34);
+  --accent:linear-gradient(135deg,#7445db,#5520cf 62%,#3d11a2);
+  --ink:var(--brand-ink,#090909);
+  --ink-2:#45404a;
+  --ink-3:#716b74;
+  --hair:rgba(9,9,9,.12);
+  --shadow:0 20px 44px -28px rgba(38,14,101,.35),0 2px 12px -7px rgba(9,9,9,.16),inset 0 1px 0 rgba(255,255,255,.95);
+  --ease-out:cubic-bezier(.23,1,.32,1);
+}
+
+body{background:var(--brand-paper,#f7f0ea)}
+.paper-bg{background:radial-gradient(52% 42% at 7% 3%,rgba(201,240,0,.34),transparent 63%),radial-gradient(54% 50% at 97% 97%,rgba(85,32,207,.22),transparent 65%),linear-gradient(165deg,#fbf7f3,#f7f0ea 58%,#eee3da)}
+.glass{background:radial-gradient(135% 95% at 0% 0%,rgba(255,255,255,.78),transparent 48%),linear-gradient(160deg,rgba(255,255,255,.82),rgba(255,255,255,.6) 56%,rgba(247,240,234,.86));box-shadow:var(--shadow)}
+.glass::after{background:linear-gradient(140deg,rgba(255,255,255,1),rgba(255,255,255,.42) 24%,rgba(201,240,0,.08) 55%,rgba(85,32,207,.48) 100%)}
+.nav a.active,.bottom-nav a.active{background:linear-gradient(120deg,rgba(201,240,0,.35),rgba(85,32,207,.11));border-color:rgba(85,32,207,.26)}
+.btn.pri{box-shadow:0 12px 24px -11px rgba(85,32,207,.72)}
+.kpi .ic-box{background:linear-gradient(160deg,rgba(201,240,0,.26),rgba(85,32,207,.08));border-color:rgba(85,32,207,.22)}
+.tag.pri,.rx-rejim.tanlangan{background:rgba(85,32,207,.12)}
+
+/* =====================================================================
+   SHARED PRODUCT COMPONENT SURFACES
+   Mavjud vanilla-modullarning umumiy klasslariga ulanadi. Selektorlar
+   faqat ko'rinish, o'qilish va holatni yaxshilaydi; event, API, forma
+   nomi va ma'lumot oqimini o'zgartirmaydi.
+   ===================================================================== */
+
+/* Forma: rangdan tashqari aniq focus ring va invalid holat. */
+.fld,.agent-tanla{
+  border-color:rgba(9,9,9,.2);
+  background:rgba(255,255,255,.8);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+}
+.fld:hover,.agent-tanla:hover{border-color:rgba(85,32,207,.36)}
+.fld:focus,.agent-tanla:focus{
+  border-color:var(--brand-violet,#5520cf);
+  outline:3px solid rgba(85,32,207,.15);
+  outline-offset:0;
+}
+.fld[aria-invalid="true"],.fld:invalid:not(:placeholder-shown){
+  border-color:var(--danger,#d63d49);
+  box-shadow:0 0 0 3px rgba(214,61,73,.1);
+}
+.fld:disabled,.agent-tanla:disabled{background:rgba(9,9,9,.055);color:var(--ink-3);cursor:not-allowed}
+
+/* Tugmalar: focus ring klaviatura foydalanuvchisi uchun ko'rinadi. */
+.btn:focus-visible,.nav a:focus-visible,.bottom-nav a:focus-visible{
+  outline:3px solid var(--brand-lime,#c9f000);
+  outline-offset:3px;
+}
+.btn{
+  touch-action:manipulation;
+  transition:transform 140ms var(--ease-out),background-color 160ms ease,
+    border-color 160ms ease,box-shadow 180ms ease,color 160ms ease;
+}
+.btn:active{transform:scale(.97)}
+@media(hover:hover) and (pointer:fine){
+  .btn.pri:hover{filter:brightness(1.04);transform:translateY(-1px)}
+}
+.btn.dngr:focus-visible{outline-color:var(--danger,#d63d49)}
+
+/* Holatlar: mavjud semantic ranglar saqlanadi, kontrast va chegara kuchayadi. */
+.tag,.badge{border:1px solid rgba(9,9,9,.1);font-weight:700}
+.tag.pri{color:var(--primary-deep)}
+.badge.gray{background:rgba(9,9,9,.06);color:var(--ink-2)}
+.alert{border-color:rgba(9,9,9,.1);box-shadow:0 10px 24px -22px rgba(9,9,9,.45)}
+.alert.d{border-left:3px solid var(--danger,#d63d49)}
+.alert.w{border-left:3px solid var(--warn,#b7791f)}
+.alert.o{border-left:3px solid var(--ok,#1a9e63)}
+
+/* Bo'sh holat xabar emas, keyingi amalsiz qolmasligi uchun aniq ajralib turadi. */
+.empty{
+  color:var(--ink-2);
+  background:rgba(255,255,255,.45);
+  box-shadow:inset 0 0 0 1px rgba(9,9,9,.08);
+}
+.modal{border:1px solid rgba(9,9,9,.11)}
+.toast{border-left:3px solid var(--brand-violet,#5520cf)}
+
+@media(prefers-reduced-motion:reduce){
+  .btn,.btn.pri:hover,.btn.pri:active{transition:background-color 120ms ease,border-color 120ms ease,color 120ms ease;transform:none}
+}

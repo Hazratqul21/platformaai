@@ -72,9 +72,30 @@ function lendingOrqaga(){
 
 function lendingBoshla(){
   lendingChiplar();
+  // YANGI AKKAUNT. Ro'yxatdan o'tgan odam o'z subdomeniga `?kir=<login>`
+  // bilan keladi. Unga lending ko'rsatish — bir qadam ortga: u
+  // allaqachon ro'yxatdan o'tgan, endi faqat kirishi kerak. Login
+  // maydoni to'ldirilgan holda darrov kirish oynasi ochiladi.
+  if(kirishTaklifi()) return;
   document.getElementById('lending').classList.add('on');
   document.getElementById('loginScreen').style.display = 'none';
   lendingKorinish();
+}
+
+/** `?kir=<login>` bo'lsa kirish oynasini to'ldirib ochadi.
+ *  `?qur=1` parametri O'CHIRILMAYDI — u kirgandan keyin `qurish.js`
+ *  ga kerak (tizim yig'ilishi ekrani). */
+function kirishTaklifi(){
+  let login='';
+  try{ login=(new URLSearchParams(location.search).get('kir')||'').trim(); }
+  catch(e){ return false; }
+  if(!login) return false;
+  document.getElementById('lending').classList.remove('on');
+  document.getElementById('loginScreen').style.display = 'flex';
+  const lg=document.getElementById('lg'), pw=document.getElementById('pw');
+  if(lg) lg.value=login;
+  if(pw) pw.focus();
+  return true;
 }
 
 /* ================= RO'YXATDAN O'TISH FORMASI ====================

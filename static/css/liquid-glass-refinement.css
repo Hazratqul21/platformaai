@@ -1,0 +1,246 @@
+/* =====================================================================
+   INNASOFT LIQUID GLASS — REFINEMENT LAYER
+
+   Bu fayl boshqa agent yozayotgan `liquid-glass.css` ni almashtirmaydi.
+   Faqat material ierarxiyasi, kontrast va accessibility'ni aniqlashtiradi.
+   DOM, API, route, business logic va ma'lumot oqimiga tegmaydi.
+   ===================================================================== */
+
+:root{
+  /* Bir xil "sutli" yuzani yo'qotish uchun darajalar orasidagi farq
+     ataylab kattalashtirildi. Blur 30–40px dan pastroq: kontur aniq,
+     shisha hissi esa orqa fon ranglari orqali saqlanadi. */
+  --lg-l2-bg:rgba(255,255,255,.58);
+  --lg-l2-blur:blur(20px) saturate(135%);
+  --lg-l2-line:rgba(255,255,255,.72);
+  --lg-l2-shadow:
+    0 1px 1px rgba(39,40,92,.05),
+    0 14px 34px -20px rgba(54,56,128,.28),
+    inset 0 1px 0 rgba(255,255,255,.86),
+    inset 0 0 0 1px rgba(36,38,82,.035);
+
+  --lg-l3-bg:rgba(255,255,255,.74);
+  --lg-l3-blur:blur(14px) saturate(135%);
+  --lg-l3-shadow:
+    0 8px 22px -14px rgba(51,52,123,.28),
+    inset 0 1px 0 rgba(255,255,255,.88),
+    inset 0 0 0 1px rgba(35,37,78,.035);
+
+  --lg-l4-bg:rgba(251,251,255,.86);
+  --lg-l4-blur:blur(28px) saturate(140%);
+  --lg-l4-shadow:
+    0 34px 86px -30px rgba(35,37,92,.38),
+    0 8px 24px -16px rgba(35,37,92,.22),
+    inset 0 1px 0 rgba(255,255,255,.92);
+
+  --lg-l5-bg:linear-gradient(180deg,rgba(252,252,255,.88),rgba(247,248,255,.78));
+  --lg-l5-blur:blur(24px) saturate(140%);
+  --lg-l5-shadow:
+    -22px 0 64px -34px rgba(48,49,126,.42),
+    0 18px 52px -30px rgba(48,49,126,.28),
+    inset 1px 0 0 rgba(255,255,255,.86),
+    inset 0 1px 0 rgba(255,255,255,.94);
+}
+
+body{
+  font-optical-sizing:auto;
+  text-rendering:optimizeLegibility;
+  background-color:var(--lg-paper);
+}
+
+/* Orqa atmosfera materialni ko'rsatadi, lekin kontentni binafsha
+   tumanga ko'mmaydi. Markazdagi oqish zona o'qishni tinch saqlaydi. */
+body::before{
+  background:
+    radial-gradient(760px 520px at 5% 0%,rgba(111,114,244,.26),transparent 67%),
+    radial-gradient(820px 560px at 96% 8%,rgba(136,139,255,.22),transparent 68%),
+    radial-gradient(700px 520px at 52% 62%,rgba(118,121,246,.11),transparent 72%),
+    radial-gradient(640px 480px at 92% 94%,rgba(201,240,90,.07),transparent 70%),
+    linear-gradient(145deg,rgba(247,246,242,.5),rgba(238,240,255,.42));
+}
+.paper-bg{opacity:.82}
+
+/* Apple-inspired degani Apple UI nusxasi emas: system font, aniq
+   tracking va o'qiladigan leading. Eski serif page title olib tashlandi. */
+.page-title,.sec,.modal h1,.modal h2,.agent-title{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-optical-sizing:auto;
+}
+.page-title{font-size:24px;line-height:1.12;font-weight:720;letter-spacing:-.035em}
+.page-sub{margin-top:4px;line-height:1.35;color:#62657f}
+.sec{line-height:1.25;letter-spacing:-.02em}
+
+/* L2 — umumiy ish yuzasi. Oq highlight endi kontur emas, yorug'lik
+   qatlami sifatida seziladi; to'q ichki hairline shaklni ushlab turadi. */
+.glass,.card,.ccard{
+  border-color:var(--lg-l2-line);
+  box-shadow:var(--lg-l2-shadow);
+  background-clip:padding-box;
+}
+.card,.ccard{
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.72),rgba(250,250,255,.49));
+}
+
+/* Strukturaviy chrome ish kartasidan biroz zichroq bo'lishi kerak. */
+.side{
+  overflow:hidden;
+  background:linear-gradient(180deg,rgba(252,252,255,.76),rgba(244,246,255,.58));
+  border-color:rgba(255,255,255,.76);
+  box-shadow:
+    0 22px 54px -32px rgba(39,40,102,.34),
+    inset 0 1px 0 rgba(255,255,255,.94),
+    inset -1px 0 0 rgba(42,44,92,.045);
+}
+.side::before{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(120deg,rgba(255,255,255,.30),transparent 38%);
+}
+.side .nav{position:relative;z-index:1}
+.side .nav a{min-height:44px}
+.side .nav a.active{
+  background:linear-gradient(135deg,rgba(91,91,239,.16),rgba(123,124,246,.08));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.74),0 8px 18px -14px rgba(91,91,239,.48);
+}
+.side .nav a.active .ic{
+  background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(101,102,241,.20));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 7px 15px -10px rgba(76,77,218,.65);
+}
+
+.topbar{
+  background:linear-gradient(135deg,rgba(255,255,255,.76),rgba(248,249,255,.56));
+  border-color:rgba(255,255,255,.76);
+  box-shadow:
+    0 12px 32px -24px rgba(42,44,112,.34),
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 0 0 1px rgba(42,44,92,.035);
+}
+.userchip{background:rgba(255,255,255,.76);box-shadow:var(--lg-l3-shadow)}
+
+/* KPI: raqam birinchi, bezak ikkinchi. Barcha kartani yoritish o'rniga
+   yuqori chapda bitta refraction highlight ishlatiladi. */
+.kpi{position:relative;isolation:isolate;min-height:132px;overflow:hidden}
+.kpi::before{
+  content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;
+  background:radial-gradient(240px 150px at 10% 0%,rgba(255,255,255,.52),transparent 72%);
+}
+.kpi .val{font-size:clamp(24px,2vw,31px);line-height:1;font-weight:760;color:var(--lg-text)}
+.kpi .lab{margin-top:8px;color:#70738b;font-weight:560}
+.kpi .ic-box{
+  background:rgba(255,255,255,.58);
+  border-color:rgba(91,91,239,.18);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 18px -14px rgba(91,91,239,.45);
+}
+
+/* Data-heavy yuza shaffof kartalardan zichroq: raqam o'qilishi effekt
+   ustidan turadi. */
+.content .page>.glass.card:not(.kpi),
+.content .page>.card:not(.kpi){
+  background:linear-gradient(155deg,rgba(255,255,255,.77),rgba(249,250,255,.62));
+  border-color:rgba(255,255,255,.78);
+  box-shadow:
+    0 16px 42px -28px rgba(40,42,104,.32),
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 0 0 1px rgba(36,38,82,.035);
+}
+td{color:#292a3f}
+th{color:#5f627b}
+tbody tr:hover{background:rgba(91,91,239,.055)}
+
+/* L3 control: yengil lift faqat hover qurilmasida, press esa darhol. */
+.btn,.fchip,.chip,.agent-icon{
+  touch-action:manipulation;
+  border-color:rgba(255,255,255,.72);
+}
+.btn,.fchip,.agent-icon{
+  min-height:44px;
+}
+.btn.icon-only,.btn.ghost,.agent-icon{
+  min-width:44px;
+}
+.btn:active,.fchip:active,.agent-icon:active{transform:scale(.97)}
+@media(hover:hover) and (pointer:fine){
+  .btn:hover{transform:translateY(-1px)}
+  .side .nav a:hover{background:rgba(91,91,239,.075)}
+}
+
+.fld,.card .fld,.glass .fld,input.fld,select.fld,textarea.fld,
+input[type=text],input[type=number],input[type=date],input[type=password],select,textarea{
+  background:rgba(255,255,255,.72);
+  border-color:rgba(42,44,82,.12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.92),inset 0 0 0 1px rgba(40,42,80,.02);
+}
+.fld:focus,input:focus,select:focus,textarea:focus{
+  background:rgba(255,255,255,.9);
+  border-color:rgba(91,91,239,.55);
+  box-shadow:0 0 0 4px rgba(91,91,239,.14),inset 0 1px 0 rgba(255,255,255,.96);
+}
+
+/* L5 — yordamchi layout'dagi eng yuqori material. Ichki oqim paneldan
+   ajraladi; katta bo'sh joy ham materialning bir qismi bo'lib ko'rinadi. */
+.agent-panel{
+  overflow:hidden;
+  background:var(--lg-l5-bg);
+  border-color:rgba(255,255,255,.80);
+  box-shadow:var(--lg-l5-shadow);
+}
+.agent-panel::before{
+  content:"";position:absolute;inset:0 0 auto 0;height:120px;pointer-events:none;z-index:-1;
+  background:radial-gradient(380px 160px at 18% 0%,rgba(123,124,246,.10),transparent 74%);
+}
+.agent-head{
+  min-height:70px;padding-top:18px;padding-bottom:14px;
+  background:rgba(255,255,255,.26);
+  border-bottom-color:rgba(42,44,82,.07);
+}
+.agent-title{font-size:17px;font-weight:720;color:var(--lg-text)}
+.agent-sub{margin-top:3px;color:#777a93}
+.agent-oqim{
+  background:linear-gradient(180deg,rgba(91,91,239,.025),transparent 34%);
+  scrollbar-color:rgba(91,91,239,.18) transparent;
+}
+.agent-xabar.agentniki .agent-matn{
+  background:rgba(255,255,255,.70);
+  border-color:rgba(42,44,82,.07);
+  box-shadow:0 10px 26px -22px rgba(42,44,112,.38),inset 0 1px 0 rgba(255,255,255,.94);
+  line-height:1.58;
+}
+.agent-kirish{
+  padding-top:14px;
+  background:rgba(250,251,255,.62);
+  border-top-color:rgba(42,44,82,.07);
+  box-shadow:0 -14px 30px -28px rgba(42,44,112,.32);
+}
+.agent-kirish textarea{background:rgba(255,255,255,.84)}
+
+.modal{
+  border-color:rgba(255,255,255,.82);
+  box-shadow:var(--lg-l4-shadow),inset 0 0 0 1px rgba(37,39,80,.035);
+}
+.overlay{background:rgba(40,42,92,.16);backdrop-filter:blur(7px) saturate(115%)}
+
+/* Kontrast va transparency accessibility — effect hech qachon
+   foydalanuvchini interfeysdan mahrum qilmaydi. */
+@media(prefers-reduced-transparency:reduce){
+  .glass,.card,.ccard,.side,.topbar,.agent-panel,.modal,.btn,.fld,
+  input,select,textarea{
+    -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+    background-color:#f8f8fc!important;
+  }
+}
+@media(prefers-contrast:more){
+  :root{--lg-text-2:#4c4f68;--lg-text-3:#62657c;--hair:rgba(23,24,43,.18)}
+  .glass,.card,.ccard,.side,.topbar,.agent-panel,.modal{border-color:rgba(23,24,43,.28)}
+  .fld,input,select,textarea{border-color:rgba(23,24,43,.38)}
+}
+@media(prefers-reduced-motion:reduce){
+  .btn,.fchip,.agent-icon,.side .nav a{transition-property:background-color,border-color,color,box-shadow}
+  .btn:hover,.btn:active,.fchip:active,.agent-icon:active{transform:none!important}
+}
+
+@media(max-width:900px){
+  .page-title{font-size:21px}
+  .topbar{background:rgba(251,251,255,.82)}
+  .agent-panel{background:rgba(249,250,255,.94)}
+  .kpi{min-height:116px}
+}

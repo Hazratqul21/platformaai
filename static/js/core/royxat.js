@@ -301,6 +301,11 @@ async function rxHolatKuzat(manzil, natija, btn){
         // Yaratilish ekraniga o'tamiz — sehrgar shu yerda tugaydi.
         const p=new URLSearchParams({qur:'1', rejim:RX.rejim||'agent'});
         if(RX.soha_matni) p.set('matn', RX.soha_matni);
+        // LOGIN ham uzatiladi. Subdomenda kirish oynasi ochiladi va
+        // odam o'z logini nima ekanini eslab o'tirmaydi — u allaqachon
+        // yozilgan bo'ladi. (Ilgari ERP da login qat'iy «admin» edi va
+        // odam o'z telefoni bilan kira olmasdi.)
+        p.set('kir', RX.login);
         location.href = manzil + '/?' + p.toString();
         return;
       }
@@ -311,6 +316,7 @@ async function rxHolatKuzat(manzil, natija, btn){
     }catch(e){/* keyingi urinish */}
   }
   natija.innerHTML=`<div class="rx-eslatma">Kutilmoqda — birozdan keyin
-    <b>${esc(RX.kod)}.innasoft.uz</b> manziliga kiring</div>`;
+    <b>${esc(RX.kod)}.innasoft.uz</b> manziliga kiring.<br>
+    Login: <b>${esc(RX.login)}</b>, parol — hozir tanlaganingiz.</div>`;
   btn.disabled=false; btn.textContent='Tizimni yaratish';
 }

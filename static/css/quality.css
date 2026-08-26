@@ -1,0 +1,42 @@
+/* =====================================================================
+   UI QUALITY GUARD
+   Frontend-only himoya qatlami. U biznes mantiqi yoki ma'lumotga
+   tegmaydi; yangi corporate, login va onboarding komponentlarining
+   klaviatura, kichik ekran va motion holatlarini barqaror qiladi.
+   ===================================================================== */
+
+/* Sichqoncha bilan emas, klaviatura bilan yurgan foydalanuvchi qayerda
+   turganini har doim ko'radi. */
+.site-header a:focus-visible,.site-footer a:focus-visible,.hero a:focus-visible,
+.product-card:focus-visible,.login-card a:focus-visible,.login-card button:focus-visible,
+.login-card input:focus-visible,.overlay:has(.rx-head) button:focus-visible,
+.overlay:has(.rx-head) input:focus-visible,.qur button:focus-visible{
+  outline:3px solid var(--brand-lime,#c9f000);outline-offset:3px;
+}
+
+/* Uzun korxona nomi, subdomen yoki login layoutni buzmasin. */
+.login-workspace b,.login-workspace small,.login-showcase-caption b,
+.login-showcase-caption span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.overlay:has(.rx-head) .rx-xulosa-qator b{min-width:0;overflow-wrap:anywhere}
+.overlay:has(.rx-head) .rx-kod-qator .muted{overflow-wrap:anywhere}
+
+/* Bosilmayotgan tugma vizual jihatdan ham aniq ko'rinadi. */
+.login-card button:disabled,.overlay:has(.rx-head) button:disabled,.qur button:disabled{
+  cursor:not-allowed;opacity:.52;filter:saturate(.45);
+}
+
+/* Motion ixtiyoriy bezak. U ishlamasa ham jarayon va mazmun yo'qolmaydi. */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;
+    animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .login-preview{transform:none!important}
+}
+
+/* 320px ekranlarda form elementlari yonma-yon qolib kesilmasin. */
+@media(max-width:360px){
+  .login-card{padding-left:18px!important;padding-right:18px!important}
+  .overlay:has(.rx-head) .rx-inn-qator{grid-template-columns:1fr}
+  .overlay:has(.rx-head) .rx-inn-qator .btn{width:100%;justify-content:center}
+  .qur-past{align-items:stretch;flex-direction:column-reverse}
+  .qur-past .btn{justify-content:center}
+}

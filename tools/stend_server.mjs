@@ -8,7 +8,7 @@ const TYPES = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-
   '.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2'};
 http.createServer(async (req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
-  if (p === '/') p = '/static/_stend.html';
+  if (p === '/') p = '/tools/stend.html';
   const file = path.join(ROOT, p);
   if (!file.startsWith(ROOT)) { res.writeHead(403).end('no'); return; }
   try {
