@@ -58,9 +58,9 @@
   --lg-r-pill:999px;
 
   /* ---- MATERIAL DARAJALARI ---- */
-  --lg-l2-bg:rgba(255,255,255,.62);
-  --lg-l2-blur:blur(22px) saturate(145%);
-  --lg-l2-line:rgba(255,255,255,.85);
+  --lg-l2-bg:rgba(255,255,255,.46);
+  --lg-l2-blur:blur(30px) saturate(165%);
+  --lg-l2-line:rgba(255,255,255,.95);
   /* Ikki qatlamli soya: yaqin (shakl) + uzoq (chuqurlik) + ichki
      yuqori highlight (yorug'lik sinishi). Shu uchtasi birga
      bo'lgandagina yuza «material» bo'lib seziladi. */
@@ -115,17 +115,47 @@
    ko'zga tashlanmaydi, faqat chuqurlik beradi.
    ===================================================================== */
 body{
-  /* ASOS — iliq ivory. Lavender faqat NAFAS: kichik, kuchsiz va
-     chetlarda. Ilgari radiuslar katta va to'yingan edi, natijada
-     butun sahifa ko'k-siyohrangga bo'yalib ketardi va iliq asos
-     umuman ko'rinmasdi. */
+  /* SHISHA ORQASIDA KO'RINADIGAN MAYDON.
+     Birinchi urinishda ranglar juda kuchsiz (alpha .13-.34) va
+     burchaklarga qo'yilgan edi — ekran o'rtasi, ya'ni AYNAN
+     kartalar turadigan joy, tekis ivory bo'lib qolardi va shisha
+     oddiy oq quti bo'lib ko'rinardi.
+     Endi maydon MARKAZNI ham qamrab oladi va rang sezilarli. */
   background:
-    radial-gradient(760px 460px at 6% -12%, rgba(238,240,255,.85) 0%, transparent 55%),
-    radial-gradient(620px 420px at 102% 2%, rgba(123,124,246,.07) 0%, transparent 52%),
-    var(--lg-paper);
+    radial-gradient(1000px 700px at 18% 6%,  rgba(139,142,255,.55) 0%, transparent 58%),
+    radial-gradient(900px 640px at 82% 12%,  rgba(108,110,246,.45) 0%, transparent 56%),
+    radial-gradient(820px 620px at 55% 62%,  rgba(158,150,255,.34) 0%, transparent 60%),
+    radial-gradient(760px 560px at 12% 88%,  rgba(91,91,239,.28)  0%, transparent 60%),
+    radial-gradient(680px 520px at 92% 84%,  rgba(201,240,90,.16) 0%, transparent 58%),
+    linear-gradient(160deg,#F7F6F2 0%,#EEF0FF 52%,#F4F3FF 100%);
   background-attachment:fixed;
   color:var(--lg-text);
   -webkit-font-smoothing:antialiased;
+}
+
+/* ---------------------------------------------------------------------
+   RANGLI MAYDON — shishaning orqasida ko'rinadigan narsa.
+
+   NEGA `body` foni YETMAYDI: sahifada `<svg class="paper-bg">`
+   qatlami bor (`position:fixed`, `z-index:-2`) va u O'Z ICHIDA
+   `#F4F6FC -> #E2E6F8` gradientini chizadi. Ya'ni `body` foni
+   butunlay bekitilgan — unga qancha rang qo'shilsa ham ko'rinmaydi.
+   Shu sabab fonga kiritilgan birinchi urinishlar ekranda umuman
+   sezilmadi.
+
+   Yechim: qog'oz to'qimasi SAQLANADI (u egasining ishi), ustiga
+   esa shu qatlam qo'yiladi — `z-index:-1`, ya'ni to'qimadan yuqori,
+   kontentdan past. Endi shisha yuzalar orqali HAQIQATAN rang
+   ko'rinadi va material «shisha»dek o'qiladi.
+   --------------------------------------------------------------------- */
+body::before{
+  content:"";
+  position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(980px 700px at 16% 2%,  rgba(129,133,255,.42) 0%, transparent 58%),
+    radial-gradient(880px 620px at 86% 10%, rgba(99,102,246,.34)  0%, transparent 56%),
+    radial-gradient(820px 620px at 52% 66%, rgba(150,142,255,.26) 0%, transparent 60%),
+    radial-gradient(700px 540px at 90% 88%, rgba(201,240,90,.14)  0%, transparent 58%);
 }
 
 /* =====================================================================
@@ -160,12 +190,14 @@ body,.btn,.fld,input,select,textarea,button{
 /* Ish yuzasi fondan zichroq: matn va forma maydonlari qattiqroq
    yuzada turadi, shaffoflik esa saqlanadi. */
 .card,.ccard{
-  padding:22px;
-  background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.62));
+  padding:26px;
+  /* Yuqoridan pastga yorug'lik: tepasi yorug'roq, pasti shaffofroq —
+     yuza yorug'likni sindirayotgandek ko'rinadi. */
+  background:linear-gradient(160deg,rgba(255,255,255,.62),rgba(255,255,255,.34));
   border-color:rgba(255,255,255,.9);
 }
 /* Cardlar bir-biriga yopishmasin — nafas oladigan masofa */
-.grid,.g2,.g3,.g4{gap:18px}
+.grid,.g2,.g3,.g4{gap:22px}
 
 /* Kichik boshqaruv yuzalari — kichikroq radius */
 .chip,.fchip,.genui-maydon,.genui-plita{border-radius:var(--lg-r-md)}
@@ -174,8 +206,11 @@ body,.btn,.fld,input,select,textarea,button{
    SIDEBAR — kengaygan va yig'ilgan holat
    ===================================================================== */
 .side{
-  border-radius:var(--lg-r-lg);
+  /* Suzuvchi kapsula: fondan ajralib tursin. */
+  border-radius:26px;
   border-left:1px solid var(--lg-l2-line);
+  margin:12px 0 12px 12px;
+  background:rgba(255,255,255,.42);
   transition:width var(--lg-mid) var(--lg-ease),
              padding var(--lg-mid) var(--lg-ease);
 }
@@ -285,8 +320,10 @@ body,.btn,.fld,input,select,textarea,button{
    TOPBAR
    ===================================================================== */
 .topbar{
-  border-radius:var(--lg-r-lg);
+  border-radius:22px;
   border:1px solid var(--lg-l2-line);
+  background:rgba(255,255,255,.46);
+  margin-top:12px;
 }
 .userchip{
   background:var(--lg-l3-bg);
