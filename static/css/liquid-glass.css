@@ -58,16 +58,17 @@
   --lg-r-pill:999px;
 
   /* ---- MATERIAL DARAJALARI ---- */
-  --lg-l2-bg:rgba(255,255,255,.46);
-  --lg-l2-blur:blur(30px) saturate(165%);
+  --lg-l2-bg:rgba(255,255,255,.72);
+  --lg-l2-blur:blur(20px) saturate(120%);
   --lg-l2-line:rgba(255,255,255,.95);
   /* Ikki qatlamli soya: yaqin (shakl) + uzoq (chuqurlik) + ichki
      yuqori highlight (yorug'lik sinishi). Shu uchtasi birga
      bo'lgandagina yuza «material» bo'lib seziladi. */
-  --lg-l2-shadow:0 1px 2px rgba(40,42,110,.05),
-                 0 16px 44px -18px rgba(60,62,140,.22),
-                 inset 0 1px 0 rgba(255,255,255,.95),
-                 inset 0 -18px 30px -22px rgba(120,124,220,.16);
+  /* Ikki qatlam yetarli: yaqin (shakl) + uzoq (ko'tarilish).
+     Ichki pastki nur olib tashlandi — u yuzani kirlantirardi. */
+  --lg-l2-shadow:0 1px 2px rgba(30,32,70,.04),
+                 0 10px 30px -14px rgba(50,52,120,.16),
+                 inset 0 1px 0 rgba(255,255,255,.9);
 
   --lg-l3-bg:rgba(255,255,255,.68);
   --lg-l3-blur:blur(18px) saturate(150%);
@@ -149,13 +150,17 @@ body{
    ko'rinadi va material «shisha»dek o'qiladi.
    --------------------------------------------------------------------- */
 body::before{
+  /* JUDA YUMSHOQ. Avvalgi variantda ranglar kuchli edi va ekran
+     loyqa, arzon ko'rinardi — spetsifikatsiyaning o'zi buni
+     taqiqlaydi: «haddan tashqari gradient emas», «ortiqcha
+     transparency emas». Premium hissi rangdan emas, TARTIBDAN
+     keladi: aniq masofa, toza chegara, o'lchovli soya.
+     Bu qatlam endi faqat sezilar-sezilmas iliqlik beradi. */
   content:"";
   position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(980px 700px at 16% 2%,  rgba(129,133,255,.42) 0%, transparent 58%),
-    radial-gradient(880px 620px at 86% 10%, rgba(99,102,246,.34)  0%, transparent 56%),
-    radial-gradient(820px 620px at 52% 66%, rgba(150,142,255,.26) 0%, transparent 60%),
-    radial-gradient(700px 540px at 90% 88%, rgba(201,240,90,.14)  0%, transparent 58%);
+    radial-gradient(1200px 820px at 14% -6%, rgba(123,124,246,.10) 0%, transparent 60%),
+    radial-gradient(1000px 700px at 92% 4%,  rgba(91,91,239,.07)  0%, transparent 58%);
 }
 
 /* =====================================================================
@@ -177,6 +182,48 @@ body,.btn,.fld,input,select,textarea,button{
 }
 
 /* =====================================================================
+   MASOFA VA IERARXIYA — premium hissining ASOSIY manbai
+   =====================================================================
+   Ikki urinishdan keyin ma'lum bo'ldi: rang bilan ishlash natija
+   bermadi (kuchli — loyqa, kuchsiz — sezilmaydi). Interfeys «oddiy
+   admin panel»dek ko'rinishining sababi boshqa edi: matn mayda,
+   qatorlar zich, hamma element bir xil vaznda.
+
+   Apple darajasidagi hissiyot BO'SH JOY va ISHONCHLI TIPOGRAFIKAdan
+   keladi, bezakdan emas.
+   ===================================================================== */
+
+/* --- Sarlavhalar: ishonchli, lekin ulkan emas --- */
+.page-title{font-size:26px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+.page-sub{font-size:13px;margin-top:3px}
+.sec{font-size:17px;font-weight:670;letter-spacing:-.02em}
+.sec-sub{font-size:13px;margin-top:2px}
+
+/* --- Raqamlar HUKMRON bo'lsin (talab 11) --- */
+.kpi b,.kpi strong,.kpi .val,.genui-plita-qiymat{
+  font-size:29px;font-weight:700;letter-spacing:-.03em;line-height:1.1;
+}
+.kpi{padding:22px 24px}
+.kpi .ic-box,.kpi .ic{width:38px;height:38px;border-radius:12px}
+
+/* --- Yorliqlar: kichik, lekin nafas oladigan --- */
+.fl{margin-bottom:7px;display:block}
+
+/* --- RO'YXAT RITMI: qatorlar zich emas, o'qishga qulay --- */
+.content tbody tr td,.content .row-item,.content li{line-height:1.5}
+.content td{padding-top:13px;padding-bottom:13px}
+.content th{padding-top:11px;padding-bottom:11px}
+
+/* --- Yon menyu: nafas --- */
+.side .nav a{padding:10px 12px;margin-bottom:3px;font-size:13.5px}
+.side .brand{padding-bottom:16px;margin-bottom:6px}
+
+/* --- Umumiy masofa --- */
+.content{padding-top:4px}
+.card+.card,.ccard+.ccard{margin-top:20px}
+.row,.between{gap:12px}
+
+/* =====================================================================
    L2 — GLASS YUZALAR (card, topbar, sidebar)
    ===================================================================== */
 .glass,.card,.ccard{
@@ -193,7 +240,7 @@ body,.btn,.fld,input,select,textarea,button{
   padding:26px;
   /* Yuqoridan pastga yorug'lik: tepasi yorug'roq, pasti shaffofroq —
      yuza yorug'likni sindirayotgandek ko'rinadi. */
-  background:linear-gradient(160deg,rgba(255,255,255,.62),rgba(255,255,255,.34));
+  background:rgba(255,255,255,.76);
   border-color:rgba(255,255,255,.9);
 }
 /* Cardlar bir-biriga yopishmasin — nafas oladigan masofa */
@@ -207,10 +254,10 @@ body,.btn,.fld,input,select,textarea,button{
    ===================================================================== */
 .side{
   /* Suzuvchi kapsula: fondan ajralib tursin. */
-  border-radius:26px;
+  border-radius:24px;
   border-left:1px solid var(--lg-l2-line);
   margin:12px 0 12px 12px;
-  background:rgba(255,255,255,.42);
+  background:rgba(255,255,255,.70);
   transition:width var(--lg-mid) var(--lg-ease),
              padding var(--lg-mid) var(--lg-ease);
 }
@@ -322,7 +369,7 @@ body,.btn,.fld,input,select,textarea,button{
 .topbar{
   border-radius:22px;
   border:1px solid var(--lg-l2-line);
-  background:rgba(255,255,255,.46);
+  background:rgba(255,255,255,.72);
   margin-top:12px;
 }
 .userchip{
