@@ -212,7 +212,14 @@ async function agentYubor() {
     // aks holda ekranda eski soha maydonlari turaveradi.
     if ((j.izlar || []).some(i =>
         i.asbob === 'profilni_faollashtir' || i.asbob === 'profil_saqla')) {
-      if (typeof route === 'function') route();
+      // Soha almashsa MENYU ham o'zgarishi mumkin: modul standarti
+      // boshqa bo'limlar to'plamini beradi (xizmatda ombor yo'q).
+      if (typeof navYukla === 'function') { try { await navYukla(); } catch (e) {} }
+      // `route` global funksiya emas — `renderNav` va `_renderPage`.
+      if (typeof renderNav === 'function') renderNav();
+      if (typeof _renderPage === 'function' && typeof PAGE === 'string') {
+        _renderPage(PAGE);
+      }
     }
   } catch (e) {
     kutish.remove();

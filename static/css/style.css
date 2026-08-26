@@ -245,10 +245,39 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
 
 /* ---------- Login ---------- */
 .login-screen{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
-.login-card{max-width:430px;width:100%;padding:34px 30px;text-align:center}
-.login-card .logo-xl{width:72px;height:72px;border-radius:21px;margin:0 auto 16px;display:grid;place-items:center;color:#fff;background:var(--accent);box-shadow:0 20px 44px -14px rgba(91,95,230,.8)}
-.login-card h1{font-family:var(--serif);font-size:34px;letter-spacing:2.5px}
-.login-card .kicker{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--primary-deep);font-weight:600;margin:7px 0 18px}
+.login-card{max-width:450px;width:100%;padding:28px 30px 24px;text-align:center}
+.login-workspace{display:none;align-items:center;gap:9px;text-align:left;margin:-3px -4px 18px;padding:9px 11px;border-radius:14px;background:linear-gradient(135deg,rgba(154,160,255,.2),rgba(255,255,255,.42));border:1px solid rgba(91,95,230,.16)}
+.login-card-yangi .login-workspace{display:flex}
+.login-workspace-mark{display:grid;place-items:center;width:28px;height:28px;border-radius:10px;flex:none;color:#fff;font-size:12px;font-weight:800;background:var(--accent);box-shadow:0 8px 16px -9px var(--primary-glow)}
+.login-workspace b{display:block;font-size:11.5px;color:var(--ink);line-height:1.2}
+.login-workspace small{display:block;margin-top:2px;font-size:10px;color:var(--ink-3);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px}
+.login-card .logo-xl{width:68px;height:68px;border-radius:20px;margin:0 auto 15px;display:grid;place-items:center;color:#fff;background:var(--accent);box-shadow:0 20px 44px -14px rgba(91,95,230,.8)}
+.login-card h1{font-family:var(--serif);font-size:31px;letter-spacing:.5px;line-height:1.15}
+.login-card .kicker{font-size:10.5px;letter-spacing:1.7px;text-transform:uppercase;color:var(--primary-deep);font-weight:700;margin:7px 0 10px}
+.login-intro{max-width:328px;margin:0 auto 19px;color:var(--ink-2);font-size:12.5px;line-height:1.55}
+.login-fields{text-align:left}
+.login-fields .fl{margin-top:11px}
+.login-fields .fl:first-child{margin-top:0}
+.login-password{position:relative}
+.login-password .fld{padding-right:92px}
+.login-password-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);padding:5px 7px;border:0;border-radius:8px;background:transparent;color:var(--primary-deep);font:inherit;font-size:10.5px;font-weight:700;cursor:pointer}
+.login-password-toggle:hover{background:rgba(91,95,230,.08)}
+.login-submit{width:100%;justify-content:center;margin-top:19px;padding:12px}
+.login-back{width:100%;justify-content:center;margin-top:7px}
+.login-security{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:13px;color:var(--ink-3);font-size:10.5px}
+.login-security span{color:var(--ok);font-size:14px;line-height:1}
+.login-foot{font-size:10.5px;margin-top:9px}
+
+/* ---------- Premium kirish — INNASOFT corporate palette ----------
+   Login mantiqi o'zgarmaydi: bu faqat sahnaning ko'rinishi. O'ngdagi
+   preview haqiqiy ma'lumot ko'rsatmaydi, mahsulotga kirishdan oldingi
+   yo'nalishni tushuntiradigan statik kompozitsiya. */
+.login-screen{background:#f7f0ea;padding:24px;align-items:stretch}
+.login-layout{width:min(1180px,100%);margin:auto;min-height:min(720px,calc(100dvh - 48px));display:grid;grid-template-columns:minmax(360px,.88fr) minmax(460px,1.32fr);background:#fff;box-shadow:0 26px 80px rgba(24,10,55,.18)}
+.login-card{max-width:none;width:auto;padding:34px 42px 28px;display:flex;flex-direction:column;text-align:left;background:#fff}
+.login-wordmark{display:inline-flex;align-items:flex-start;align-self:flex-start;color:#090909;text-decoration:none;font-size:18px;font-weight:950;letter-spacing:-1px}.login-wordmark span{font-size:7px;margin:2px 0 0 2px}
+.login-form-wrap{width:min(345px,100%);margin:auto 0}.login-card .logo-xl{width:44px;height:44px;border-radius:0;margin:0 0 31px;background:#5520cf;box-shadow:none}.login-card h1{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:33px;line-height:.98;letter-spacing:-.07em}.login-card .kicker{font-size:10px;color:#5520cf;letter-spacing:.1em;margin:9px 0 9px}.login-intro{margin:0 0 25px;font-size:12px;color:#5b5754;max-width:300px}.login-fields .fl{font-size:10px;color:#090909;margin-top:13px}.login-fields .fld{height:48px;border:1px solid rgba(9,9,9,.45);border-radius:0;background:#fff;color:#090909;font-size:12px;padding:0 13px}.login-fields .fld:focus{border-color:#5520cf;box-shadow:0 0 0 3px rgba(85,32,207,.12)}.login-password-toggle{color:#5520cf}.login-submit{height:50px;margin-top:19px;border-radius:0;background:#090909!important;box-shadow:none!important;font-size:12px}.login-submit span{margin-left:auto;color:#c9f000;font-size:18px}.login-submit:hover{background:#5520cf!important}.login-back{justify-content:flex-start;width:auto;margin-top:13px;padding-left:0;color:#5b5754!important}.login-security{justify-content:flex-start;margin-top:21px;font-size:10px}.login-security span{color:#5520cf}.login-foot{margin-top:22px;font-size:9.5px;color:#777!important}.login-workspace{margin:20px 0 -12px;padding:8px 10px;border-radius:0;background:#f7f0ea;border:1px solid rgba(9,9,9,.13)}.login-workspace-mark{border-radius:0;background:#5520cf}.login-card-yangi .login-workspace{display:flex}.login-showcase{position:relative;min-height:500px;overflow:hidden;display:flex;flex-direction:column;padding:22px;background:#120a20;color:#fff}.login-showcase:before{content:"";position:absolute;width:360px;height:360px;right:-100px;top:-150px;border-radius:50%;background:#5520cf;filter:blur(10px);opacity:.82}.login-showcase-head{position:relative;z-index:2;display:flex;justify-content:space-between;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:800}.login-showcase-head>span:last-child{display:flex;align-items:center;gap:6px;color:#c9f000}.login-showcase-head i{width:7px;height:7px;border-radius:50%;background:#c9f000}.login-preview{position:relative;z-index:1;display:grid;grid-template-columns:52px 1fr;gap:0;width:92%;margin:auto;min-height:355px;background:#1b1326;border:1px solid rgba(255,255,255,.15);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.46);transform:perspective(1100px) rotateY(-7deg) rotateX(2deg)}.preview-sidebar{padding:16px 0;display:flex;flex-direction:column;align-items:center;gap:15px;background:#100b18;border-radius:18px 0 0 18px}.preview-sidebar b{font-size:9px;color:#c9f000;letter-spacing:-.06em;margin-bottom:12px}.preview-sidebar span{width:15px;height:15px;border:1px solid rgba(255,255,255,.35);border-radius:4px}.preview-sidebar .preview-active{background:#5520cf;border-color:#5520cf;box-shadow:0 0 0 4px rgba(85,32,207,.23)}.preview-main{padding:22px}.preview-greeting{display:flex;justify-content:space-between;align-items:start}.preview-greeting small,.preview-kpis small,.preview-chart small,.preview-ai small{display:block;color:#aaa2b2;font-size:8px}.preview-greeting strong{display:block;margin-top:5px;font-size:17px;letter-spacing:-.06em}.preview-greeting>span{color:#c9f000;font-size:13px}.preview-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:23px}.preview-kpis article{padding:10px 9px;background:#261d31;border-radius:7px}.preview-kpis b{display:block;margin-top:7px;font-size:15px;letter-spacing:-.06em}.preview-kpis i{display:block;width:38%;height:3px;margin-top:10px;background:#c9f000}.preview-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:9px;margin-top:10px}.preview-chart,.preview-ai{min-height:130px;padding:12px;background:#261d31;border-radius:7px}.chart-bars{height:84px;display:flex;align-items:end;gap:5px;padding-top:20px}.chart-bars i{display:block;flex:1;background:#5520cf;border-radius:2px 2px 0 0}.chart-bars i:nth-child(1){height:31%}.chart-bars i:nth-child(2){height:56%}.chart-bars i:nth-child(3){height:42%}.chart-bars i:nth-child(4){height:70%}.chart-bars i:nth-child(5){height:52%}.chart-bars i:nth-child(6){height:86%;background:#c9f000}.chart-bars i:nth-child(7){height:64%}.preview-ai{display:flex;flex-direction:column}.preview-ai>span{display:grid;place-items:center;width:26px;height:26px;margin-bottom:auto;border-radius:50%;background:#c9f000;color:#120a20;font-size:12px}.preview-ai b{font-size:10px;line-height:1.35;margin-top:7px}.login-showcase-caption{position:relative;z-index:2;display:flex;justify-content:space-between;gap:16px;border-top:1px solid rgba(255,255,255,.3);padding-top:13px;font-size:10px}.login-showcase-caption b{max-width:260px}.login-showcase-caption span{color:#c9f000;white-space:nowrap}
+@media(max-width:860px){.login-screen{padding:0;background:#fff;align-items:stretch}.login-layout{min-height:100dvh;grid-template-columns:1fr;box-shadow:none}.login-card{padding:25px 24px 20px;min-height:100dvh}.login-showcase{display:none}.login-form-wrap{margin:auto 0}.login-card .logo-xl{margin-bottom:25px}.login-card h1{font-size:30px}}
 .roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 4px}
 .roles button{font-family:inherit;font-size:11.5px;font-weight:600;padding:9px 6px;border-radius:11px;border:1px solid rgba(91,95,230,.2);background:rgba(255,255,255,.45);color:var(--ink-2);cursor:pointer;transition:.15s}
 .roles button:hover{background:#fff;color:var(--primary-deep);border-color:var(--primary)}
@@ -382,8 +411,15 @@ label.fl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:
    diagramma ikki rangli bo'lib ko'rinadi. */
 .genui-bar-yolak{background:rgba(128,128,128,.16);border-radius:6px;
   height:8px;overflow:hidden}
+/* TRANSFORM, `width` EMAS. `width` ni animatsiya qilish har kadrda
+   layoutni qayta hisoblatadi; `transform` esa kompozitor qatlamida
+   ishlaydi. Kenglik 100% bo'lib turadi, nisbat `scaleX` bilan
+   beriladi (JS `genui.js` da qo'yadi). Kirish harakati — `ease-out`. */
 .genui-bar{height:100%;border-radius:6px;background:var(--primary);
-  transition:width .35s ease}
+  width:100%;transform-origin:left center;transform:scaleX(0);
+  transition:transform .35s ease-out}
+/* Kirish animatsiyasisiz chizilishi uchun JS qiymatni darrov qo'yadi;
+   `scaleX(0)` faqat qiymat kelmagan holatdagi zaxira ko'rinish. */
 .genui-b-ok{background:var(--ok)} .genui-b-warn{background:var(--warn)}
 .genui-b-dn{background:var(--danger)}
 .genui-bar-son{font-weight:600;font-size:11px;white-space:nowrap}

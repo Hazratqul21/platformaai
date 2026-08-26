@@ -117,7 +117,15 @@ const GENUI_CHIZUVCHI = {
       const yolak = el('div', 'genui-bar-yolak');
       const chiziq = el('div', 'genui-bar ' +
         (e.holat ? 'genui-b-' + (GENUI_RANG[e.holat] || 'mut') : ''));
-      chiziq.style.width = Math.max(2, Math.abs(qiymat) / eng * 100) + '%';
+      // Nisbat `scaleX` bilan beriladi — `width` ni animatsiya qilish
+      // har kadrda layoutni qayta hisoblatadi.
+      //
+      // KIRISH ANIMATSIYASI ATAYLAB YO'Q. Diagramma bir marta
+      // chiziladi, o'sib chiqishi ma'no bermaydi — bezak bo'lardi.
+      // Qiymat darrov qo'yiladi; `transition` esa qiymat KEYIN
+      // o'zgarsa (yangi javob kelsa) yumshoq o'tish beradi.
+      chiziq.style.transform =
+        'scaleX(' + Math.max(0.02, Math.abs(qiymat) / eng) + ')';
       yolak.appendChild(chiziq);
       qator.appendChild(yolak);
       qator.appendChild(el('div', 'genui-bar-son',
@@ -199,7 +207,21 @@ const GENUI_CHIZUVCHI = {
         tugma.remove();
         // Amal tizimni o'zgartirgan bo'lishi mumkin (profil, maqom) —
         // sahifani yangilaymiz, aks holda ekranda eskisi turaveradi.
-        if (typeof route === 'function') route();
+        //
+        // MENYU ham serverdan qayta olinadi. `route()` yon menyuni
+        // XOTIRADAGI ro'yxatdan chizadi va u kirish paytida bir marta
+        // yuklangan — shuning uchun «bu bo'limni olib tashla» amali
+        // bajarilsa ham bo'lim ekranda turaverardi va foydalanuvchi
+        // «ishlamadi» deb qolardi.
+        if (typeof navYukla === 'function') { try { await navYukla(); } catch (e) {} }
+        // DIQQAT: `route` degan global funksiya YO'Q — bu shart hech
+        // qachon bajarilmagan, ya'ni tasdiqlangan amaldan keyin ekran
+        // umuman yangilanmasdi. Haqiqiy nomlar: `renderNav` (yon menyu)
+        // va `_renderPage` (joriy sahifa).
+        if (typeof renderNav === 'function') renderNav();
+        if (typeof _renderPage === 'function' && typeof PAGE === 'string') {
+          _renderPage(PAGE);
+        }
       } catch (e) {
         holat.textContent = '✕ ' + (e.message || e);
         holat.className = 'genui-holat genui-t-dn';

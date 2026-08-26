@@ -42,6 +42,34 @@ MIGRATSIYALAR: list[tuple[str, str, str]] = [
     ("users", "parol_almashtirilsin", "BOOLEAN NOT NULL DEFAULT FALSE"),
 ]
 
+# ---------------------------------------------------------------------
+# INDEKSLAR
+#
+# PostgreSQL tashqi kalitga indeksni O'ZI QO'YMAYDI. Shuning uchun
+# `orders.client_id` bo'yicha qidirish jadvalni to'liq o'qib chiqadi.
+# Hozir jadvallar kichik (100–500 qator) va bu sezilmaydi, lekin
+# ma'lumot o'sishi bilan qarz yoshi, mijoz kartochkasi va kassa
+# jurnali sekinlashadi.
+#
+# Faqat KODDA HAQIQATAN filtrlanadigan ustunlar tanlangan (so'rovlar
+# bo'yicha sanab chiqildi) — «har ehtimolga qarshi» indeks yozuvni
+# sekinlashtiradi va joy egallaydi.
+#
+# (jadval, ustunlar) — nom avtomat yasaladi: ix_<jadval>_<ustunlar>
+INDEKSLAR: list[tuple[str, str]] = [
+    ("orders", "client_id"),        # mijoz kartochkasi, qarz hisobi
+    ("orders", "status"),           # faol/arxiv ro'yxati
+    ("payments", "client_id"),      # mijoz to'lovlari, qarz yoshi
+    ("payments", "order_id"),       # buyurtma to'lovi
+    ("kassa_entries", "entry_at"),  # kassa jurnali sana bo'yicha
+    ("purchases", "supplier_id"),   # yetkazib beruvchi qarzi
+    ("purchase_payments", "purchase_id"),
+    ("cash_entries", "employee_id"),  # xodim avansi
+    ("stock_moves", "order_id"),
+    ("material_moves", "material_id"),
+    ("audit_logs", "at"),           # jurnal oxiridan o'qiladi
+]
+
 
 def _postgres(engine) -> bool:
     return engine.dialect.name == "postgresql"
@@ -98,6 +126,22 @@ def run_migrations(engine) -> list[str]:
                               f"{ustun} {_ddl_tur(engine, tur)}"))
             qoshildi.append(f"{jadval}.{ustun}")
             log.info("Migratsiya: %s.%s ustuni qo'shildi", jadval, ustun)
+
+        # --- INDEKSLAR ---
+        # `IF NOT EXISTS` ikkala bazada ham bor — idempotent.
+        for jadval, ustun in INDEKSLAR:
+            if jadval not in mavjud_jadvallar:
+                continue
+            ustunlar = {c["name"] for c in insp.get_columns(jadval)}
+            if ustun not in ustunlar:
+                continue
+            nom = f"ix_{jadval}_{ustun}"
+            if nom in {i["name"] for i in insp.get_indexes(jadval)}:
+                continue
+            conn.execute(text(f'CREATE INDEX IF NOT EXISTS "{nom}" '
+                              f'ON "{jadval}" ("{ustun}")'))
+            qoshildi.append(nom)
+            log.info("Migratsiya: %s indeksi yaratildi", nom)
 
     if not qoshildi:
         log.info("Migratsiya: baza allaqachon yangi — o'zgarish yo'q")
