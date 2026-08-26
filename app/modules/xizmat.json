@@ -65,5 +65,19 @@
         "Menejer"
       ]
     }
+  ],
+  "bolimlar": [
+    "calc",
+    "orders",
+    "crm",
+    "dash",
+    "ai",
+    "hr",
+    "fin",
+    "kassa",
+    "hisob",
+    "exp",
+    "set",
+    "help"
   ]
 }

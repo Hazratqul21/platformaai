@@ -48,6 +48,7 @@ with TestClient(app) as c:
         "login": "aziz@mebel.uz", "parol": "MebelParol9",
         "akkaunt_kod": "mebelsex", "akkaunt_nom": "Mebel Sex MCHJ",
         "inn": "301234567", "soha": "mebel"})
+    r_royxat = r
     ok(r.status_code == 200, f"ro'yxatdan o'tish javobi {r.status_code}")
     ok(r.json().get("manzil") == "https://mebelsex.innasoft.uz",
        f"subdomen manzili: {r.json().get('manzil')}")
@@ -58,9 +59,16 @@ with TestClient(app) as c:
        f"({h.get('izoh') or 'izohsiz'})")
 
     print("\n3. AKKAUNT SUBDOMENIDA ERP GA KIRISH")
+    # ERP LOGINI — odam ro'yxatdan o'tishda O'ZI yozgani.
+    # Ilgari ERP da foydalanuvchi qat'iy «admin» nomi bilan yaratilardi:
+    # odam o'z telefoni/emaili bilan kirmoqchi bo'lardi va «login yoki
+    # parol xato» olardi, hech qayerda logini «admin» ekani aytilmasdi.
+    # Ya'ni ro'yxatdan o'tgan mijoz o'z tizimiga KIRA OLMASDI.
+    ok(r_royxat.json().get("erp_login") == "aziz@mebel.uz",
+       f"javobda ERP logini qaytdi: {r_royxat.json().get('erp_login')}")
     # Host sarlavhasi orqali middleware akkauntni aniqlaydi.
     r = c.post("/api/auth/login",
-               json={"login": "admin", "password": "MebelParol9"},
+               json={"login": "aziz@mebel.uz", "password": "MebelParol9"},
                headers={"host": "mebelsex.innasoft.uz"})
     ok(r.status_code == 200, f"ERP login javobi {r.status_code}")
     tok = r.json().get("token")
@@ -68,6 +76,11 @@ with TestClient(app) as c:
     # Ro'yxatda parol berilgani uchun majburiy almashtirish YO'Q
     ok(not r.json().get("parol_almashtirilsin"),
        "parol ro'yxatda o'rnatilgani uchun majburiy almashtirish yo'q")
+    r_adm = c.post("/api/auth/login",
+                   json={"login": "admin", "password": "MebelParol9"},
+                   headers={"host": "mebelsex.innasoft.uz"})
+    ok(r_adm.status_code == 401,
+       f"eski «admin» logini endi yo'q ({r_adm.status_code})")
 
     print("\n4. TANLANGAN SOHA FAOL BO'LDIMI")
     r = c.get("/api/soha/joriy", headers={"host": "mebelsex.innasoft.uz",
@@ -80,7 +93,8 @@ with TestClient(app) as c:
     c.post("/api/platforma/royxat", json={
         "login": "guli@non.uz", "parol": "NonParol99",
         "akkaunt_kod": "nonzavod", "akkaunt_nom": "Non Zavodi", "soha": "non"})
-    r = c.post("/api/auth/login", json={"login": "admin", "password": "NonParol99"},
+    r = c.post("/api/auth/login",
+               json={"login": "guli@non.uz", "password": "NonParol99"},
                headers={"host": "nonzavod.innasoft.uz"})
     tok2 = r.json().get("token")
     ok(bool(tok2), "ikkinchi akkaunt admini kirdi")

@@ -278,16 +278,32 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
             for k, t in domain.modullar().items()]}
 
     if nom == "profillarni_kor":
-        return {"profillar": [
-            {"kalit": p.kalit, "nom": p.nom, "faol": p.faol}
-            for p in db.query(m.SohaProfil).order_by(m.SohaProfil.id).all()]}
+        # IKKI MANBA: mijoz bazasidagi profillar + platforma
+        # shablonlari (fayllarda). Yangi akkaunt bazasiga faqat o'z
+        # sohasi tushadi, qolgan 30 tasi shablon bo'lib turaveradi —
+        # sozlash yordamchisi ularni baribir namuna qilib ola oladi.
+        oz = [{"kalit": p.kalit, "nom": p.nom, "faol": p.faol,
+               "manba": "akkaunt"}
+              for p in db.query(m.SohaProfil).order_by(m.SohaProfil.id).all()]
+        bor = {x["kalit"] for x in oz}
+        shablon = [{"kalit": k, "nom": t.get("nom", k), "faol": False,
+                    "manba": "shablon"}
+                   for k, t in sorted(domain.shablonlar().items())
+                   if k not in bor]
+        return {"profillar": oz + shablon,
+                "eslatma": ("`manba: shablon` — platforma namunasi, mijoz "
+                            "bazasida yo'q. Faollashtirilsa avtomat "
+                            "ko'chiriladi.")}
 
     if nom == "profilni_oqi":
         p = db.query(m.SohaProfil).filter(
             m.SohaProfil.kalit == kirish["kalit"]).first()
-        if not p:
+        if p:
+            return {"tarif": json.loads(p.tarif_json), "manba": "akkaunt"}
+        tarif = domain.shablonlar().get(kirish["kalit"])
+        if tarif is None:
             return {"xato": f"'{kirish['kalit']}' profili topilmadi"}
-        return {"tarif": json.loads(p.tarif_json)}
+        return {"tarif": tarif, "manba": "shablon"}
 
     if nom == "profil_saqla":
         tarif = kirish["tarif"]
@@ -538,6 +554,146 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
             "olingan_mol_qiymati": float(jami), "jami_tolov": float(tolangan),
             "qoldiq_qarz": float(bal["debt"])}
 
+    if nom == "bolimlarni_kor":
+        from . import bolimlar as b
+        royxat = b.toliq(db, domain.profil().modul.kalit)
+        return {
+            "yoqilgan": [{"kalit": x["kalit"], "nom": x["nom"],
+                          "majburiy": x["majburiy"]}
+                         for x in royxat if x["faol"]],
+            "ochirilgan": [{"kalit": x["kalit"], "nom": x["nom"]}
+                           for x in royxat if not x["faol"]],
+            "eslatma": ("`dash`, `ai`, `set`, `help` — MAJBURIY, olib "
+                        "tashlab bo'lmaydi. O'zgartirish uchun "
+                        "`bolimlarni_sozla` amalini taklif qiling va "
+                        "KERAKLI bo'limlarning HAMMASINI sanang "
+                        "(ro'yxat butunlay almashadi, qo'shilmaydi)."),
+        }
+
+    # --- PUL VA HISOB ------------------------------------------------
+    def _sana_ol(kalit, standart=None):
+        """AI yuborgan sanani o'qiydi. Buzuq bo'lsa — standart."""
+        from datetime import datetime as _dt
+        xom = (kirish.get(kalit) or "").strip()
+        if not xom:
+            return standart
+        try:
+            return _dt.strptime(xom[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return standart
+
+    if nom in ("kassa_harakati", "xarajat_tahlili"):
+        dan, gacha = _sana_ol("dan"), _sana_ol("gacha")
+        q = db.query(m.KassaEntry)
+        if dan:
+            q = q.filter(m.KassaEntry.entry_at >= dan)
+        if gacha:
+            q = q.filter(m.KassaEntry.entry_at <= gacha)
+        yozuvlar = q.all()
+        if not yozuvlar:
+            return {"xabar": "Bu davrda kassa yozuvi yo'q",
+                    "davr": {"dan": str(dan or "boshidan"),
+                             "gacha": str(gacha or "bugungacha")}}
+
+        NOL = Decimal("0")
+        kirim = sum((Decimal(str(y.amount)) for y in yozuvlar
+                     if y.direction == "Kirim"), NOL)
+        chiqim = sum((Decimal(str(y.amount)) for y in yozuvlar
+                      if y.direction == "Chiqim"), NOL)
+
+        def _tur_kaliti(matn: str) -> str:
+            """Bir xil turni BIR qatorga yig'adi.
+
+            Excel dan kelgan ma'lumotda bir tur to'rt xil yozilgan
+            bo'lishi mumkin: «зарплата», «Зарплата», «зарплата · oylik
+            (sanasiz)». Ularni ajratib ko'rsatsak AI to'rtta alohida
+            xarajat deb o'qiydi va «oylik 30% ekan» deb xato xulosa
+            chiqaradi — aslida u 90%.
+            """
+            asos = (matn or "").split("·")[0].strip()
+            return asos.lower() or "(ko'rsatilmagan)"
+
+        def _guruh(qaysi, kalit_fn, birlashtir: bool = False):
+            jam = {}
+            for y in yozuvlar:
+                if y.direction != qaysi:
+                    continue
+                xom = kalit_fn(y) or "(ko'rsatilmagan)"
+                k = _tur_kaliti(xom) if birlashtir else xom
+                bor = jam.setdefault(k, [Decimal("0"), 0, xom])
+                bor[0] += Decimal(str(y.amount))
+                bor[1] += 1
+            return sorted(({"nom": (v[2].split("·")[0].strip() if birlashtir
+                                    else k) or k,
+                            "summa": float(v[0]), "soni": v[1]}
+                           for k, v in jam.items()),
+                          key=lambda x: -x["summa"])
+
+        # Oylik dinamika — «o'tgan oyga nisbatan qanday» savoli uchun
+        oylik = {}
+        for y in yozuvlar:
+            oy = y.entry_at.strftime("%Y-%m") if y.entry_at else "?"
+            bor = oylik.setdefault(oy, [Decimal("0"), Decimal("0")])
+            if y.direction == "Kirim":
+                bor[0] += Decimal(str(y.amount))
+            else:
+                bor[1] += Decimal(str(y.amount))
+        oylar = [{"oy": k, "kirim": float(v[0]), "chiqim": float(v[1])}
+                 for k, v in sorted(oylik.items())]
+
+        if nom == "kassa_harakati":
+            return {
+                "davr": {"dan": str(dan or "boshidan"),
+                         "gacha": str(gacha or "bugungacha")},
+                "yozuvlar_soni": len(yozuvlar),
+                "kirim": float(kirim), "chiqim": float(chiqim),
+                "qoldiq": float(kirim - chiqim),
+                "oylar": oylar,
+                "chiqim_turlari": _guruh("Chiqim", lambda y: (y.note or "").strip(), True)[:12],
+                "kirim_turlari": _guruh("Kirim", lambda y: (y.note or "").strip(), True)[:12],
+                "eng_kop_chiqim_kimga": _guruh("Chiqim", lambda y: (y.who or "").strip(), True)[:10],
+            }
+
+        # xarajat_tahlili — faqat chiqim, ulushi foizda
+        nechta = int(kirish.get("nechta") or 10)
+        turlar = _guruh("Chiqim", lambda y: (y.note or "").strip(), True)
+        for t in turlar:
+            t["ulush_foiz"] = round(t["summa"] / float(chiqim) * 100, 1) \
+                if chiqim else 0
+        eng_katta = sorted((y for y in yozuvlar if y.direction == "Chiqim"),
+                           key=lambda y: -Decimal(str(y.amount)))[:10]
+        return {
+            "davr": {"dan": str(dan or "boshidan"),
+                     "gacha": str(gacha or "bugungacha")},
+            "jami_xarajat": float(chiqim),
+            "turlar": turlar[:nechta],
+            "kimga": _guruh("Chiqim", lambda y: (y.who or "").strip(), True)[:nechta],
+            "oylik": oylar,
+            "eng_katta_yozuvlar": [
+                {"sana": y.entry_at.isoformat() if y.entry_at else None,
+                 "kim": y.who, "izoh": y.note, "summa": float(y.amount)}
+                for y in eng_katta],
+        }
+
+    if nom == "buxgalteriya_hisoboti":
+        from .hisob import xizmat as _gl
+        dan, gacha = _sana_ol("dan"), _sana_ol("gacha")
+        fz = _gl.foyda_zarar(db, dan, gacha)
+        qn = _gl.aylanma_qaydnoma(db, dan, gacha)
+        qatorlar = qn.get("qatorlar", qn) if isinstance(qn, dict) else qn
+        return {
+            "davr": {"dan": str(dan or "boshidan"),
+                     "gacha": str(gacha or "bugungacha")},
+            "daromad": float(fz["daromad"]),
+            "xarajat": float(fz["xarajat"]),
+            "foyda": float(fz["foyda"]),
+            "schetlar": [
+                {"kod": x["kod"], "nom": x["nom"], "tur": x.get("tur", ""),
+                 "qoldiq": float(x["qoldiq"])}
+                for x in (fz.get("tafsilot") or [])],
+            "aylanma_schetlar_soni": len(qatorlar) if qatorlar else 0,
+        }
+
     if nom == "korsat":
         xom = kirish.get("komponentlar_json")
         # Ba'zi model to'g'ridan-to'g'ri ro'yxat yuborishi mumkin —
@@ -617,6 +773,53 @@ def _javobni_qisqartir(natija: dict) -> dict:
     return qisqa
 
 
+class LimitTugadi(RuntimeError):
+    """Akkauntning shu oygi AI limiti tugagan — so'rov YUBORILMAYDI.
+
+    Router buni 402 ga aylantiradi: «to'lov kerak», ya'ni xato emas,
+    chegara. ERP ning qolgan qismi ishlayveradi — to'xtaydigan faqat AI.
+    """
+
+
+def _limit_tekshir() -> None:
+    """LLM ga so'rov ketishidan OLDIN oylik limitni tekshiradi.
+
+    NEGA SHU YERDA: `suhbat_oqim` — hamma yo'lning yagona darvozasi
+    (`/xabar`, `/oqim`, Telegram bot, testlar). Routerga qo'yilsa
+    bittasi unutilardi.
+
+    Ilgari limit FAQAT ko'rsatilardi (`kabinet.py`, `admin.py`) va
+    hech qayerda to'xtatmasdi: limit qo'ygan mijoz uni istagancha
+    oshib ketardi, sarf esa faqat KEYIN yozilardi.
+
+    Tekshiruvning O'ZI yiqilsa — AI to'xtatilmaydi (ogohlantirish
+    yoziladi). Boshqaruv bazasi javob bermayotgan bo'lsa, tizimning
+    boshqa qismi ham allaqachon ishlamayapti; sarfni yozib bo'lmagani
+    uchun odamni javobsiz qoldirish yechim emas.
+    """
+    from . import tenancy
+    akkaunt = tenancy.joriy() if tenancy.yoqilganmi() else None
+    if not akkaunt:
+        return                       # yagona rejim — limit tushunchasi yo'q
+    try:
+        from .platforma.db import BoshqaruvSession
+        from .platforma import xizmat as px
+        bdb = BoshqaruvSession()
+        try:
+            holat = px.limit_holati(bdb, akkaunt.id)
+        finally:
+            bdb.close()
+    except Exception:                                  # noqa: BLE001
+        log.warning("AI limitini tekshirib bo'lmadi — so'rov o'tkazildi")
+        return
+    if holat["toxtatilsin"]:
+        raise LimitTugadi(
+            f"Shu oyda AI uchun belgilangan limit tugadi: "
+            f"{holat['som']:.0f} / {holat['limit_som']:.0f} so'm. "
+            f"Limitni obuna bo'limidan oshiring — ERP ning qolgan "
+            f"qismi ishlayveradi.")
+
+
 def _ai_sarf_yoz(javob: dict, agent_kalit: str, user_login: str = "") -> None:
     """AI so'rovini boshqaruv bazasidagi `ai_sarf` ga yozadi.
 
@@ -665,6 +868,10 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "yordamchi",
     `suhbat()` shu generatorning ustiga qurilgan — eski chaqiruvchilar
     (masalan Telegram bot) o'zgarishsiz ishlayveradi.
     """
+    # LIMIT — birinchi qadam. Model chaqirilgandan keyin tekshirish
+    # kech: pul allaqachon sarflangan bo'lardi.
+    _limit_tekshir()
+
     # Eski agent kalitlari («moliya», «ombor»…) ham qabul qilinadi —
     # hammasi BITTA yordamchiga olib boradi (eski havolalar buzilmasin).
     if agent_kalit not in AGENTLAR:
@@ -947,6 +1154,76 @@ ishi. Sen hisoblaysan va ko'rsatasan.""",
 
 # Har asbobni qaysi rol ishlatishi mumkin. Eski AGENTLAR dagi
 # `rollar` maydonlarining BIRLASHMASI — himoya kuchi o'zgarmadi.
+# --- PUL VA HISOB ASBOBLARI ---------------------------------------
+#
+# NEGA KERAK EDI. Agentning asboblari ishlab chiqarish zanjiriga
+# qurilgan edi: ombor qoldig'i, buyurtma retsepti, mijoz qarzi.
+# XIZMAT biznesi (bilyard klubi, gilam yuvish, ta'lim markazi) esa
+# kunini KASSA JURNALIDA o'tkazadi — ijara to'laydi, oylik beradi,
+# tushum yozadi. Bunday mijozda AI ko'radigan narsa deyarli yo'q edi:
+# 177 kassa yozuvi bor, agent esa faqat yalpi qoldiqni ko'rardi va
+# «nimaga ko'p ketyapti» degan savolga javob bera olmasdi.
+HAMMA_ASBOBLAR += [
+    {
+        "nom": "kassa_harakati",
+        "izoh": ("Kassa jurnali: kirim/chiqim, oylar kesimi, tur bo'yicha "
+                 "taqsimot va eng ko'p uchraydigan tomonlar. Davr "
+                 "berilmasa — butun tarix. «Bu oy qancha ketdi», «kassada "
+                 "qancha qoldi» kabi savollarga shu asbob javob beradi."),
+        "sxema": {
+            "type": "object",
+            "properties": {
+                "dan": {"type": "string", "description": "YYYY-MM-DD (ixtiyoriy)"},
+                "gacha": {"type": "string", "description": "YYYY-MM-DD (ixtiyoriy)"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "nom": "xarajat_tahlili",
+        "izoh": ("Xarajatlar tahlili: qaysi turga qancha ketgan, ulushi "
+                 "foizda, eng katta yozuvlar va oylik dinamika. Tejash "
+                 "taklifini shu raqamlarga tayanib bering."),
+        "sxema": {
+            "type": "object",
+            "properties": {
+                "dan": {"type": "string", "description": "YYYY-MM-DD (ixtiyoriy)"},
+                "gacha": {"type": "string", "description": "YYYY-MM-DD (ixtiyoriy)"},
+                "nechta": {"type": "integer", "description": "Nechta tur (standart 10)"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "nom": "buxgalteriya_hisoboti",
+        "izoh": ("Bosh kitobdan foyda-zarar va aylanma qaydnoma: daromad, "
+                 "xarajat, foyda va schetlar kesimi. Buxgalteriya raqamlari "
+                 "kerak bo'lganda shu asbobni chaqiring."),
+        "sxema": {
+            "type": "object",
+            "properties": {
+                "dan": {"type": "string", "description": "YYYY-MM-DD (ixtiyoriy)"},
+                "gacha": {"type": "string", "description": "YYYY-MM-DD (ixtiyoriy)"},
+            },
+            "additionalProperties": False,
+        },
+    },
+]
+
+
+HAMMA_ASBOBLAR += [
+    {
+        "nom": "bolimlarni_kor",
+        "izoh": ("Yon menyu holati: hozir qaysi bo'limlar yoqilgan, qaysilari "
+                 "o'chirilgan, va tizimda umuman qanday bo'limlar bor. "
+                 "Mijoz «menga bu bo'lim kerak emas» yoki «kassa qo'sh» desa "
+                 "AVVAL shuni chaqiring — kalitlarni shundan olasiz, keyin "
+                 "`bolimlarni_sozla` amalini TAKLIF qilasiz."),
+        "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+]
+
+
 ASBOB_ROLLARI = {
     # Tizimni sozlash — faqat Rahbar (profil yaratadi/o'zgartiradi)
     "modullarni_kor":       ["Rahbar"],
@@ -964,6 +1241,12 @@ ASBOB_ROLLARI = {
     "qarzdorlar":        ["Rahbar", "Buxgalter"],
     "pul_holati":        ["Rahbar", "Buxgalter"],
     "mijoz_hisobi":      ["Rahbar", "Buxgalter"],
+    # Kassa va buxgalteriya — pul ma'lumoti, moliya doirasida
+    "kassa_harakati":        ["Rahbar", "Buxgalter"],
+    "xarajat_tahlili":       ["Rahbar", "Buxgalter"],
+    "buxgalteriya_hisoboti": ["Rahbar", "Buxgalter"],
+    # Menyu tuzilishi — tizim sozlamasi, faqat Rahbar
+    "bolimlarni_kor":        ["Rahbar"],
 }
 
 YORDAMCHI_KALIT = "yordamchi"

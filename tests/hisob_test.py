@@ -47,7 +47,17 @@ print("=" * 62 + "\n")
 print("1. HISOBLAR REJASI VA QOIDALAR YUKLANDI")
 n_s, n_q = gl.yukla(db)
 ok(n_s >= 25, f"{n_s} schet yuklandi (BHMS №21)")
-ok(n_q == 10, f"{n_q} provodka qoidasi")
+ok(n_q >= 12, f"{n_q} provodka qoidasi")
+# Aniq SON emas, KERAKLI qoida bor-yo'qligi tekshiriladi: yangi hodisa
+# qo'shilganda sinov behuda yiqilmasin, lekin mavjudi yo'qolsa tutilsin.
+# `kassa_kirim`/`kassa_chiqim` — xizmat biznesining asosiy hodisasi
+# (bilyard klubida 177 kassa yozuvi bor edi, Bosh kitob esa bo'sh).
+_kerakli = {"buyurtma_topshirildi", "mijoz_tolovi", "material_kirim",
+            "ish_haqi_tolandi", "sex_xarajati", "mamuriy_xarajat",
+            "kassa_kirim", "kassa_chiqim"}
+_bor = {q.hodisa for q in db.query(m.ProvodkaQoida).all()}
+ok(_kerakli <= _bor, f"kerakli qoidalar joyida (yetishmaydi: "
+                     f"{sorted(_kerakli - _bor) or 'yo`q'})")
 ok(db.query(m.Schet).filter(m.Schet.kod == "4010").first() is not None,
    "4010 (xaridorlardan olinadigan) bor")
 # Ikkinchi marta yuklash takrorlamasin

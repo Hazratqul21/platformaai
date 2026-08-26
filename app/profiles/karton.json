@@ -123,5 +123,120 @@
     "tur_zaxira": "{layers} слой",
     "hujjat_mahsulot": "Гофра қути {olcham} мм, {tarkib}",
     "nakladnoy_mahsulot": "Картон қути {olcham} мм, {tarkib}"
+  },
+  "modul": "ishlab_chiqarish",
+  "kataloglar": {
+    "birliklar": [
+      "dona",
+      "kg",
+      "m²",
+      "litr",
+      "rulon",
+      "paket",
+      "list",
+      "metr"
+    ],
+    "lavozimlar": [
+      "Stanokchi",
+      "Yordamchi",
+      "Kleychi",
+      "Kashirovkachi",
+      "Flekso operatori",
+      "Kesuvchi",
+      "Laminatchi",
+      "Bosmachi"
+    ],
+    "kategoriyalar": [
+      "Qog'oz",
+      "Karton",
+      "Gofrokarton",
+      "Kley",
+      "Bo'yoq",
+      "Lak",
+      "Plyonka",
+      "Boshqa"
+    ],
+    "xizmatlar": [
+      {
+        "nom": "Laminatsiya",
+        "narx": 2500,
+        "birlik": "m²",
+        "formula": "x*y*n"
+      },
+      {
+        "nom": "Noj (pichoq)",
+        "narx": 150000,
+        "birlik": "dona",
+        "formula": "n"
+      },
+      {
+        "nom": "Tisneniye",
+        "narx": 3000,
+        "birlik": "m²",
+        "formula": "x*y*n"
+      },
+      {
+        "nom": "Viborochniy lak",
+        "narx": 2000,
+        "birlik": "m²",
+        "formula": "x*y*n"
+      },
+      {
+        "nom": "Matoviy lak",
+        "narx": 1800,
+        "birlik": "m²",
+        "formula": "x*y*n"
+      },
+      {
+        "nom": "Glyansoviy lak",
+        "narx": 1800,
+        "birlik": "m²",
+        "formula": "x*y*n"
+      },
+      {
+        "nom": "Laklash (umumiy)",
+        "narx": 1500,
+        "birlik": "m²",
+        "formula": "x*y*n"
+      },
+      {
+        "nom": "Bosma (1 rang)",
+        "narx": 120,
+        "birlik": "dona",
+        "formula": "n"
+      }
+    ],
+    "formulalar": [
+      {
+        "nom": "Tekis qavat (layner), kg",
+        "ifoda": "x*y*g*n/1000",
+        "izoh": "1 tekis qavat og'irligi: m² × grammaj ÷ 1000"
+      },
+      {
+        "nom": "Gofra qavat (fluting), kg",
+        "ifoda": "x*y*g*1.35*n/1000",
+        "izoh": "Gofra qavat 1.35 koef. bilan"
+      },
+      {
+        "nom": "3-qavat karton, kg",
+        "ifoda": "x*y*(2*g+1.35*gf)*n/1000",
+        "izoh": "2 layner (g) + 1 fluting (gf)"
+      },
+      {
+        "nom": "Kley, kg",
+        "ifoda": "x*y*0.01*n",
+        "izoh": "Kraxmal kley ~10 g/m²"
+      },
+      {
+        "nom": "Laminatsiya, m²",
+        "ifoda": "x*y*n",
+        "izoh": "Qoplama maydoni"
+      },
+      {
+        "nom": "Lak, m²",
+        "ifoda": "x*y*n",
+        "izoh": "Laklanadigan maydon"
+      }
+    ]
   }
 }

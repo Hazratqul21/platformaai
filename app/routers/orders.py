@@ -616,7 +616,9 @@ def set_status(oid: int, status: str, db: Session = Depends(get_db), user=Depend
         raise HTTPException(400, f"'{status}' — bu ish tartibida yo'q maqom. "
                                  f"Mumkin: {', '.join(md.nomlar)}")
 
-    if user.role != "Rahbar" and user.role not in yangi.rollar:
+    from .. import rollar as _r
+    _asos = _r.asos(db, user.role)
+    if _asos != _r.ENG_YUQORI and _asos not in yangi.rollar:
         raise HTTPException(403, f"{user.role} roliga '{status}' maqomini o'rnatish ruxsat etilmaydi")
 
     joriy = md.status(o.status)

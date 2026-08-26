@@ -1,0 +1,173 @@
+{
+  "kalit": "bilyard",
+  "nom": "Bilyard klubi",
+  "modul": "xizmat",
+  "izoh": "Stol vaqtga beriladi, yonida bar ishlaydi. Miqdor — SOAT.",
+  "maydonlar": [
+    {
+      "kalit": "stol_raqami",
+      "nom": "Stol raqami",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "stol_turi",
+      "nom": "Stol turi",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Rus piramidasi",
+        "Pul (amerikanka)",
+        "Snuker",
+        "VIP xona"
+      ]
+    },
+    {
+      "kalit": "tarif",
+      "nom": "Tarif",
+      "tur": "matn",
+      "majburiy": true,
+      "variantlar": [
+        "Kunduzgi",
+        "Kechki",
+        "Dam olish kuni",
+        "Abonement"
+      ]
+    },
+    {
+      "kalit": "soatlik_narx",
+      "nom": "Bir soat narxi",
+      "tur": "kasr",
+      "birlik": "so'm",
+      "majburiy": true,
+      "min": "0"
+    },
+    {
+      "kalit": "boshlanish_vaqti",
+      "nom": "O'yin boshlangan vaqt",
+      "tur": "matn",
+      "majburiy": false
+    },
+    {
+      "kalit": "oyinchilar",
+      "nom": "O'yinchilar soni",
+      "tur": "butun",
+      "standart": "2",
+      "min": "1",
+      "max": "12"
+    },
+    {
+      "kalit": "bar_summasi",
+      "nom": "Bar hisobi (ichimlik, taom)",
+      "tur": "kasr",
+      "birlik": "so'm",
+      "standart": "0",
+      "min": "0"
+    }
+  ],
+  "olchov": {
+    "birlik": "soat",
+    "kasrli": true,
+    "min": "0.5",
+    "max": "24"
+  },
+  "narx": {
+    "usul": "qolda",
+    "izoh": "Narx = soatlik tarif × soat + bar hisobi. Tarif kunduz/kechga qarab o'zgaradi, shuning uchun qo'lda kiritiladi."
+  },
+  "retsept": [],
+  "matnlar": {
+    "olcham": "{qty} soat, soatiga {soatlik_narx} so'm",
+    "tarkib": "{stol_turi} — {stol_raqami}-stol",
+    "tur": "{stol_turi}",
+    "tur_zaxira": "bilyard",
+    "hujjat_mahsulot": "{tarkib}, {tarif} tarif, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  },
+  "kataloglar": {
+    "birliklar": [
+      "soat",
+      "dona",
+      "litr",
+      "portsiya",
+      "kg"
+    ],
+    "lavozimlar": [
+      "Administrator",
+      "Barmen",
+      "Kassir",
+      "Marker (hakam)",
+      "Farrosh",
+      "Qo'riqchi",
+      "Oshpaz"
+    ],
+    "kategoriyalar": [
+      "Ichimlik",
+      "Taom",
+      "Bar inventari",
+      "O'yin inventari",
+      "Xo'jalik mollari",
+      "Boshqa"
+    ],
+    "xizmatlar": [
+      {
+        "nom": "Stol — kunduzgi soat",
+        "narx": 30000,
+        "birlik": "soat",
+        "formula": "n"
+      },
+      {
+        "nom": "Stol — kechki soat",
+        "narx": 45000,
+        "birlik": "soat",
+        "formula": "n"
+      },
+      {
+        "nom": "VIP xona — soat",
+        "narx": 80000,
+        "birlik": "soat",
+        "formula": "n"
+      },
+      {
+        "nom": "Kiy ijarasi",
+        "narx": 10000,
+        "birlik": "dona",
+        "formula": "n"
+      }
+    ],
+    "formulalar": [
+      {
+        "nom": "O'yin haqi",
+        "ifoda": "n*s",
+        "izoh": "soat (n) × soatlik tarif (s)"
+      },
+      {
+        "nom": "Hisob (o'yin + bar)",
+        "ifoda": "n*s+b",
+        "izoh": "o'yin haqi + bar hisobi (b)"
+      }
+    ]
+  },
+  "rollar": [
+    {
+      "nom": "Administrator",
+      "asos": "Rahbar"
+    },
+    {
+      "nom": "Menejer",
+      "asos": "Menejer"
+    },
+    {
+      "nom": "Barmen",
+      "asos": "Menejer"
+    },
+    {
+      "nom": "Kassir",
+      "asos": "Buxgalter"
+    },
+    {
+      "nom": "Buxgalter",
+      "asos": "Buxgalter"
+    }
+  ]
+}

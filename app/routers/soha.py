@@ -29,10 +29,109 @@ def _chiqar(p: m.SohaProfil) -> dict:
     }
 
 
+def _shablondan(kalit: str, tarif: dict) -> dict:
+    """Fayldagi shablonni ro'yxat uchun bir xil ko'rinishga keltiradi."""
+    return {
+        "kalit": kalit, "nom": tarif.get("nom", kalit), "faol": False,
+        "izoh": tarif.get("izoh", ""),
+        "maydonlar": tarif.get("maydonlar", []),
+        "narx_usuli": tarif.get("narx", {}).get("usul", "qolda"),
+        # Bazada YO'Q — hali ishlatilmagan platforma shabloni.
+        # Faollashtirilganda bazaga ko'chiriladi.
+        "shablon": True,
+    }
+
+
 @router.get("/profillar")
 def profillar(db: Session = Depends(get_db), user=Depends(get_user)):
-    """Bazadagi hamma profil. Faoli `faol: true` bilan belgilangan."""
-    return [_chiqar(p) for p in db.query(m.SohaProfil).order_by(m.SohaProfil.id)]
+    """Mijozning profillari + platforma shablonlari.
+
+    NEGA IKKI MANBA. Ilgari yangi akkaunt ochilganda 30 ta soha
+    profili ham uning bazasiga ko'chirilardi — bilyard klubining
+    bazasida «Beton zavodi» va «Poyabzal sexi» yotardi. Endi bazaga
+    faqat mijoz ISHLATGANI tushadi, qolgani fayllarda turadi va shu
+    yerda ro'yxatga qo'shiladi. Ya'ni tanlov kamaymadi, faqat begona
+    ma'lumot mijoz bazasiga yozilmaydi.
+    """
+    oz = [_chiqar(p) for p in db.query(m.SohaProfil).order_by(m.SohaProfil.id)]
+    bor = {x["kalit"] for x in oz}
+    shablonlar = [_shablondan(k, t)
+                  for k, t in sorted(domain.shablonlar().items(),
+                                     key=lambda x: x[1].get("nom", x[0]))
+                  if k not in bor]
+    return oz + shablonlar
+
+
+@router.get("/bolimlar")
+def bolimlar_royxati(db: Session = Depends(get_db), user=Depends(get_user)):
+    """Yon menyu — SHU akkaunt uchun.
+
+    Ilgari menyu frontendda qotirilgan edi va har biznes karton sexining
+    bo'limlarini ko'rardi. Endi ro'yxat shu yerdan keladi: akkaunt
+    tanlovi -> modul standarti -> hammasi (eski xatti-harakat).
+
+    Faol bo'lmagan bo'limlar ham qaytariladi (`faol: false`) — mijoz
+    sozlamalarda ularni ko'rib, kerakligini belgilaydi.
+    """
+    from .. import bolimlar as b
+    return {"bolimlar": b.toliq(db, domain.profil().modul.kalit, user.role),
+            "modul": domain.profil().modul.kalit}
+
+
+class BolimlarIn(BaseModel):
+    kalitlar: list[str]
+
+
+@router.put("/bolimlar")
+def bolimlar_saqla(data: BolimlarIn, db: Session = Depends(get_db),
+                   user=Depends(require_roles("Rahbar"))):
+    """Mijoz o'z menyusini yig'adi — kod yozilmaydi.
+
+    AI sozlash yordamchisi ham SHU endpointga yuboradi: suhbatdan
+    chiqqan ro'yxat taklif qilinadi, tugmani ODAM bosadi.
+
+    `dash`, `ai`, `set`, `help` olib tashlanmaydi — ularsiz mijoz
+    tizimga qaytib kira olmaydi (`bolimlar.MAJBURIY`).
+    """
+    from .. import bolimlar as b
+    tanlov = b.saqla(db, data.kalitlar)
+    db.add(m.AuditLog(who=user.name, action="Bo'limlar o'zgartirildi",
+                      detail=", ".join(tanlov)))
+    db.commit()
+    return {"ok": True, "bolimlar": tanlov}
+
+
+@router.get("/rollar")
+def rollar_royxati(db: Session = Depends(get_db), user=Depends(get_user)):
+    """Shu akkauntdagi lavozimlar va ularning huquq asosi.
+
+    Mijoz o'z atamasini ishlatadi («Barmen», «Administrator»), huquq
+    esa beshta asosdan biriga bog'lanadi. Ro'yxat yo'q bo'lsa beshta
+    asos nomining o'zi qaytadi — bugungi xatti-harakat.
+    """
+    from .. import rollar as r
+    return {"rollar": r.royxat(db), "asoslar": r.ASOSLAR}
+
+
+class RollarIn(BaseModel):
+    rollar: list[dict]          # [{"nom": "Barmen", "asos": "Menejer"}]
+
+
+@router.put("/rollar")
+def rollar_saqla(data: RollarIn, db: Session = Depends(get_db),
+                 user=Depends(require_roles("Rahbar"))):
+    """Mijoz o'z lavozim nomlarini belgilaydi.
+
+    HUQUQ O'YLAB TOPILMAYDI: har nom beshta asosdan biriga bog'lanadi.
+    Rahbar asosidagi rol har doim qoldiriladi — aks holda akkauntni
+    boshqaradigan odam qolmaydi.
+    """
+    from .. import rollar as r
+    tanlov = r.saqla(db, data.rollar)
+    db.add(m.AuditLog(who=user.name, action="Rollar o'zgartirildi",
+                      detail=", ".join(f"{x['nom']}<-{x['asos']}" for x in tanlov)))
+    db.commit()
+    return {"ok": True, "rollar": tanlov}
 
 
 @router.get("/joriy")
@@ -88,7 +187,16 @@ def faollashtirish(data: FaollashtirishIn, db: Session = Depends(get_db),
     """
     yangi = db.query(m.SohaProfil).filter(m.SohaProfil.kalit == data.kalit).first()
     if not yangi:
-        raise HTTPException(404, f"'{data.kalit}' profili topilmadi")
+        # Bazada yo'q, lekin platforma shabloni bo'lishi mumkin —
+        # o'sha paytda bazaga ko'chiriladi («kerak bo'lganda yuklash»).
+        tarif = domain.shablonlar().get(data.kalit)
+        if not tarif:
+            raise HTTPException(404, f"'{data.kalit}' profili topilmadi")
+        yangi = m.SohaProfil(kalit=data.kalit, nom=tarif.get("nom", data.kalit),
+                             tarif_json=json.dumps(tarif, ensure_ascii=False),
+                             faol=False)
+        db.add(yangi)
+        db.flush()
     for p in db.query(m.SohaProfil).all():
         p.faol = (p.id == yangi.id)
     db.add(m.AuditLog(who=user.name, action="Soha profili almashtirildi",

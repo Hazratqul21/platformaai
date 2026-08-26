@@ -50,7 +50,9 @@ with TestClient(app) as c:
             "akkaunt_kod": kod, "akkaunt_nom": kod.upper(), "soha": "mebel"})
 
     def erp(kod):
-        r = c.post("/api/auth/login", json={"login": "admin", "password": "UserParol9"},
+        # ERP logini — ro'yxatdan o'tishda yozilgani (qat'iy «admin» emas)
+        r = c.post("/api/auth/login",
+                   json={"login": f"{kod}@x.uz", "password": "UserParol9"},
                    headers={"host": f"{kod}.innasoft.uz"})
         return {"host": f"{kod}.innasoft.uz",
                 "authorization": f"Bearer {r.json()['token']}"}

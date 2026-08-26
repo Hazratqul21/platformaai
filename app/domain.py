@@ -243,6 +243,15 @@ class Profil:
         self.min_miqdor = Decimal(str(olchov.get("min", "0.001")))
         self.max_miqdor = Decimal(str(olchov.get("max", "1000000")))
         # Qaysi ish tartibi bilan ishlaydi (app/modules/*.json)
+        # KATALOGLAR — lavozim, material bo'limi, xizmat, formula.
+        # Ilgari bular `seed.py` da qotirilgan edi va har akkauntga
+        # karton sexiniki quyilardi. Endi soha o'zi aytadi.
+        self.kataloglar = tarif.get("kataloglar", {})
+        # ROLLAR — soha o'z lavozimini aytadi: bilyardda «Barmen»,
+        # non zavodida «Xamirchi». Har biri beshta huquq ASOSIDAN
+        # biriga bog'lanadi (`app/rollar.py`). Bo'sh bo'lsa — beshta
+        # standart nom ishlatiladi (bugungi xatti-harakat).
+        self.rollar = tarif.get("rollar", [])
         self.modul_kaliti = tarif.get("modul", ZAXIRA_MODUL)
         self.modul: Modul | None = None   # yuklanganda to'ldiriladi
         self._indeks = {md.kalit: md for md in self.maydonlar}

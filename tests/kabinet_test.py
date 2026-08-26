@@ -100,7 +100,48 @@ with TestClient(app) as c:
     m = c.get("/api/kabinet/mening", headers=H).json()
     ok(m["ai"]["toxtatilgan"], "limit sarfdan past — AI to'xtatilgan")
 
-    print("\n7. LIMIT MANFIY BO'LMAYDI")
+    print("\n7. LIMIT HAQIQATAN TO'XTATADIMI (faqat ko'rsatish emas)")
+    # ENG MUHIM TEKSHIRUV. Ilgari limit FAQAT hisoblanardi va ekranga
+    # chiqarilardi — `toxtatilgan: true` ko'rinardi, lekin agentga
+    # so'rov baribir ketaverardi. Ya'ni limit qo'ygan mijoz uni
+    # istagancha oshib ketardi va buni faqat oy oxirida bilardik.
+    # Sinov «hisob-kitob to'g'ri» ni emas, «PUL SARFLANMADI» ni
+    # tekshirishi kerak.
+    e = c.post("/api/auth/login",
+               json={"login": "aziz@k.uz", "password": "KabinetP9"},
+               headers={"host": "kabtest.innasoft.uz"})
+    ok(e.status_code == 200, f"ERP ga kirildi ({e.status_code})")
+    EH = {"host": "kabtest.innasoft.uz",
+          "authorization": f"Bearer {e.json().get('token')}"}
+
+    r = c.post("/api/agent/xabar", json={"matn": "Salom", "agent": "yordamchi"},
+               headers=EH)
+    ok(r.status_code == 402,
+       f"limit tugagan — agent so'rovi to'xtatildi ({r.status_code})")
+    ok("limit" in r.text.lower(), "sabab tushunarli aytildi")
+    r = c.post("/api/agent/oqim", json={"matn": "Salom", "agent": "yordamchi"},
+               headers=EH)
+    ok(r.status_code == 402, f"oqim endpointi ham to'xtadi ({r.status_code})")
+
+    # Limit olib tashlansa darvoza ochiladi. Bu yerda endpoint
+    # CHAQIRILMAYDI: kalit qo'yilgan muhitda u haqiqiy LLM ga so'rov
+    # yuborardi (pul va kvota). Qorovulning o'zi to'g'ridan-to'g'ri
+    # tekshiriladi — u hamma yo'lning yagona darvozasi.
+    c.post("/api/kabinet/ai-limit", json={"limit_som": 0}, headers=H)
+    from app import agent as ai_modul
+    from app.tenancy import Akkaunt as _Akk
+    _t = tenancy.ornat(_Akk(id=akk.id, kod=akk.kod,
+                            baza_nomi=akk.baza_nomi))
+    try:
+        ai_modul._limit_tekshir()
+        ochildi = True
+    except ai_modul.LimitTugadi:
+        ochildi = False
+    finally:
+        tenancy.tozala(_t)
+    ok(ochildi, "limit olib tashlandi — darvoza ochildi")
+
+    print("\n8. LIMIT MANFIY BO'LMAYDI")
     ok(c.post("/api/kabinet/ai-limit", json={"limit_som": -100},
               headers=H).status_code == 400, "manfiy limit rad etildi")
 

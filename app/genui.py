@@ -320,31 +320,77 @@ def _eng_past_qoldiq(db, user, kirish):
                                  f"{mat.min_stock} {mat.unit}"}
 
 
+def _bolimlarni_sozla(db, user, kirish):
+    """Yon menyuni MIJOZ xohlaganidek yig'adi (AI taklif qiladi, odam bosadi).
+
+    Bu — konstruktorning eng ko'rinadigan qismi: odam chatda «menga
+    ombor kerak emas, kassa va buxgalteriya yetadi» deydi, AI ro'yxatni
+    taklif qiladi, tugma bosilgach menyu o'zgaradi. Kod yozilmaydi.
+
+    `dash`, `ai`, `set`, `help` olib tashlanmaydi — ularsiz mijoz
+    tizimga qaytib kira olmaydi (`bolimlar.MAJBURIY`).
+    """
+    from . import models as m, bolimlar as b
+    xom = kirish.get("kalitlar") or []
+    if isinstance(xom, str):                 # model satr yuborishi mumkin
+        xom = [x.strip() for x in xom.replace(",", " ").split() if x.strip()]
+    notanish = [k for k in xom if k not in b.KATALOG]
+    if notanish:
+        return {"xato": f"Noma'lum bo'lim: {', '.join(notanish)}. "
+                        f"Mavjudlari: {', '.join(b.KATALOG)}"}
+    if not xom:
+        return {"xato": "Bo'limlar ro'yxati bo'sh"}
+
+    tanlov = b.saqla(db, xom)
+    db.add(m.AuditLog(who=user.name, action="Bo'limlar o'zgartirildi",
+                      detail=f"{', '.join(tanlov)} (AI taklifi, tasdiqlandi)"))
+    db.commit()
+    nomlar = [b.KATALOG[k]["nom"] for k in tanlov]
+    return {"ok": True, "bolimlar": tanlov,
+            "xabar": "Menyu yangilandi: " + ", ".join(nomlar) +
+                     ". Sahifani yangilang."}
+
+
 AMALLAR = {
+    "bolimlarni_sozla": {
+        "izoh": ("Yon menyudagi BO'LIMLARNI mijoz xohlaganidek yig'ish "
+                 "taklifi. `kalitlar` — bo'lim kalitlari ro'yxati "
+                 "(`bolimlarni_kor` asbobidan olinadi). Mijoz «bu bo'lim "
+                 "kerak emas» yoki «menga faqat kassa kerak» desa shuni "
+                 "taklif qiling."),
+        "tugma": "Menyuni yangilash", "xavfli": True,
+        "kirish_namuna": {"kalitlar": ["kassa", "fin", "hisob", "crm"]},
+        "rollar": ["Rahbar"], "bajar": _bolimlarni_sozla,
+    },
     "profilni_faollashtir": {
         "izoh": ("Taklif qilingan soha profilini FAOL qiladi — butun tizim "
                  "shunga moslashadi. Profil saqlangandan keyin taklif qiling."),
         "tugma": "Faollashtirish", "xavfli": True,
+        "kirish_namuna": {"kalit": "bilyard"},
         "rollar": ["Rahbar"], "bajar": _profilni_faollashtir,
     },
     "buyurtma_maqomi": {
         "izoh": "Buyurtmani keyingi bosqichga o'tkazishni taklif qiladi.",
         "tugma": "O'tkazish", "xavfli": False,
+        "kirish_namuna": {"buyurtma_id": 42, "maqom": "Topshirildi"},
         "rollar": ["Rahbar", "Menejer", "Sex boshlig'i"], "bajar": _buyurtma_maqomi,
     },
     "mijozni_bloklash": {
         "izoh": "Mijozni qora ro'yxatga qo'shish/chiqarish taklifi.",
         "tugma": "Bloklash", "xavfli": True,
+        "kirish_namuna": {"mijoz_id": 7, "bloklansin": True},
         "rollar": ["Rahbar"], "bajar": _mijozni_bloklash,
     },
     "kredit_limiti": {
         "izoh": "Mijozning kredit limitini o'zgartirish taklifi.",
         "tugma": "Limitni o'rnatish", "xavfli": True,
+        "kirish_namuna": {"mijoz_id": 7, "limit": 5000000},
         "rollar": ["Rahbar", "Buxgalter"], "bajar": _kredit_limiti,
     },
     "eng_past_qoldiq": {
         "izoh": "Material uchun eng past qoldiq chegarasini o'rnatish taklifi.",
         "tugma": "O'rnatish", "xavfli": False,
+        "kirish_namuna": {"material_id": 3, "miqdor": 500},
         "rollar": ["Rahbar", "Sklad mudiri"], "bajar": _eng_past_qoldiq,
     },
 }
@@ -359,7 +405,9 @@ def amalni_bajar(db, user, amal: str, kirish: dict) -> dict:
     tarif = AMALLAR.get(amal)
     if not tarif:
         return {"xato": f"'{amal}' — noma'lum amal"}
-    if user.role not in tarif["rollar"] and user.role != "Rahbar":
+    from . import rollar as _r
+    _asos = _r.asos(db, user.role)
+    if _asos not in tarif["rollar"] and _asos != _r.ENG_YUQORI:
         return {"xato": f"Bu amal faqat: {', '.join(tarif['rollar'])}"}
     return tarif["bajar"](db, user, kirish or {})
 
@@ -367,7 +415,11 @@ def amalni_bajar(db, user, amal: str, kirish: dict) -> dict:
 def korsatma_matni() -> str:
     """Modelga beriladigan ko'rsatma — komponentlar va amallar ro'yxati."""
     turlar = "\n".join(f"- `{nom}` — {t['izoh']}" for nom, t in TURLAR.items())
-    amallar = "\n".join(f"- `{nom}` — {t['izoh']}" for nom, t in AMALLAR.items())
+    import json as _json
+    amallar = "\n".join(
+        f"- `{nom}` — {t['izoh']}\n  kirish: "
+        f"{_json.dumps(t.get('kirish_namuna', {}), ensure_ascii=False)}"
+        for nom, t in AMALLAR.items())
     return f"""
 ## KO'RINISH (komponentlar)
 
@@ -395,6 +447,13 @@ Qoidalar:
 
 Sen bazaga O'ZING yozmaysan. Biror narsani o'zgartirish kerak bo'lsa
 `tasdiq` komponentini ko'rsat — foydalanuvchi tugmani bosadi va shundan
-keyin bajariladi. Mavjud amallar:
+keyin bajariladi.
+
+MUHIM: `tasdiq` komponentidagi `kirish` maydonini TO'LDIR. Bo'sh
+qoldirsang tugma bosilganda amal bajarilmaydi va foydalanuvchi
+«ishlamadi» deb qoladi. Har amalning kirish namunasi pastda berilgan —
+qiymatlarni ASBOB javobidan ol, o'ylab topma.
+
+Mavjud amallar:
 {amallar}
 """

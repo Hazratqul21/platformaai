@@ -10,7 +10,10 @@ router = APIRouter(prefix="/api/users", tags=["Foydalanuvchilar"])
 
 admin_only = require_roles("Rahbar")
 
-# Xodimga berilishi mumkin bo'lgan huquq to'plamlari
+# Xodimga berilishi mumkin bo'lgan huquq to'plamlari — ZAXIRA ro'yxat.
+# Haqiqiy ro'yxat AKKAUNTNIKI (`app/rollar.py`): bilyard klubida
+# «Administrator», «Barmen», «Kassir» bo'lishi mumkin, ularning har
+# birida shu beshtadan biri HUQUQ ASOSI bo'lib turadi.
 ALLOWED_ROLES = ["Rahbar", "Menejer", "Sklad mudiri", "Sex boshlig'i", "Buxgalter"]
 
 
@@ -34,8 +37,10 @@ def list_users(db: Session = Depends(get_db), user=Depends(admin_only)):
 
 @router.post("")
 def create_user(data: UserIn, db: Session = Depends(get_db), user=Depends(admin_only)):
-    if data.role not in ALLOWED_ROLES:
-        raise HTTPException(400, f"Huquq noto'g'ri. Ruxsat: {ALLOWED_ROLES}")
+    from .. import rollar as _r
+    ruxsat = _r.nomlar(db)
+    if data.role not in ruxsat:
+        raise HTTPException(400, f"Huquq noto'g'ri. Ruxsat: {ruxsat}")
     if not data.login.strip() or len(data.password) < 4:
         raise HTTPException(400, "Login bo'sh bo'lmasin, parol kamida 4 belgi")
     if db.query(m.User).filter(m.User.login == data.login.strip()).first():

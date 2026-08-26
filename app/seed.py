@@ -16,47 +16,75 @@ from . import domain
 from .domain import soha_yoz, soha_oqi
 
 
-def seed_catalogs(db: Session):
-    """Standart kataloglar — birlik, lavozim, bo'lim, xizmat, formula.
-    Prod rejimda ham yuklanadi (bularsiz tizim ishlamaydi)."""
-    for name in m.DEFAULT_UNITS:
-        db.add(m.Unit(name=name))
-    for name in m.DEFAULT_POSITIONS:
-        db.add(m.Position(name=name))
-    for name in m.DEFAULT_CATEGORIES:
-        db.add(m.Category(name=name))
+# ---------------------------------------------------------------------
+# UMUMIY MINIMUM — sohasi noma'lum bo'lganda quyiladigan yagona narsa.
+#
+# NEGA SHUNCHA KAM. Ilgari HAR akkauntga karton sexining kataloglari
+# quyilardi: «Kleychi», «Flekso operatori», «Gofrokarton», «Kraxmal
+# kley», «Tekis qavat (layner)» formulasi. Bilyard klubi xodim
+# qo'shmoqchi bo'lsa, lavozim ro'yxatidan «Laminatchi» ni tanlashi
+# kerak edi.
+#
+# Endi soha kataloglari PROFIL ichida (`kataloglar` bloki), bu yerda
+# esa faqat har biznesda uchraydigan o'lchov birliklari qoladi.
+# Qolganini mijoz o'zi yig'adi — yoki AI yordamchi taklif qiladi.
+# ---------------------------------------------------------------------
+UMUMIY_BIRLIKLAR = ["dona", "soat", "kg", "litr", "m²", "metr", "paket"]
 
-    # ishlab chiqarish xizmatlari (poligrafiya) — narx/o'lchov/formula
-    services = [
-        ("Laminatsiya", 2500, "m²", "x*y*n"),
-        ("Noj (pichoq)", 150000, "dona", "n"),          # bir marta forma narxi
-        ("Tisneniye", 3000, "m²", "x*y*n"),
-        ("Viborochniy lak", 2000, "m²", "x*y*n"),
-        ("Matoviy lak", 1800, "m²", "x*y*n"),
-        ("Glyansoviy lak", 1800, "m²", "x*y*n"),
-        ("Laklash (umumiy)", 1500, "m²", "x*y*n"),
-        ("Bosma (1 rang)", 120, "dona", "n"),
-    ]
-    for name, price, unit, formula in services:
-        db.add(m.Service(name=name, price=Decimal(price), unit=unit, formula=formula))
 
-    # sozlanadigan formulalar (sebestoyimost) — sanoat standartlariga
-    # moslangan: layner (tekis qavat) + fluting (gofra, koef. 1.35), kg da.
-    # o'zgaruvchilar: x,y — o'lcham (m), g — grammaj (g/m²), n — soni (dona)
-    formulas = [
-        ("Tekis qavat (layner), kg", "x*y*g*n/1000",
-         "1 tekis qavat og'irligi: m² × grammaj ÷ 1000"),
-        ("Gofra qavat (fluting), kg", "x*y*g*1.35*n/1000",
-         "Gofra qavat 1.35 koef. bilan (to'lqin ko'proq qog'oz oladi)"),
-        ("3-qavat karton, kg", "x*y*(2*g+1.35*gf)*n/1000",
-         "2 layner (g) + 1 fluting (gf) — jami og'irlik kg"),
-        ("Kley, kg", "x*y*0.01*n",
-         "Kraxmal kley ~10 g/m² (0.01 kg/m²) — sanoat me'yori"),
-        ("Laminatsiya, m²", "x*y*n", "Qoplama maydoni m²"),
-        ("Lak, m²", "x*y*n", "Laklanadigan maydon m²"),
-    ]
-    for name, expr, desc in formulas:
-        db.add(m.Formula(name=name, expression=expr, description=desc))
+def _profil_kataloglari() -> dict:
+    """Faol profildagi `kataloglar` bloki. Bo'lmasa — bo'sh."""
+    try:
+        return domain.profil().kataloglar or {}
+    except Exception:                                     # noqa: BLE001
+        return {}
+
+
+def seed_catalogs(db: Session, kataloglar: dict | None = None):
+    """Kataloglar — PROFILDAN, kodda qotirilgan ro'yxatdan emas.
+
+    `kataloglar` berilmasa faol profildan olinadi. Profilda ham
+    bo'lmasa — faqat umumiy birliklar quyiladi, qolgani BO'SH qoladi
+    («yangi mijoz kirganda hammasi top-toza bo'lsin» talabi).
+
+    Har element NOMI BO'YICHA qo'shiladi: allaqachon bor bo'lsa
+    takrorlanmaydi (`unique` cheklovi buzilmasin).
+    """
+    if kataloglar is None:
+        kataloglar = _profil_kataloglari()
+
+    def _bor(model, nom):
+        return db.query(model).filter(model.name == nom).first() is not None
+
+    for nom in (kataloglar.get("birliklar") or UMUMIY_BIRLIKLAR):
+        if nom and not _bor(m.Unit, nom):
+            db.add(m.Unit(name=nom))
+
+    # Lavozim va material bo'limi — FAQAT profil aytganda.
+    # Aytmasa bo'sh qoladi: bilyard klubiga «Kleychi» kerak emas.
+    for nom in (kataloglar.get("lavozimlar") or []):
+        if nom and not _bor(m.Position, nom):
+            db.add(m.Position(name=nom))
+    for nom in (kataloglar.get("kategoriyalar") or []):
+        if nom and not _bor(m.Category, nom):
+            db.add(m.Category(name=nom))
+
+    # Xizmatlar: [nom, narx, birlik, formula]
+    for x in (kataloglar.get("xizmatlar") or []):
+        nom = (x.get("nom") or "").strip()
+        if not nom or _bor(m.Service, nom):
+            continue
+        db.add(m.Service(name=nom, price=Decimal(str(x.get("narx", 0))),
+                         unit=x.get("birlik", "dona"),
+                         formula=x.get("formula", "n")))
+
+    # Tannarx formulalari: [nom, ifoda, izoh]
+    for f in (kataloglar.get("formulalar") or []):
+        nom = (f.get("nom") or "").strip()
+        if not nom or _bor(m.Formula, nom):
+            continue
+        db.add(m.Formula(name=nom, expression=f.get("ifoda", ""),
+                         description=f.get("izoh", "")))
 
 
 def seed_real(db: Session):

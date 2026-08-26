@@ -1,0 +1,42 @@
+{
+  "kalit": "umumiy",
+  "nom": "Umumiy (soha hali tanlanmagan)",
+  "modul": "xizmat",
+  "izoh": "Boshlang'ich profil — mijoz o'z ishini AI bilan suhbatda yig'adi. Maydonlar eng kami: nima sotildi, nechta, qancha.",
+  "maydonlar": [
+    {
+      "kalit": "mahsulot",
+      "nom": "Mahsulot yoki xizmat",
+      "tur": "matn",
+      "majburiy": true
+    },
+    {
+      "kalit": "tavsif",
+      "nom": "Qo'shimcha tavsif",
+      "tur": "matn",
+      "majburiy": false
+    }
+  ],
+  "olchov": {
+    "birlik": "dona",
+    "kasrli": true,
+    "min": "0.001",
+    "max": "1000000"
+  },
+  "narx": {
+    "usul": "qolda",
+    "izoh": "Narx qo'lda kiritiladi. Soha aniqlangach AI uni retseptga yoki formulaga bog'laydi."
+  },
+  "retsept": [],
+  "kataloglar": {
+    "birliklar": ["dona", "soat", "kg", "litr", "m²", "metr"]
+  },
+  "matnlar": {
+    "olcham": "{qty} {birlik}",
+    "tarkib": "{mahsulot}",
+    "tur": "{mahsulot}",
+    "tur_zaxira": "umumiy",
+    "hujjat_mahsulot": "{tarkib}, {olcham}",
+    "nakladnoy_mahsulot": "{tarkib}, {olcham}"
+  }
+}

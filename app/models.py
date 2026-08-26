@@ -286,9 +286,15 @@ class InventoryCheck(Base):
 
 
 class Setting(Base):
+    """Kalit-qiymat sozlamalari.
+
+    `value` — TEXT, chunki bu yerda JSON ham saqlanadi: bo'limlar
+    ro'yxati (`bolimlar`), rollar (`rollar`). 200 belgi chegarasi
+    bilan 5 ta rol yozilganda prodda «value too long» xatosi chiqdi.
+    """
     __tablename__ = "settings"
     key: Mapped[str] = mapped_column(String(50), primary_key=True)
-    value: Mapped[str] = mapped_column(String(200))
+    value: Mapped[str] = mapped_column(Text, default="")
 
 
 class MaterialLot(Base):

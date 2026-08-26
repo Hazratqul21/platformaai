@@ -104,12 +104,23 @@ crontab -e
 0 3 * * * /opt/innasoft/zaxira.sh >> /var/log/innasoft-zaxira.log 2>&1
 ```
 
-Baza + rasmlar `zaxira/` ga tushadi, 14 kun saqlanadi (`ZAXIRA_KUN` bilan
-o'zgartiriladi). **Tiklashni bir marta sinab ko'ring** — sinalmagan
-zaxira zaxira emas:
+Serverdagi **HAR bir baza** alohida faylga tushadi — ijarachilikda har
+mijoz o'z bazasida (`inna_karton`, `inna_mebel`…), akkauntlar ro'yxati esa
+boshqaruv bazasida. Ro'yxat qo'lda yozilmaydi: yangi mijoz qo'shilishi
+bilan uning bazasi ham keyingi zaxiraga tushadi. Rasmlar bilan birga
+`zaxira/` da 14 kun saqlanadi (`ZAXIRA_KUN` bilan o'zgartiriladi).
+
+**Tiklashni bir marta sinab ko'ring** — sinalmagan zaxira zaxira emas:
 
 ```bash
-gunzip -c zaxira/baza-<sana>.sql.gz | docker compose exec -T db psql -U innasoft innasoft
+gunzip -c zaxira/baza-inna_karton-<sana>.sql.gz | \
+  docker compose exec -T db psql -U innasoft -d inna_karton
+```
+
+Baza umuman yo'q bo'lsa (server almashdi) avval yaratiladi:
+
+```bash
+docker compose exec -T db createdb -U innasoft inna_karton
 ```
 
 ## 6. Yangilash

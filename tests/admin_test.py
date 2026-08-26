@@ -76,7 +76,8 @@ with TestClient(app) as c:
     ok(r.status_code == 200 and r.json()["holat"] == "muzlatilgan", "muzlatildi")
 
     # Muzlatilgan akkaunt YOZA olmaydi, lekin O'QIY oladi
-    r = c.post("/api/auth/login", json={"login": "admin", "password": "UserParol9"},
+    r = c.post("/api/auth/login",
+               json={"login": "aaa@x.uz", "password": "UserParol9"},
                headers={"host": "aaa.innasoft.uz"})
     tok = r.json().get("token")
     yoz = c.post("/api/clients", json={"company": "Test"},

@@ -18,6 +18,10 @@ from ..auth import get_user, require_roles
 from .. import models as m
 
 router = APIRouter(prefix="/api/kassa", tags=["Kassa jurnali"])
+# YOZISH ham, O'QISH ham shu cheklovda. Ilgari faqat yozish yopilgan
+# edi: sklad mudiri menyuda «Касса» ni ko'rmasdi, lekin `/api/kassa`
+# ni to'g'ridan-to'g'ri chaqirib oylik va ijarani o'qiy olardi.
+# Menyuda yashirish — himoya emas.
 kassachi = require_roles("Rahbar", "Buxgalter")
 
 
@@ -50,7 +54,8 @@ def firms(db: Session = Depends(get_db), user=Depends(get_user)):
 
 
 @router.get("")
-def journal(firm: str | None = None, db: Session = Depends(get_db), user=Depends(get_user)):
+def journal(firm: str | None = None, db: Session = Depends(get_db),
+            user=Depends(kassachi)):
     # Firmasi ko'rsatilmagan yozuv ikkala sex ostida ham ko'rinadi — mijoz,
     # buyurtma va xarajat ro'yxatlaridagi qoida bilan bir xil. Aks holda avtomat
     # yozuvlar (firmasi belgilanmagan mijozning to'lovi) filtrda yo'qolib ketardi.
@@ -102,6 +107,13 @@ def add_entry(d: EntryIn, db: Session = Depends(get_db), user=Depends(kassachi))
                       detail=f"{d.who} · {d.amount:,.0f} {d.currency}".replace(",", " ")))
     db.commit()
 
+    # BOSH KITOBGA ham tushsin. Xizmat biznesi (bilyard, gilam yuvish,
+    # ta'lim) kunini shu jurnalda o'tkazadi — ulanmasa «Бухгалтерия»
+    # bo'limi bo'sh qoladi va foyda-zarar 0 ko'rsatadi.
+    # GL xatosi kassa yozuvini TO'XTATMAYDI (`ulash._xavfsiz`).
+    from ..hisob import ulash as gl_ulash
+    gl_ulash.kassa_yozuvi(db, e, kim=user.name)
+
     out = entry_out(e)
     # Chiqim "kim"i yetkazib beruvchi nomiga o'xshasa — ikki marta yozib
     # qo'ymaslik uchun ogohlantiramiz (kassa va Xarid alohida hisoblar)
@@ -150,7 +162,8 @@ def del_entry(eid: int, db: Session = Depends(get_db), user=Depends(require_role
 
 
 @router.get("/export.xlsx")
-def export_xlsx(firm: str | None = None, db: Session = Depends(get_db), user=Depends(get_user)):
+def export_xlsx(firm: str | None = None, db: Session = Depends(get_db),
+                user=Depends(kassachi)):
     """Kirim-chiqim Excel — приход-расход fayl formatida (chapda chiqim, o'ngda kirim)."""
     HDR = Font(bold=True, color="FFFFFF")
     FILL = PatternFill("solid", fgColor="5E63E0")

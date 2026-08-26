@@ -186,7 +186,8 @@ docker compose down                  # to'xtatish (baza qoladi)
 ./zaxira.sh
 ```
 
-Baza va rasmlar `zaxira/` ga tushadi, 14 kun saqlanadi. Cron uchun:
+Serverdagi hamma baza (har mijozniki alohida) va rasmlar `zaxira/` ga
+tushadi, 14 kun saqlanadi. Cron uchun:
 
 ```
 0 3 * * * /opt/innasoft/zaxira.sh >> /var/log/innasoft-zaxira.log 2>&1
@@ -195,7 +196,8 @@ Baza va rasmlar `zaxira/` ga tushadi, 14 kun saqlanadi. Cron uchun:
 Tiklash:
 
 ```bash
-gunzip -c zaxira/baza-<sana>.sql.gz | docker compose exec -T db psql -U innasoft innasoft
+gunzip -c zaxira/baza-<baza_nomi>-<sana>.sql.gz | \
+  docker compose exec -T db psql -U innasoft -d <baza_nomi>
 ```
 
 **Tiklashni bir marta sinab ko'ring** — sinalmagan zaxira zaxira emas.

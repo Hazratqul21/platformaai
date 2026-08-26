@@ -70,6 +70,21 @@ def run_migrations(engine) -> list[str]:
     mavjud_jadvallar = set(insp.get_table_names())
     qoshildi: list[str] = []
 
+    # `settings.value` — VARCHAR(200) edi. U yerda endi JSON saqlanadi
+    # (bo'limlar ro'yxati, rollar), 200 belgi yetmaydi: prodda 5 ta rol
+    # yozilganda «value too long for character varying(200)» chiqdi.
+    # SQLite uzunlikni e'tiborsiz qoldiradi, shuning uchun faqat
+    # PostgreSQL uchun kerak.
+    if "settings" in mavjud_jadvallar and engine.dialect.name != "sqlite":
+        for ustun in insp.get_columns("settings"):
+            uzunlik = getattr(ustun.get("type"), "length", None)
+            if ustun["name"] == "value" and uzunlik:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE settings "
+                                      "ALTER COLUMN value TYPE TEXT"))
+                qoshildi.append("settings.value->TEXT")
+                log.info("Migratsiya: settings.value TEXT ga kengaytirildi")
+
     with engine.begin() as conn:
         for jadval, ustun, tur in MIGRATSIYALAR:
             if jadval not in mavjud_jadvallar:
@@ -159,7 +174,7 @@ def jadvalni_qayta_qur(engine, jadval: str, modeldan) -> bool:
     return True
 
 
-def profillarni_yukla(db) -> int:
+def profillarni_yukla(db, faqat: set[str] | None = None) -> int:
     """`app/profiles/*.json` shablonlarini bazaga ko'chiradi.
 
     Shablon fayl — faqat BOSHLANG'ICH nusxa. Bazaga tushgach haqiqat
@@ -182,6 +197,12 @@ def profillarni_yukla(db) -> int:
     bor = {p.kalit: p for p in db.query(m.SohaProfil).all()}
     qoshildi = yangilandi = 0
     for kalit, tarif in shablonlar().items():
+        # `faqat` berilsa — SHU kalitlargina bazaga tushadi.
+        # Yangi mijozning bazasi 30 ta begona soha bilan to'lmasin:
+        # shablonlar platforma darajasida, FAYLLARDA turadi va
+        # kerak bo'lganda o'sha yerdan o'qiladi (`soha.py` birlashtiradi).
+        if faqat is not None and kalit not in faqat and kalit not in bor:
+            continue
         tarif_json = json.dumps(tarif, ensure_ascii=False)
         mavjud = bor.get(kalit)
         if mavjud is None:

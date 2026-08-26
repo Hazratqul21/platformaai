@@ -130,8 +130,19 @@ def get_user_parolsiz(authorization: str = Header(default=""),
 
 
 def require_roles(*roles):
-    def dep(user: m.User = Depends(get_user)) -> m.User:
-        if user.role not in roles and user.role != "Rahbar":
+    """Endpointni rol bo'yicha yopadi.
+
+    ROL NOMI MIJOZNIKI BO'LISHI MUMKIN. Bilyard klubida «Barmen» degan
+    rol bor va uning huquq ASOSI «Menejer» — shuning uchun tekshiruv
+    nomni emas, ASOSNI solishtiradi (`app/rollar.py`). Mijoz rol
+    belgilamagan bo'lsa asos nomning o'zi bo'ladi, ya'ni eski
+    xatti-harakat saqlanadi.
+    """
+    def dep(user: m.User = Depends(get_user),
+            db: Session = Depends(get_db)) -> m.User:
+        from . import rollar
+        a = rollar.asos(db, user.role)
+        if a not in roles and a != rollar.ENG_YUQORI:
             raise HTTPException(403, f"Bu bo'lim faqat: {', '.join(roles)} uchun")
         return user
     return dep

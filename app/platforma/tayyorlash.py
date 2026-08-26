@@ -73,7 +73,8 @@ def sxema_tayyorla(engine: Engine) -> None:
 
 
 def bazani_toldir(sess, admin_parol: str = "", admin_ism: str = "Boshqaruvchi",
-                  profil_kaliti: str | None = None) -> None:
+                  profil_kaliti: str | None = None,
+                  admin_login: str = "admin") -> None:
     """Bo'sh bazaga: 22 profil, kataloglar, admin.
 
     `seed()` dan farqi — namuna/demo ma'lumot YO'Q. Yangi mijoz o'z
@@ -84,7 +85,15 @@ def bazani_toldir(sess, admin_parol: str = "", admin_ism: str = "Boshqaruvchi",
     from ..seed import seed_catalogs
     from ..auth import hash_pw
 
-    profillarni_yukla(sess)
+    # FAQAT tanlangan soha bazaga tushadi. Ilgari 30 ta profil ham
+    # har mijozning bazasiga ko'chirilardi — bilyard klubining
+    # bazasida «Beton zavodi», «Poyabzal sexi» yotardi. Qolganlari
+    # fayllarda turaveradi va sozlash paytida o'sha yerdan o'qiladi.
+    # Soha tanlanmagan bo'lsa — UMUMIY boshlang'ich profil. Ilgari
+    # bunday akkaunt jimgina `karton` ga tushardi (`domain` ning
+    # zaxira shabloni) va bilyard klubi karton maydonlarini ko'rardi.
+    profil_kaliti = profil_kaliti or "umumiy"
+    profillarni_yukla(sess, faqat={profil_kaliti})
 
     # Bosh kitob: hisoblar rejasi va provodka qoidalari (BHMS №21)
     from ..hisob import xizmat as gl
@@ -101,10 +110,24 @@ def bazani_toldir(sess, admin_parol: str = "", admin_ism: str = "Boshqaruvchi",
 
     domain.qayta_yukla(sess)
 
+    # Soha o'z lavozimlarini aytgan bo'lsa — o'shalar yoziladi.
+    # Aytmasa beshta standart nom qoladi.
+    from .. import rollar as _rollar
+    if getattr(domain.profil(), "rollar", None):
+        _rollar.saqla(sess, domain.profil().rollar)
+
     if not sess.query(m.User).first():
         parol = (admin_parol or "").strip()
+        # LOGIN — odam ro'yxatdan o'tishda O'ZI yozgani (telefon yoki
+        # email). Ilgari bu yerda qat'iy «admin» turardi: odam o'z
+        # telefoni bilan kirmoqchi bo'lardi va «Логин ёки пароль
+        # нотўғри» olardi — hech qayerda «logining admin» deb
+        # yozilmagan edi. Ya'ni ro'yxatdan o'tgan mijoz o'z tizimiga
+        # kira olmasdi. Qo'lda tayyorlashda (login berilmasa) eski
+        # «admin» qoladi.
+        login = (admin_login or "").strip().lower() or "admin"
         sess.add(m.User(
-            login="admin", password_hash=hash_pw(parol or "1234"),
+            login=login[:50], password_hash=hash_pw(parol or "1234"),
             name=admin_ism, role="Rahbar",
             # Parol berilmagan bo'lsa — 1234 va majburiy almashtirish.
             parol_almashtirilsin=not parol))
@@ -114,7 +137,8 @@ def bazani_toldir(sess, admin_parol: str = "", admin_ism: str = "Boshqaruvchi",
 
 def akkaunt_tayyorla(baza_nomi: str, admin_parol: str = "",
                    admin_ism: str = "Boshqaruvchi",
-                   profil_kaliti: str | None = None) -> None:
+                   profil_kaliti: str | None = None,
+                   admin_login: str = "admin") -> None:
     """To'liq zanjir: baza + sxema + to'ldirish. Fon vazifasi chaqiradi.
 
     Idempotent: qayta chaqirilsa mavjud narsani buzmaydi (baza bor bo'lsa
@@ -124,6 +148,6 @@ def akkaunt_tayyorla(baza_nomi: str, admin_parol: str = "",
     sxema_tayyorla(engine)
     sess = tenancy.akkaunt_sessiya(baza_nomi)
     try:
-        bazani_toldir(sess, admin_parol, admin_ism, profil_kaliti)
+        bazani_toldir(sess, admin_parol, admin_ism, profil_kaliti, admin_login)
     finally:
         sess.close()

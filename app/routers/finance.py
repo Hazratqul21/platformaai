@@ -13,6 +13,13 @@ from .. import kassa_sync as ks
 
 router = APIRouter(prefix="/api/finance", tags=["Moliya"])
 
+# Moliya ma'lumoti — mijoz qarzi, to'lov, pul oqimi. Menyudagi
+# «Молия» bo'limi Rahbar/Buxgalter/Menejerga ochiq, API ham shunday
+# bo'lishi kerak edi — ilgari `get_user` turardi, ya'ni sklad mudiri
+# ham qarzdorlar ro'yxatini o'qiy olardi.
+moliyachi = require_roles("Buxgalter", "Menejer")
+
+
 def _sotilgan():
     """Sotilgan hisoblanadigan maqomlar — ish tartibidan (modul) olinadi."""
     return domain.statuslar("ishlab_chiqarish", "tayyor", "topshirildi")
@@ -54,7 +61,7 @@ def add_payment(data: PayIn, db: Session = Depends(get_db),
 
 @router.get("/payments")
 def payment_list(client_id: int | None = None, limit: int = 300,
-                 db: Session = Depends(get_db), user=Depends(get_user)):
+                 db: Session = Depends(get_db), user=Depends(moliyachi)):
     """To'lovlar ro'yxati — xato kiritilganini topib o'chirish uchun."""
     q = db.query(m.Payment)
     if client_id:
@@ -94,19 +101,21 @@ def del_payment(pid: int, db: Session = Depends(get_db),
 
 
 @router.get("/debtors")
-def debtors(firm: str | None = None, db: Session = Depends(get_db), user=Depends(get_user)):
+def debtors(firm: str | None = None, db: Session = Depends(get_db),
+            user=Depends(moliyachi)):
     """Debitor qarzdorlik + aging jadvali (TZ 4.2)."""
     return s.debt_aging(db, firm)
 
 
 @router.get("/cashflow")
 def cashflow(days: int = 7, firm: str | None = None,
-             db: Session = Depends(get_db), user=Depends(get_user)):
+             db: Session = Depends(get_db), user=Depends(moliyachi)):
     return s.cash_flow_forecast(db, days, firm)
 
 
 @router.get("/dashboard")
-def dashboard(firm: str | None = None, db: Session = Depends(get_db), user=Depends(get_user)):
+def dashboard(firm: str | None = None, db: Session = Depends(get_db),
+              user=Depends(moliyachi)):
     """Rahbar bosh sahifasi (TZ 4.4).
 
     firm berilsa — barcha ko'rsatkich shu firma bo'yicha hisoblanadi.

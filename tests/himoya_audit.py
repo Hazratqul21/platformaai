@@ -23,6 +23,9 @@ OCHIQ = {
     "/":                "statik sahifa",
     "/favicon.ico":     "statik",
     "/robots.txt":      "statik",
+    # Korporativ sayt ko'rigi — reklama sahifasi, mijoz ma'lumoti yo'q.
+    # `static/innasoft.html` ni beradi, bazaga umuman tegmaydi.
+    "/innasoft":        "korporativ sayt ko'rigi (statik)",
     # Rasm — `<img src>` auth sarlavha yubormaydi, shuning uchun URL
     # bo'yicha ochiq (avvalgi StaticFiles mount ham shunday edi). Endi
     # akkaunt papkasidan beriladi — bir akkaunt boshqasinikini ko'rmaydi.
@@ -85,6 +88,44 @@ def audit(ildiz: pathlib.Path) -> tuple[int, list[str]]:
     return jami, ochiq
 
 
+# ---------------------------------------------------------------------
+# IKKINCHI QATLAM — «himoyalangan» yetarli emas, TO'G'RI rol kerak.
+#
+# Birinchi qatlam faqat «tokensiz kirib bo'ladimi» deb qaraydi. Lekin
+# `Depends(get_user)` — HAR QANDAY kirgan foydalanuvchi degani. Prodda
+# aynan shu bo'shliq topildi: sklad mudiri menyuda «Касса» ni ko'rmasdi,
+# lekin `/api/kassa` ni chaqirib oylik va ijarani o'qiy olardi.
+# Menyuda yashirish — himoya emas.
+# ---------------------------------------------------------------------
+ROL_TALAB = {
+    "app/routers/kassa.py":   ["journal", "export_xlsx", "add_entry", "del_entry"],
+    "app/routers/finance.py": ["payment_list", "debtors", "cashflow",
+                               "dashboard", "add_payment", "del_payment"],
+}
+# `require_roles(...)` dan yasalgan qisqartmalar
+QOROVULLAR = ("require_roles", "kassachi", "moliyachi", "admin_only")
+
+
+def rol_auditi(ildiz) -> list[str]:
+    """Pul endpointlari rol bilan yopilganmi."""
+    ochiq = []
+    for nisbiy, funksiyalar in ROL_TALAB.items():
+        fayl = ildiz / nisbiy
+        if not fayl.exists():
+            ochiq.append(f"{nisbiy}: fayl topilmadi")
+            continue
+        daraxt = ast.parse(fayl.read_text(encoding="utf-8"))
+        imzolar = {t.name: ast.unparse(t.args)
+                   for t in ast.walk(daraxt)
+                   if isinstance(t, (ast.FunctionDef, ast.AsyncFunctionDef))}
+        for nom in funksiyalar:
+            if nom not in imzolar:
+                ochiq.append(f"{nisbiy}: `{nom}` topilmadi (nomi o'zgardimi?)")
+            elif not any(q in imzolar[nom] for q in QOROVULLAR):
+                ochiq.append(f"{nisbiy}: `{nom}` — har rolga ochiq")
+    return ochiq
+
+
 def main() -> int:
     ildiz = pathlib.Path(__file__).resolve().parent.parent
     jami, ochiq = audit(ildiz)
@@ -96,6 +137,15 @@ def main() -> int:
             print("   ·", x)
         return 1
     print(f"\n✅ {jami}/{jami} ENDPOINT HIMOYALANGAN")
+
+    rol_ochiq = rol_auditi(ildiz)
+    nechta = sum(len(v) for v in ROL_TALAB.values())
+    if rol_ochiq:
+        print(f"\n❌ PUL ENDPOINTLARI — ROL HIMOYASI YO'Q ({len(rol_ochiq)} ta):")
+        for x in rol_ochiq:
+            print("   ·", x)
+        return 1
+    print(f"✅ {nechta}/{nechta} PUL ENDPOINTI ROL BILAN YOPILGAN")
     return 0
 
 

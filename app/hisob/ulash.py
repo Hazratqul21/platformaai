@@ -164,3 +164,41 @@ def mahsulot_tayyor(db: Session, summa, sana: date,
     return gl.qoida_boyicha(db, "mahsulot_tayyor", sana or date.today(),
                             {"summa": summa}, hujjat_turi="buyurtma",
                             hujjat_id=hujjat_id, kim=kim)
+
+
+@_xavfsiz("kassa_yozuvi")
+def kassa_yozuvi(db: Session, yozuv: m.KassaEntry,
+                 kim: str = "") -> m.Provodka | None:
+    """Kassa jurnalidagi MUSTAQIL yozuv -> provodka.
+
+    NEGA KERAK EDI. GL faqat ishlab chiqarish zanjiriga ulangan edi:
+    buyurtma, to'lov, xarid, ish haqi. Xizmat biznesi esa (bilyard
+    klubi, gilam yuvish, ta'lim markazi) kunini KASSA JURNALIDA
+    o'tkazadi — ijara to'ladi, oylik beradi, tushum yozadi.
+
+    Natijada bilyard klubida 177 ta kassa yozuvi bor edi, Bosh kitob
+    esa BO'SH: «Бухгалтерия» bo'limi 0.00 ko'rsatardi, foyda-zarar
+    ham 0/0/0. Ma'lumot bor, hisobot yo'q.
+
+    BOG'LANGAN YOZUVGA TEGILMAYDI. Mijoz to'lovi, xarid to'lovi va
+    xodim avansi kassaga NUSXA bo'lib tushadi va ularning provodkasi
+    o'z hodisasidan yoziladi. Ularni bu yerda ham yozsak, summa Bosh
+    kitobda IKKI MARTA ko'rinardi.
+    """
+    if any((yozuv.linked_payment_id, yozuv.linked_purchase_id,
+            yozuv.linked_cash_id, yozuv.linked_purchase_payment_id,
+            yozuv.linked_supplier_payment_id)):
+        return None
+    # Valyuta kursi qotirilmagan — dollar yozuvini so'mlik Bosh kitobga
+    # taxminiy kurs bilan qo'shish hisobotni buzadi. Ular o'tkazib
+    # yuboriladi (kassa jurnalida ko'rinib turaveradi).
+    if (yozuv.currency or "so'm") != "so'm":
+        return None
+    summa = _d(yozuv.amount)
+    if summa <= NOL:
+        return None
+    hodisa = "kassa_kirim" if yozuv.direction == "Kirim" else "kassa_chiqim"
+    izoh = " · ".join(x for x in (yozuv.who or "", yozuv.note or "") if x)
+    return gl.qoida_boyicha(db, hodisa, yozuv.entry_at or date.today(),
+                            {"summa": summa}, hujjat_turi="kassa",
+                            hujjat_id=yozuv.id, izoh=izoh[:200], kim=kim)

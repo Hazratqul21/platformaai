@@ -40,10 +40,10 @@ def _bloklarni_soddalashtir(xabarlar: list) -> list[dict]:
 
 
 @router.get("/holat")
-def holat(user=Depends(get_user)):
+def holat(db: Session = Depends(get_db), user=Depends(get_user)):
     """Agent tayyormi, qaysi provayder, va shu rolga qaysi agentlar ochiq."""
     h = llm.holat()
-    h["agentlar"] = ai.agent_royxati(user.role)
+    h["agentlar"] = ai.agent_royxati(_rol(db, user))
     return h
 
 
@@ -98,6 +98,30 @@ def _agent_ruxsatini_tekshir(agent_kalit: str | None, rol: str) -> None:
                                  f"rolingizga ochiq emas")
 
 
+def _rol(db, user) -> str:
+    """Foydalanuvchi rolining HUQUQ ASOSI.
+
+    Rol nomi mijozniki bo'lishi mumkin («Barmen», «Administrator»).
+    AI asboblari va agent ruxsati beshta asos nomiga bog'langan,
+    shuning uchun tekshiruvdan oldin nom asosga aylantiriladi."""
+    from .. import rollar as _r
+    return _r.asos(db, getattr(user, "role", "") or "")
+
+
+def _limitni_tekshir() -> None:
+    """Oylik AI limiti tugagan bo'lsa 402 qaytaradi.
+
+    Chuqur qorovul `agent.suhbat_oqim` ichida turibdi (bot ham shu
+    yerdan o'tadi), lekin oqim endpointi javobni BOSHLAB yuborgandan
+    keyin HTTP kodini o'zgartira olmaydi. Shuning uchun bu yerda —
+    oqim boshlanishidan oldin — tushunarli 402 beriladi.
+    """
+    try:
+        ai._limit_tekshir()
+    except ai.LimitTugadi as e:
+        raise HTTPException(402, str(e))
+
+
 @router.post("/xabar")
 def xabar(data: XabarIn, db: Session = Depends(get_db),
           user=Depends(get_user)):
@@ -106,7 +130,8 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
     Rol tekshiruvi ASBOB DARAJASIDA: yordamchi bitta, lekin unga
     beriladigan asboblar foydalanuvchi roliga qarab filtrlanadi.
     """
-    _agent_ruxsatini_tekshir(data.agent, user.role)
+    _agent_ruxsatini_tekshir(data.agent, _rol(db, user))
+    _limitni_tekshir()
 
     tayyor, izoh = llm.tayyormi()
     if not tayyor:
@@ -130,7 +155,7 @@ def xabar(data: XabarIn, db: Session = Depends(get_db),
 
     try:
         natija = ai.suhbat(db, tarix, data.agent,
-                           getattr(user, "login", ""), user.role)
+                           getattr(user, "login", ""), _rol(db, user))
     except llm.LLMBand as e:
         # Vaqtinchalik band — 503 va tushunarli xabar. 502 «server buzuq»
         # degani, bu esa «keyinroq urinib ko'ring» degani.
@@ -169,7 +194,8 @@ def oqim(data: XabarIn, db: Session = Depends(get_db), user=Depends(get_user)):
     xabar matni kerak (POST). Oddiy qatorli oqimni brauzer
     `response.body.getReader()` bilan hech qanday kutubxonasiz o'qiydi.
     """
-    _agent_ruxsatini_tekshir(data.agent, user.role)
+    _agent_ruxsatini_tekshir(data.agent, _rol(db, user))
+    _limitni_tekshir()
     tayyor, izoh = llm.tayyormi()
     if not tayyor:
         raise HTTPException(400, izoh)
@@ -197,7 +223,7 @@ def oqim(data: XabarIn, db: Session = Depends(get_db), user=Depends(get_user)):
         try:
             for hodisa in ai.suhbat_oqim(db, tarix, data.agent,
                                         getattr(user, "login", ""),
-                                        user.role):
+                                        _rol(db, user)):
                 if hodisa.get("tur") == "yakun":
                     yakuniy = hodisa
                     # Xom tarixni mijozga bermaymiz — u katta va kerak emas
@@ -284,12 +310,17 @@ def faoliyat(db: Session = Depends(get_db), user=Depends(get_user)):
 
 
 @router.get("/amallar")
-def amallar(user=Depends(get_user)):
-    """Shu rolga ochiq tasdiqlanadigan amallar — sozlamalar ekrani uchun."""
+def amallar(db: Session = Depends(get_db), user=Depends(get_user)):
+    """Shu rolga ochiq tasdiqlanadigan amallar — sozlamalar ekrani uchun.
+
+    Rol nomi mijozniki bo'lishi mumkin («Barmen»), shuning uchun huquq
+    ASOSI bo'yicha filtrlanadi (`app/rollar.py`)."""
+    from .. import rollar as _r
+    _asos = _r.asos(db, user.role)
     return [{"kalit": k, "izoh": t["izoh"], "tugma": t["tugma"],
              "xavfli": bool(t.get("xavfli"))}
             for k, t in genui.AMALLAR.items()
-            if user.role in t["rollar"] or user.role == "Rahbar"]
+            if _asos in t["rollar"] or _asos == _r.ENG_YUQORI]
 
 
 # =====================================================================

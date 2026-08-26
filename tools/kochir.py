@@ -17,9 +17,19 @@ Asosiy o'girish: eski `orders` jadvalidagi karton ustunlari
 `karton` bo'lishi shart, aks holda maydonlar tanilmaydi.
 
 Ishlatish:
-    .venv/bin/python tools/kochir.py <eski.db> [--tekshir]
+    .venv/bin/python tools/kochir.py <eski.db> [--tekshir] [--kirish]
 
     --tekshir  — hech narsa yozmaydi, faqat nima ko'chishini ko'rsatadi
+    --kirish   — foydalanuvchi va OCHIQ SESSIYALARNI ham ko'chiradi
+
+`--kirish` YAKUNIY O'TISH (cutover) uchun: eski parollar va ochiq
+sessiyalar saqlanadi, ya'ni mijoz uchun bu «tizim yangilandi», «yangi
+tizimga ko'chdik» emas. Parallel NUSXA yasayotganda bermang — bitta
+sessiya ikki bazada yashab qolsa qaysi nusxaga yozilgani chalkashadi.
+
+RASM FAYLLARI alohida ko'chiriladi: yozuv bu vositada, fayllar esa
+`uploads/<baza_nomi>/` ga (nusxalanmasa havolalar singan rasmga olib
+boradi).
 """
 import argparse
 import sqlite3
@@ -88,7 +98,8 @@ def jadval_bormi(conn, nom: str) -> bool:
         (nom,)).fetchone())
 
 
-def kochir(manba: str, tekshir_faqat: bool = False) -> dict:
+def kochir(manba: str, tekshir_faqat: bool = False,
+           kirish: bool = False) -> dict:
     conn = ochish_ro(manba)
     db = SessionLocal()
     hisob = {}
@@ -395,6 +406,164 @@ def kochir(manba: str, tekshir_faqat: bool = False) -> dict:
                 n += 1
         hisob["sozlamalar"] = n
 
+        # ---- 16. KATALOGLAR — birlik, lavozim, bo'lim -----------------
+        # Nomi bo'yicha UPSERT: akkaunt tayyorlanganda `seed_catalogs`
+        # standart ro'yxatni yozib qo'ygan bo'lishi mumkin, mijozniki
+        # esa boshqacha. Takror nom `unique` cheklovini buzardi.
+        for jadval, model, hisob_nomi in (("units", m.Unit, "birliklar"),
+                                          ("positions", m.Position, "lavozimlar"),
+                                          ("categories", m.Category, "bolimlar")):
+            n = 0
+            if jadval_bormi(conn, jadval):
+                for r in conn.execute(f"SELECT * FROM {jadval}"):
+                    nom = (_q(r, "name") or "").strip()
+                    if not nom:
+                        continue
+                    bor = db.query(model).filter(model.name == nom).first()
+                    if bor is None:
+                        db.add(model(name=nom))
+                    n += 1
+            hisob[hisob_nomi] = n
+        db.flush()
+
+        # ---- 17. XIZMATLAR va FORMULALAR -----------------------------
+        # Formula tannarxga to'g'ridan-to'g'ri ta'sir qiladi (qavat,
+        # kley sarfi). Ko'chmasa hisob-kitob mijozdagidan farq qiladi.
+        # NOMI BO'YICHA UPSERT, `merge` EMAS. `db.merge()` birlamchi
+        # kalit (`id`) bo'yicha ishlaydi — `formulas.name` esa unique.
+        # Seed allaqachon shu nomdagi formulani yozgan bo'lsa, merge
+        # yangi qator qo'shmoqchi bo'lib `UNIQUE constraint failed`
+        # beradi va BUTUN ko'chirish yiqiladi. (Mashqda ushlandi.)
+        n = 0
+        if jadval_bormi(conn, "services"):
+            for r in conn.execute("SELECT * FROM services"):
+                nom = (_q(r, "name") or "").strip()
+                if not nom:
+                    continue
+                bor = db.query(m.Service).filter(m.Service.name == nom).first()
+                if bor is None:
+                    bor = m.Service(name=nom[:80])
+                    db.add(bor)
+                bor.price = _d(_q(r, "price"))
+                bor.unit = _q(r, "unit", "m²")[:20]
+                bor.formula = _q(r, "formula", "x*y*n")[:120]
+                bor.active = bool(_q(r, "active", 1))
+                n += 1
+        hisob["xizmatlar"] = n
+
+        n = 0
+        if jadval_bormi(conn, "formulas"):
+            for r in conn.execute("SELECT * FROM formulas"):
+                nom = (_q(r, "name") or "").strip()
+                if not nom:
+                    continue
+                bor = db.query(m.Formula).filter(m.Formula.name == nom).first()
+                if bor is None:
+                    bor = m.Formula(name=nom[:60])
+                    db.add(bor)
+                bor.expression = _q(r, "expression", "")[:200]
+                bor.description = _q(r, "description", "")[:200]
+                bor.active = bool(_q(r, "active", 1))
+                n += 1
+        hisob["formulalar"] = n
+        db.flush()
+
+        # ---- 18. BUYURTMA RASMLARI -----------------------------------
+        # Yozuv ko'chiriladi, FAYLLAR esa alohida ko'chiriladi
+        # (`uploads/<baza_nomi>/`). Fayl ko'chirilmasa havola singan
+        # rasmga olib boradi — shuning uchun ikkisi BIR paytda
+        # qilinishi kerak (yo'riqnoma: docs/ish-jarayoni).
+        n = 0
+        if jadval_bormi(conn, "order_photos"):
+            for r in conn.execute("SELECT * FROM order_photos"):
+                o = buyurtma_xarita.get(_q(r, "order_id"))
+                fayl = (_q(r, "filename") or "").strip()
+                if o is None or not fayl:
+                    continue
+                db.add(m.OrderPhoto(
+                    order_id=o.id, filename=fayl[:200],
+                    created_at=_sana(_q(r, "created_at")) or datetime.utcnow()))
+                n += 1
+        hisob["buyurtma_rasmlari"] = n
+
+        # ---- 19. AUDIT JURNALI ---------------------------------------
+        # «Kim nima qildi» tarixi. Bu ham mijozning ma'lumoti: kim
+        # narxni o'zgartirgani, kim to'lovni o'chirgani shu yerda.
+        n = 0
+        if jadval_bormi(conn, "audit_logs"):
+            for r in conn.execute("SELECT * FROM audit_logs ORDER BY id"):
+                db.add(m.AuditLog(
+                    who=(_q(r, "who") or "")[:100],
+                    action=(_q(r, "action") or "")[:200],
+                    detail=_q(r, "detail", "") or "",
+                    at=_sana(_q(r, "at")) or datetime.utcnow()))
+                n += 1
+        hisob["audit_yozuvlari"] = n
+
+        # ---- 20. KIRISH: foydalanuvchilar va ochiq sessiyalar --------
+        # BU MA'LUMOT EMAS, KIRISH HUQUQI — shuning uchun alohida
+        # bayroq (`--kirish`) bilan boshqariladi.
+        #
+        # YAKUNIY O'TISHDA SHART. Aks holda mijozning xodimlari eski
+        # paroli bilan kira olmaydi va bu ular uchun «yangilanish»
+        # emas, «yangi tizim» bo'ladi — aynan biz qochayotgan narsa.
+        #
+        # PARALLEL NUSXAGA BERILMAYDI: bitta sessiya ikki bazada
+        # yashab qolsa, odam qaysi nusxaga yozayotganini bilmaydi.
+        #
+        # Parol OCHIQ ko'rinishda hech qayerda yo'q: bcrypt xeshi
+        # o'zgartirilmasdan ko'chiriladi.
+        n_user, n_yangi = 0, 0
+        user_xarita = {}
+        if kirish and jadval_bormi(conn, "users"):
+            for r in conn.execute("SELECT * FROM users"):
+                login = (_q(r, "login") or "").strip()
+                xesh = _q(r, "password_hash") or ""
+                if not login or not xesh:
+                    continue
+                bor = db.query(m.User).filter(m.User.login == login).first()
+                if bor is None:
+                    bor = m.User(login=login[:50], password_hash=xesh,
+                                 name=(_q(r, "name") or login)[:100],
+                                 role=(_q(r, "role") or "Menejer")[:30])
+                    db.add(bor)
+                    n_yangi += 1
+                else:
+                    # Akkaunt tayyorlanganda yasalgan vaqtinchalik
+                    # foydalanuvchi ustiga mijozning HAQIQIY paroli
+                    # yoziladi — u o'z parolini o'zgarmagan deb biladi.
+                    bor.password_hash = xesh
+                    bor.name = (_q(r, "name") or bor.name)[:100]
+                    bor.role = (_q(r, "role") or bor.role)[:30]
+                # Eski tizimda majburiy parol almashtirish yo'q edi.
+                # Bayroq yoqiq qolsa odam kirgan zahoti «parolni
+                # almashtiring» oynasiga tushardi.
+                bor.parol_almashtirilsin = False
+                db.flush()
+                user_xarita[r["id"]] = bor
+                n_user += 1
+        hisob["foydalanuvchilar"] = n_user
+        if kirish:
+            hisob["yangi_foydalanuvchi"] = n_yangi
+
+        # Brauzerdagi va Telegram ilovasidagi token BAZADA yashaydi.
+        # Ko'chirilsa odam qayta kirmaydi: ekran ochiladi va ishlaydi.
+        # Muddati o'tganlari olinmaydi — baza behuda shishmasin.
+        n = 0
+        if kirish and jadval_bormi(conn, "auth_tokens"):
+            hozir = datetime.utcnow()
+            for r in conn.execute("SELECT * FROM auth_tokens"):
+                token = (_q(r, "token") or "").strip()
+                u = user_xarita.get(_q(r, "user_id"))
+                muddat = _sana(_q(r, "expires"))
+                if not token or u is None or muddat is None or muddat < hozir:
+                    continue
+                if db.get(m.AuthToken, token) is not None:
+                    continue
+                db.add(m.AuthToken(token=token, user_id=u.id, expires=muddat))
+                n += 1
+        hisob["ochiq_sessiyalar"] = n
+
         if tekshir_faqat:
             db.rollback()
             print("🔍 TEKSHIRUV REJIMI — hech narsa yozilmadi")
@@ -415,10 +584,15 @@ def main():
     p.add_argument("manba", help="Eski SQLite fayl (ZAXIRA nusxasi!)")
     p.add_argument("--tekshir", action="store_true",
                    help="Hech narsa yozmaydi, faqat sanaydi")
+    p.add_argument("--kirish", action="store_true",
+                   help="Foydalanuvchi va ochiq sessiyalarni ham ko'chiradi "
+                        "(YAKUNIY o'tish uchun; parallel nusxaga bermang)")
     a = p.parse_args()
 
     print(f"Manba (faqat o'qish): {a.manba}")
-    hisob = kochir(a.manba, a.tekshir)
+    if a.kirish:
+        print("🔑 Kirish ham ko'chiriladi — parol xeshi va ochiq sessiyalar")
+    hisob = kochir(a.manba, a.tekshir, a.kirish)
     print()
     for kalit, son in hisob.items():
         print(f"  {kalit:<24} {son}")

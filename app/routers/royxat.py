@@ -47,7 +47,7 @@ class RoyxatIn(BaseModel):
 
 
 def _fon_tayyorla(akkaunt_id: int, baza_nomi: str, parol: str,
-                  ism: str, soha: str | None):
+                  ism: str, soha: str | None, login: str = "admin"):
     """Fon vazifasi: baza yaratiladi va holat yangilanadi.
 
     Xato bo'lsa `Akkaunt.tayyorlik = "xato"` — foydalanuvchi ko'radi va
@@ -58,7 +58,7 @@ def _fon_tayyorla(akkaunt_id: int, baza_nomi: str, parol: str,
         akkaunt = db.get(pm.Akkaunt, akkaunt_id)
         try:
             akkaunt_tayyorla(baza_nomi, admin_parol=parol, admin_ism=ism,
-                           profil_kaliti=soha)
+                           profil_kaliti=soha, admin_login=login)
             akkaunt.tayyorlik = "tayyor"
             akkaunt.tayyorlik_izohi = ""
             px.audit(db, "baza_tayyorlandi", akkaunt_id=akkaunt_id)
@@ -122,6 +122,10 @@ def royxat(data: RoyxatIn, fon: BackgroundTasks,
     login = (data.login or "").strip().lower()
     if len(login) < 5:
         raise HTTPException(400, "Login juda qisqa")
+    # ERP dagi `users.login` — 50 belgi. Uzunroq login qabul qilinsa
+    # akkaunt bazasi tayyorlanayotganda kesilib, odam kira olmasdi.
+    if len(login) > 50:
+        raise HTTPException(400, "Login 50 belgidan oshmasin")
     if len((data.parol or "")) < 8:
         raise HTTPException(400, "Parol kamida 8 belgidan iborat bo'lsin")
     if db.query(pm.PlatformaUser).filter(pm.PlatformaUser.login == login).first():
@@ -153,11 +157,16 @@ def royxat(data: RoyxatIn, fon: BackgroundTasks,
 
     # Baza tayyorlash — FON vazifasi. So'rov ichida qilinsa foydalanuvchi
     # bir necha soniya «osilib qolgan» ekranni ko'radi.
+    # LOGIN ham uzatiladi: ERP dagi foydalanuvchi AYNAN shu login bilan
+    # yaratiladi. Aks holda odam o'z telefoni bilan kira olmay qolardi.
     fon.add_task(_fon_tayyorla, akkaunt.id, akkaunt.baza_nomi, data.parol,
-                 odam or data.akkaunt_nom, data.soha)
+                 odam or data.akkaunt_nom, data.soha, login)
 
     return {"akkaunt_kod": akkaunt.kod, "holat": akkaunt.tayyorlik,
             "manzil": f"https://{akkaunt.kod}.{_domen()}",
+            # Frontend shuni kirish oynasiga oldindan qo'yadi — odam
+            # o'z logini nima ekanini o'ylab o'tirmasin.
+            "erp_login": login,
             "soha_matni": soha_matni}
 
 

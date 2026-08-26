@@ -69,6 +69,16 @@ ok("qarzdorlar" not in sklad, "«qarzdorlar» sklad mudiriga berilmaydi")
 ok("qarzdorlar" in set(ai.rolga_asboblar("Buxgalter")),
    "«qarzdorlar» buxgalterga beriladi")
 
+# PUL ASBOBLARI — nomi bo'yicha aniq tekshiriladi. `AGENTLAR["moliya"]`
+# ro'yxatiga tushmagan yangi asbob jimgina sklad mudiriga o'tib
+# ketmasin: kassa jurnalida oyliklar va ijara turadi.
+for _pul in ("kassa_harakati", "xarajat_tahlili", "buxgalteriya_hisoboti"):
+    ok(_pul not in sklad, f"«{_pul}» sklad mudiriga berilmaydi")
+    ok(_pul not in set(ai.rolga_asboblar("Sex boshlig'i")),
+       f"«{_pul}» sex boshlig'iga berilmaydi")
+    ok(_pul in set(ai.rolga_asboblar("Buxgalter")),
+       f"«{_pul}» buxgalterga beriladi")
+
 print("\n3-QATLAM — har agentning rollari e'lon qilingan")
 for kalit, a in ai.AGENTLAR.items():
     ok(bool(a.get("rollar")), f"«{kalit}» agentida rollar ro'yxati bor")
