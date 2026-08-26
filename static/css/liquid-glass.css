@@ -58,11 +58,16 @@
   --lg-r-pill:999px;
 
   /* ---- MATERIAL DARAJALARI ---- */
-  --lg-l2-bg:rgba(255,255,255,.55);
-  --lg-l2-blur:blur(24px) saturate(140%);
-  --lg-l2-line:rgba(255,255,255,.65);
-  --lg-l2-shadow:0 12px 40px rgba(70,70,150,.08),
-                 inset 0 1px 0 rgba(255,255,255,.75);
+  --lg-l2-bg:rgba(255,255,255,.62);
+  --lg-l2-blur:blur(22px) saturate(145%);
+  --lg-l2-line:rgba(255,255,255,.85);
+  /* Ikki qatlamli soya: yaqin (shakl) + uzoq (chuqurlik) + ichki
+     yuqori highlight (yorug'lik sinishi). Shu uchtasi birga
+     bo'lgandagina yuza «material» bo'lib seziladi. */
+  --lg-l2-shadow:0 1px 2px rgba(40,42,110,.05),
+                 0 16px 44px -18px rgba(60,62,140,.22),
+                 inset 0 1px 0 rgba(255,255,255,.95),
+                 inset 0 -18px 30px -22px rgba(120,124,220,.16);
 
   --lg-l3-bg:rgba(255,255,255,.68);
   --lg-l3-blur:blur(18px) saturate(150%);
@@ -74,10 +79,12 @@
   --lg-l4-shadow:0 32px 80px rgba(40,42,110,.20),
                  inset 0 1px 0 rgba(255,255,255,.9);
 
-  --lg-l5-bg:rgba(255,255,255,.72);
-  --lg-l5-blur:blur(32px) saturate(150%);
-  --lg-l5-shadow:-18px 0 60px rgba(60,62,140,.14),
-                 inset 1px 0 0 rgba(255,255,255,.8);
+  --lg-l5-bg:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.70));
+  --lg-l5-blur:blur(30px) saturate(150%);
+  --lg-l5-shadow:-1px 0 2px rgba(40,42,110,.05),
+                 -26px 0 70px -24px rgba(60,62,140,.26),
+                 inset 1px 0 0 rgba(255,255,255,.95),
+                 inset 0 1px 0 rgba(255,255,255,.9);
 
   /* ---- HARAKAT ---- */
   --lg-fast:180ms;
@@ -108,10 +115,15 @@
    ko'zga tashlanmaydi, faqat chuqurlik beradi.
    ===================================================================== */
 body{
+  /* ASOS — iliq ivory. Lavender faqat NAFAS: kichik, kuchsiz va
+     chetlarda. Ilgari radiuslar katta va to'yingan edi, natijada
+     butun sahifa ko'k-siyohrangga bo'yalib ketardi va iliq asos
+     umuman ko'rinmasdi. */
   background:
-    radial-gradient(1100px 700px at 12% -10%, var(--lg-atmos) 0%, transparent 62%),
-    radial-gradient(900px 600px at 100% 0%, rgba(123,124,246,.10) 0%, transparent 58%),
+    radial-gradient(760px 460px at 6% -12%, rgba(238,240,255,.85) 0%, transparent 55%),
+    radial-gradient(620px 420px at 102% 2%, rgba(123,124,246,.07) 0%, transparent 52%),
     var(--lg-paper);
+  background-attachment:fixed;
   color:var(--lg-text);
   -webkit-font-smoothing:antialiased;
 }
@@ -147,7 +159,11 @@ body,.btn,.fld,input,select,textarea,button{
 }
 /* Ish yuzasi fondan zichroq: matn va forma maydonlari qattiqroq
    yuzada turadi, shaffoflik esa saqlanadi. */
-.card,.ccard{padding:22px;background:rgba(255,255,255,.66)}
+.card,.ccard{
+  padding:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.62));
+  border-color:rgba(255,255,255,.9);
+}
 /* Cardlar bir-biriga yopishmasin — nafas oladigan masofa */
 .grid,.g2,.g3,.g4{gap:18px}
 
@@ -158,14 +174,14 @@ body,.btn,.fld,input,select,textarea,button{
    SIDEBAR — kengaygan va yig'ilgan holat
    ===================================================================== */
 .side{
-  border-radius:0 var(--lg-r-lg) var(--lg-r-lg) 0;
-  border-left:none;
+  border-radius:var(--lg-r-lg);
+  border-left:1px solid var(--lg-l2-line);
   transition:width var(--lg-mid) var(--lg-ease),
              padding var(--lg-mid) var(--lg-ease);
 }
 .side .nav a{
   border-radius:var(--lg-r-md);
-  color:var(--lg-text-2);font-weight:560;
+  color:var(--lg-text-2);font-weight:570;
   transition:background-color var(--lg-fast) var(--lg-ease),
              color var(--lg-fast) var(--lg-ease),
              transform var(--lg-fast) var(--lg-ease);
@@ -208,7 +224,10 @@ body,.btn,.fld,input,select,textarea,button{
     display:flex;width:21px;height:21px;opacity:1;color:inherit;
   }
   body.ai-ochiq .side .nav a svg{width:21px;height:21px;stroke-width:1.9}
-  body.ai-ochiq .side .nav a:not(.active){color:var(--lg-text-2)}
+  body.ai-ochiq .side .nav a:not(.active){color:#5A5D78}
+  body.ai-ochiq .side .nav a:not(.active):hover{
+    background:rgba(91,91,239,.09);color:var(--lg-text);
+  }
   body.ai-ochiq .side .nav a.active{color:var(--lg-primary)}
   body.ai-ochiq .side .nav a{
     justify-content:center;padding-left:0;padding-right:0;
@@ -314,7 +333,10 @@ body,.btn,.fld,input,select,textarea,button{
 /* =====================================================================
    INPUTLAR — glass, oq quti emas
    ===================================================================== */
-.fld,input[type=text],input[type=number],input[type=date],
+/* Selektor kuchaytirildi: `style.css` dagi `.fld` radiusni 12px ga
+   tushirib qo'yardi (talab: 14–18px). */
+.fld,.card .fld,.glass .fld,input.fld,select.fld,textarea.fld,
+input[type=text],input[type=number],input[type=date],
 input[type=password],select,textarea{
   background:rgba(255,255,255,.62);
   -webkit-backdrop-filter:blur(10px);
@@ -323,6 +345,7 @@ input[type=password],select,textarea{
   border-radius:var(--lg-r-sm);
   color:var(--lg-text);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  padding-top:11px;padding-bottom:11px;
   transition:border-color var(--lg-fast) var(--lg-ease),
              box-shadow var(--lg-fast) var(--lg-ease),
              background-color var(--lg-fast) var(--lg-ease);
