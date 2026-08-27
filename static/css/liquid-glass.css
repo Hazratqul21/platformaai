@@ -803,6 +803,136 @@ select option{background:#fff;color:var(--lg-text)}
 }
 
 /* =====================================================================
+   KIRISH EKRANI — tinch, iliq, yirik sarlavha
+
+   Namuna: markazdagi tor kartochka emas, IKKI USTUN. Chapda gap —
+   sarlavha sahifadagi eng katta narsa, u KARTA ICHIDA emas, iliq
+   fonda turadi. O'ngda ko'rgazma. Kirish ekrani hali mahsulot ichi
+   emas, shuning uchun u shishasiz va tinch.
+
+   MANTIQQA TEGILMAYDI: `doLogin`, `lendingOrqaga`, `lg`, `pw` va
+   qolgan hamma id o'z joyida. Bu yerda faqat ko'rinish.
+   ===================================================================== */
+.login-screen{
+  background:#F5F3EE;
+  padding:clamp(14px,2.2vw,32px);
+}
+.login-layout{
+  width:min(1320px,100%);
+  background:transparent;
+  box-shadow:none;
+  gap:clamp(24px,3.4vw,56px);
+  grid-template-columns:minmax(430px,1.05fr) minmax(400px,1fr);
+  align-items:stretch;
+}
+.login-card{
+  background:transparent;
+  padding:clamp(20px,2.6vw,44px) clamp(20px,3.4vw,60px);
+  justify-content:center;
+}
+.login-wordmark{color:#17182B;font-weight:800;letter-spacing:-.03em;font-size:17px}
+.login-card .logo-xl{
+  width:44px;height:44px;border-radius:12px;margin:0 0 30px;
+  background:#17182B;box-shadow:none;
+}
+
+/* SARLAVHA — sahifadagi eng katta narsa */
+.login-card h1{
+  font-family:var(--serif);
+  font-size:clamp(38px,4.6vw,62px);
+  font-weight:500;
+  line-height:1.0;
+  letter-spacing:-.025em;
+  color:#17182B;
+  margin:0 0 14px;
+}
+.login-card .kicker{
+  font-size:10px;letter-spacing:.15em;font-weight:700;
+  color:#8B6F4E;margin:0 0 18px;
+}
+.login-intro{
+  font-size:15.5px;line-height:1.5;color:#5B5754;
+  max-width:36ch;margin:0 0 30px;
+}
+
+/* Forma FONDA turadi — ortiqcha ramka yo'q. Namunadagi kartochka
+   fondan deyarli farq qilmaydi, shuning uchun ramka o'rniga
+   bo'sh joy va tinch maydonlar ishlatiladi. */
+.login-form-wrap{
+  width:min(410px,100%);margin:0;
+  background:transparent;border:none;padding:0;box-shadow:none;
+}
+.login-fields .fl{
+  font-size:10.5px;letter-spacing:.07em;font-weight:650;
+  color:#6B6764;margin-top:16px;
+}
+.login-fields .fl:first-child{margin-top:0}
+.login-fields .fld{
+  height:52px;border-radius:12px;
+  border:1px solid rgba(23,24,43,.15);
+  background:#fff;color:#17182B;font-size:14.5px;padding:0 15px;
+  box-shadow:0 1px 2px rgba(23,24,43,.03);
+  transition:border-color var(--lg-fast) var(--lg-ease),
+             box-shadow var(--lg-fast) var(--lg-ease);
+}
+.login-fields .fld:focus{
+  border-color:#17182B;
+  box-shadow:0 0 0 3px rgba(23,24,43,.09);
+}
+.login-fields .fld::placeholder{color:#A8A5A1}
+.login-password-toggle{color:#6B6764;font-weight:600;font-size:12px}
+.login-password-toggle:hover{color:#17182B}
+
+/* Asosiy tugma — qora, keng, sarlavha bilan bir vaznda */
+.login-submit{
+  height:52px;width:100%;margin-top:24px;
+  border-radius:12px;
+  background:#17182B!important;
+  border:none!important;box-shadow:none!important;
+  color:#fff;font-size:14.5px;font-weight:600;
+  justify-content:center;
+  transition:background-color var(--lg-fast) var(--lg-ease),
+             transform var(--lg-fast) var(--lg-ease);
+}
+.login-submit:hover{background:#33344F!important;transform:translateY(-1px)}
+.login-submit:active{transform:translateY(0)}
+.login-submit span,.login-submit svg{margin-left:7px;color:#fff}
+
+.login-back{
+  width:100%;justify-content:center;margin-top:11px;
+  height:46px;border-radius:12px;
+  background:#fff!important;
+  border:1px solid rgba(23,24,43,.13)!important;
+  color:#5B5754!important;font-size:13.5px;font-weight:600;
+}
+.login-back:hover{background:#FAF9F6!important;color:#17182B!important}
+
+.login-security{
+  justify-content:flex-start;margin-top:20px;
+  font-size:11.5px;color:#8B8783;
+}
+.login-security span{color:#8B8783}
+.login-foot{margin-top:26px;font-size:11px;color:#A8A5A1!important;text-align:left}
+
+.login-workspace{
+  border-radius:13px;background:#EDEBE4;
+  border:1px solid rgba(23,24,43,.07);
+  margin:0 0 22px;padding:11px 13px;
+}
+.login-workspace-mark{border-radius:9px;background:#17182B}
+
+/* O'ng ustun — yumaloq ko'rgazma, chetga yopishmaydi */
+.login-showcase{border-radius:22px;min-height:auto;padding:26px}
+
+@media (max-width:980px){
+  .login-layout{grid-template-columns:1fr;min-height:auto}
+  .login-showcase{display:none}
+  .login-card{padding:28px 22px;min-height:100dvh;justify-content:center}
+  .login-form-wrap{width:100%;max-width:420px}
+  .login-card h1{font-size:40px}
+}
+
+/* =====================================================================
    HARAKATNI KAMAYTIRISH
    `quality.css` da global himoya bor; bu yerda shu qatlamdagi
    ko'chish va masshtab aniq nomlanadi — mazmun beruvchi rang va
