@@ -116,6 +116,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
         if jadval_bormi(conn, "clients"):
             for r in conn.execute("SELECT * FROM clients"):
                 c = m.Client(
+                    id=r["id"],
                     company=_q(r, "company", "Nomsiz"),
                     contact=_q(r, "contact", ""), phone=_q(r, "phone", ""),
                     inn=_q(r, "inn", ""), pay_type=_q(r, "pay_type", "Naqd"),
@@ -133,7 +134,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
         yb_xarita = {}
         if jadval_bormi(conn, "suppliers"):
             for r in conn.execute("SELECT * FROM suppliers"):
-                sp = m.Supplier(name=_q(r, "name", "Nomsiz"),
+                sp = m.Supplier(id=r["id"], name=_q(r, "name", "Nomsiz"),
                                 phone=_q(r, "phone", ""),
                                 kind=_q(r, "kind", "xomashyo"))
                 db.add(sp)
@@ -146,6 +147,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
         if jadval_bormi(conn, "materials"):
             for r in conn.execute("SELECT * FROM materials"):
                 mt = m.Material(
+                    id=r["id"],
                     name=_q(r, "name", "Nomsiz"),
                     category=_q(r, "category", ""), marka=_q(r, "marka", ""),
                     manufacturer=_q(r, "manufacturer", ""),
@@ -166,6 +168,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
             for r in conn.execute("SELECT * FROM raw_lots"):
                 yb = yb_xarita.get(_q(r, "supplier_id"))
                 lot = m.RawLot(
+                    id=r["id"],
                     lot_no=_q(r, "lot_no", ""),
                     supplier_id=yb.id if yb else None,
                     grade=_q(r, "grade", ""), grammage=int(_q(r, "grammage", 0) or 0),
@@ -199,6 +202,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                                         else qiymat))
                 yaratilgan = _sana(_q(r, "created_at")) or datetime.utcnow()
                 o = m.Order(
+                    id=r["id"],
                     client_id=c.id, attributes=atr,
                     product_name=_q(r, "product_name", ""),
                     qty=_d(_q(r, "qty"), "1"),
@@ -230,6 +234,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                     continue
                 o = buyurtma_xarita.get(_q(r, "order_id"))
                 db.add(m.Payment(
+                    id=r["id"],
                     client_id=c.id, order_id=o.id if o else None,
                     amount=_d(_q(r, "amount")), method=_q(r, "method", "Naqd"),
                     paid_at=(_sana(_q(r, "paid_at")) or datetime.utcnow()).date(),
@@ -246,6 +251,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
         if jadval_bormi(conn, "kassa_entries"):
             for r in conn.execute("SELECT * FROM kassa_entries"):
                 db.add(m.KassaEntry(
+                    id=r["id"],
                     direction=_q(r, "direction", "Kirim"),
                     who=_q(r, "who", ""), note=_q(r, "note", ""),
                     amount=_d(_q(r, "amount")),
@@ -262,6 +268,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
         if jadval_bormi(conn, "employees"):
             for r in conn.execute("SELECT * FROM employees"):
                 emp = m.Employee(
+                    id=r["id"],
                     name=_q(r, "name", "Nomsiz"),
                     position=_q(r, "position", "Stanokchi"),
                     phone=_q(r, "phone", ""),
@@ -284,6 +291,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                     continue
                 pdate = (_sana(_q(r, "purchased_at")) or datetime.utcnow()).date()
                 pu = m.Purchase(
+                    id=r["id"],
                     material_id=mt.id, supplier_id=yb.id,
                     qty=_d(_q(r, "qty"), "1"), unit=_q(r, "unit", "kg"),
                     fmt=_q(r, "fmt", ""), unit_price=_d(_q(r, "unit_price")),
@@ -307,6 +315,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                 if pu is None:
                     continue
                 db.add(m.PurchasePayment(
+                    id=r["id"],
                     purchase_id=pu.id, amount=_d(_q(r, "amount")),
                     method=_q(r, "method", "Naqd"),
                     paid_at=(_sana(_q(r, "paid_at")) or datetime.utcnow()).date(),
@@ -321,6 +330,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
             for r in conn.execute("SELECT * FROM cash_entries"):
                 emp = emp_xarita.get(_q(r, "employee_id"))
                 db.add(m.CashEntry(
+                    id=r["id"],
                     employee_id=emp.id if emp else None,
                     kind=_q(r, "kind", "Xarajat"), amount=_d(_q(r, "amount")),
                     note=_q(r, "note", ""), firm=_q(r, "firm", ""),
@@ -338,6 +348,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                 if emp is None:
                     continue
                 db.add(m.WorkEntry(
+                    id=r["id"],
                     employee_id=emp.id, order_id=o.id if o else None,
                     qty=_d(_q(r, "qty")), qc_passed=bool(_q(r, "qc_passed", 1)),
                     rate=_d(_q(r, "rate")), amount=_d(_q(r, "amount")),
@@ -355,6 +366,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                 if lot is None:
                     continue
                 db.add(m.StockMove(
+                    id=r["id"],
                     lot_id=lot.id, order_id=o.id if o else None,
                     kg=_d(_q(r, "kg")), cost=_d(_q(r, "cost")),
                     moved_at=_sana(_q(r, "moved_at")) or datetime.utcnow(),
@@ -370,6 +382,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                 if mt is None:
                     continue
                 db.add(m.MaterialMove(
+                    id=r["id"],
                     material_id=mt.id, qty=_d(_q(r, "qty")),
                     reason=_q(r, "reason", ""), order_id=o.id if o else None,
                     at=_sana(_q(r, "at")) or datetime.utcnow(),
@@ -385,6 +398,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                 if yb is None:
                     continue
                 db.add(m.PaymentSchedule(
+                    id=r["id"],
                     supplier_id=yb.id,
                     due_date=(_sana(_q(r, "due_date")) or datetime.utcnow()).date(),
                     amount=_d(_q(r, "amount")), paid=bool(_q(r, "paid", 0)),
@@ -481,6 +495,7 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                 if o is None or not fayl:
                     continue
                 db.add(m.OrderPhoto(
+                    id=r["id"],
                     order_id=o.id, filename=fayl[:200],
                     created_at=_sana(_q(r, "created_at")) or datetime.utcnow()))
                 n += 1
@@ -572,11 +587,58 @@ def kochir(manba: str, tekshir_faqat: bool = False,
                 who="Ko'chirish vositasi", action="Eski tizimdan ko'chirildi",
                 detail=", ".join(f"{k}: {v}" for k, v in hisob.items())))
             db.commit()
+            ketma_ketlikni_tikla(db)
     finally:
         db.close()
         conn.close()
 
     return hisob
+
+
+# Raqami SAQLANADIGAN jadvallar. Katalogla (birlik, lavozim, bo'lim,
+# xizmat, formula) bu ro'yxatda YO'Q: ular nomi bo'yicha UPSERT
+# bo'ladi va akkaunt tayyorlanganda seed bilan to'lgan bo'lishi
+# mumkin — ularga eski raqamni tiqish to'qnashuv beradi.
+RAQAM_SAQLANADI = (
+    "clients", "suppliers", "materials", "raw_lots", "orders",
+    "payments", "kassa_entries", "employees", "purchases",
+    "purchase_payments", "cash_entries", "work_entries",
+    "stock_moves", "material_moves", "payment_schedules",
+    "order_photos", "audit_logs",
+)
+
+
+def ketma_ketlikni_tikla(db) -> None:
+    """`id` qo'lda berilgani uchun PostgreSQL ketma-ketligi ORTDA qoladi.
+
+    NEGA SHART: PostgreSQL da `id` ni aniq qiymat bilan qo'yish
+    ketma-ketlikni surmaydi. Ya'ni 114 ta buyurtma 3..697 raqamlari
+    bilan ko'chsa ham, ketma-ketlik 1 da turaveradi va Rustam aka
+    ko'chishdan keyin YARATGAN BIRINCHI buyurtma `id=1` olishga
+    urinadi — u raqam band, natijada `UniqueViolation`.
+
+    Shuning uchun har jadvalning ketma-ketligi eng katta `id` ga
+    suriladi. SQLite da ketma-ketlik yo'q — hech nima qilinmaydi.
+    """
+    from sqlalchemy import text
+    if db.bind.dialect.name != "postgresql":
+        return
+    tuzatildi = []
+    for jadval in RAQAM_SAQLANADI:
+        # `pg_get_serial_sequence` jadvalning O'Z ketma-ketligini
+        # topadi — nomini taxmin qilish shart emas.
+        nom = db.execute(text(
+            "SELECT pg_get_serial_sequence(:t, 'id')"), {"t": jadval}).scalar()
+        if not nom:
+            continue
+        eng_katta = db.execute(text(
+            f'SELECT COALESCE(MAX(id), 0) FROM "{jadval}"')).scalar() or 0
+        # `is_called=true` — keyingi qiymat eng_katta+1 bo'ladi.
+        db.execute(text("SELECT setval(:s, :v, true)"),
+                   {"s": nom, "v": max(int(eng_katta), 1)})
+        tuzatildi.append(f"{jadval}={eng_katta}")
+    db.commit()
+    print("🔢 Ketma-ketliklar tiklandi: " + ", ".join(tuzatildi))
 
 
 def main():
