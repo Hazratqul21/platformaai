@@ -98,7 +98,7 @@ function quickSheet(){
   modal(`<h2 class="sec mb">Тезкор амаллар</h2>
   <div class="qa-grid">
   ${quickActions().map((q,i)=>`<div class="qa" onclick="QUICK[${QUICK.indexOf(q)}].run()">
-    <span class="qi">${q.i}</span><span>${q.t}</span><span class="muted" style="font-size:10px;font-weight:500">${q.d}</span></div>`).join('')}
+    <span class="qi">${icon(q.i,20)}</span><span>${q.t}</span><span class="muted" style="font-size:10px;font-weight:500">${q.d}</span></div>`).join('')}
   </div>`);
 }
 async function qaWork(){closeModal();if(!window._emps)window._emps=await api('/api/hr/employees');hrWorkModal();}

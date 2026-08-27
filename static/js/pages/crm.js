@@ -74,15 +74,22 @@ window.crmRender = () => {
         <div style="font-size:10.5px;margin-bottom:4px">${c.firm
             ? '<span class="tag mut">'+icon('factory',11)+' '+esc(c.firm)+'</span>'
             : '<span class="tag warn" title="Фирмаси белгиланмаган — иккала фирмада кўринади">'+icon('alertic',11)+' фирма белгиланмаган</span>'}</div>
-        <div class="between" style="margin-top:6px;font-size:12.5px;cursor:pointer" onclick="openClient(${c.id})">
+        <div class="krt-jadval" onclick="openClient(${c.id})">
             <span class="muted">Қарз</span>
-            <b style="color:${c.debt>0?'var(--danger)':'var(--ok)'}">${mshort(c.debt)}</b>
+            <b style="color:${
+              /* RANG KO'RINADIGAN QIYMATGA ERGASHADI.
+                 Nuqson: hisob-kitob qoldig'i sabab qarz 0.002 so'm
+                 bo'lardi — `mshort` uni «0» qilib ko'rsatardi, rang
+                 esa `>0` bo'lgani uchun QIZIL chiqardi. Ekranda nol
+                 turib, qizil rangda ogohlantirardi. Bir so'mdan
+                 kichik qoldiq nol hisoblanadi. */
+              Math.round(c.debt) > 0 ? 'var(--danger)' : 'var(--ok)'
+            }">${mshort(c.debt)}</b>
+            <span class="muted">Буюртмалар</span>
+            <span>${c.orders_count} та</span>
         </div>
-        <div class="between" style="font-size:11.5px">
-            <span class="muted">Буюртмалар</span><span>${c.orders_count} та</span>
-        </div>
-        <div class="row" style="gap:5px;margin-top:8px">
-          <button class="btn sm pri" style="flex:1;justify-content:center" onclick="openClient(${c.id})">${icon('clipboard',14)} Деталлари</button>
+        <div class="row" style="gap:6px;margin-top:10px">
+          <button class="btn sm pri" style="justify-content:center" onclick="openClient(${c.id})">${icon('clipboard',14)} Деталлари</button>
           ${['Rahbar','Menejer','Buxgalter'].includes(ME.role)?`<button class="btn sm ghost" title="Таҳрирлаш" onclick='crmAddModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>${icon('pencil',13)}</button>`:''}
         </div>
     </div>`).join('') || `<div class="glass card muted" style="grid-column:1/-1;text-align:center;padding:26px">

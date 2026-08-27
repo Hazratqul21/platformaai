@@ -14,8 +14,8 @@ PAGES.dash=async()=>{
     return `<div class="alert d glass mb" style="border-radius:16px"><div class="ai">${icon('alertic',16)}</div>
     <div><b>${esc(a.grade)} — ${kg<0?'омбор қарзда':t('paper_enough_for').replace('{days}', Math.max(1,Math.round(a.days_left)))}</b>
     <p>${t('restock_warehouse')} — ${kg<0?Math.abs(kg).toFixed(0)+' кг етишмаяпти':t('left_in_stock').replace('{amount}', kg.toFixed(0)+' кг')}</p></div></div>`;})():''}
-  <div class="row mb" style="gap:8px;overflow-x:auto;padding:2px;-webkit-overflow-scrolling:touch">
-    ${quickActions().slice(0,5).map(q=>`<button class="btn" style="flex:none" onclick="QUICK[${QUICK.indexOf(q)}].run()">${q.i} ${q.t}</button>`).join('')}
+  <div class="dash-tez mb">
+    ${quickActions().slice(0,5).map(q=>`<button class="btn" style="flex:none" onclick="QUICK[${QUICK.indexOf(q)}].run()">${icon(q.i,15)} ${q.t}</button>`).join('')}
   </div>
   <div class="grid g4 mb">
     ${kpi('wallet',t('today_sales'),mshort(d.today_sales)+" сўм",'','')}

@@ -987,6 +987,48 @@ select option{background:#fff;color:var(--lg-text)}
 }
 
 /* =====================================================================
+   KARTOCHKA ICHIDAGI KO'RSATKICHLAR — yorliq va qiymat yonma-yon
+
+   Nuqson: yorliq/qiymat juftliklari `between` bilan chiziladi.
+   Kartochka tor bo'lsa bu to'g'ri, keng bo'lsa yorliq chap chetda,
+   qiymati o'ng chetda — orasida 600px bo'sh joy qolib, ko'z
+   ularni bog'lay olmasdi. Endi ikki ustunli to'r: yorliq qiymatiga
+   yopishib turadi va kartochka kengaysa ham ajralmaydi.
+   ===================================================================== */
+.krt-jadval{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:2px var(--s3,12px);
+  align-items:baseline;
+  margin-top:8px;
+  font-size:12.5px;
+  cursor:pointer;
+}
+.krt-jadval > .muted{font-size:11.5px}
+.krt-jadval > b,.krt-jadval > span:not(.muted){
+  justify-self:start;font-variant-numeric:tabular-nums;
+}
+
+/* =====================================================================
+   BOSH SAHIFA — tez amallar qatori
+
+   Nuqson: qator kartochka enidan uzun bo'lsa oxirgi tugma chetda
+   KESILIB qolardi — foydalanuvchi u yerda yana amal borligini
+   bilmasdi. Endi qator gorizontal suriladi va chetida yumshoq
+   so'nish bor: «davomi bor» degani ko'rinib turadi.
+   ===================================================================== */
+.dash-tez{
+  display:flex;gap:10px;
+  overflow-x:auto;
+  padding-bottom:4px;
+  scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 28px),transparent 100%);
+  mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 28px),transparent 100%);
+}
+.dash-tez::-webkit-scrollbar{display:none}
+.dash-tez .btn{flex:0 0 auto}
+
+/* =====================================================================
    BUYURTMA KARTOCHKASI — bosqich chizig'i va suzuvchi tugmalar
    ===================================================================== */
 
