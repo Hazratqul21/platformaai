@@ -79,7 +79,11 @@ ok "olindi va butunligi tekshirildi"
 # ---------------------------------------------------------------- 5
 qadam "5/10  Akkaunt yozuvi va bazasi (profil: karton)"
 docker cp "$ISH/manba.db" innasoft-app:/tmp/manba.db >/dev/null
-docker exec innasoft-app python - <<'PY' || xato "akkaunt yaratilmadi"
+# `-i` SHART: usiz `docker exec` stdin ni konteynerga uzatmaydi va
+# `python -` BO'SH kirish o'qib, hech nima qilmasdan 0 bilan chiqadi.
+# Ya'ni qadam «bajarildi» ko'rinadi, aslida hech nima bo'lmaydi.
+# Aynan shu 2026-08-28 dagi birinchi urinishni yiqitdi.
+docker exec -i innasoft-app python - <<'PY' || xato "akkaunt yaratilmadi"
 from app.platforma import xizmat, tayyorlash
 import app.platforma.models as pm
 from app.tenancy import boshqaruv_sessiya
@@ -99,7 +103,11 @@ tayyorlash.akkaunt_tayyorla("inna_tizim",
                             profil_kaliti="karton")
 print("  baza va sxema tayyor")
 PY
-ok "akkaunt tayyor"
+# ISHONMAYMIZ, TEKSHIRAMIZ: baza rostdan yaratildimi.
+docker exec innasoft-db psql -U innasoft -d postgres -tAc \
+  "SELECT 1 FROM pg_database WHERE datname='$BAZA'" | grep -q 1 \
+  || xato "5-qadam bajarilgandek ko'rindi, lekin '$BAZA' bazasi yaratilmagan"
+ok "akkaunt tayyor va baza mavjudligi tekshirildi"
 
 # ---------------------------------------------------------------- 6
 qadam "6/10  Ma'lumot ko'chirilmoqda (--kirish: sessiyalar ham)"
