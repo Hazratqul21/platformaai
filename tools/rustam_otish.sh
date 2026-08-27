@@ -85,9 +85,9 @@ docker cp "$ISH/manba.db" innasoft-app:/tmp/manba.db >/dev/null
 # Aynan shu 2026-08-28 dagi birinchi urinishni yiqitdi.
 docker exec -i innasoft-app python - <<'PY' || xato "akkaunt yaratilmadi"
 from app.platforma import xizmat, tayyorlash
+from app.platforma.db import BoshqaruvSession
 import app.platforma.models as pm
-from app.tenancy import boshqaruv_sessiya
-b = boshqaruv_sessiya()
+b = BoshqaruvSession()
 try:
     bor = b.query(pm.Akkaunt).filter(pm.Akkaunt.kod == "tizim").first()
     if bor is None:
