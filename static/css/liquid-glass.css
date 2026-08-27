@@ -987,6 +987,43 @@ select option{background:#fff;color:var(--lg-text)}
 }
 
 /* =====================================================================
+   BUYURTMA KARTOCHKASI — bosqich chizig'i va suzuvchi tugmalar
+   ===================================================================== */
+
+/* Bosqich yorliqlari nuqtalar bilan bir chiziqda tursin.
+   Nuqsоn: `justify-content:space-between` yorliqlarni chetlarga
+   itarardi, nuqtalar esa o'z joyida qolardi — oxirgi yorliq
+   nuqtasidan chetga chiqib ketardi va kartochka qirrasiga
+   yopishardi. Endi har yorliq teng ulushda va nuqtasi ustida. */
+.trk-labs{
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:1fr;
+  justify-content:stretch;
+  gap:4px;
+  font-size:10px;
+  line-height:1.25;
+}
+.trk-labs span{text-align:center}
+.trk-labs span:first-child{text-align:left}
+.trk-labs span:last-child{text-align:right}
+
+/* =====================================================================
+   SUZUVCHI TUGMA — pastki menyu bilan URISHMASIN
+
+   Nuqson: telefonda AI tugmasi pastki menyuning eng o'ng bandi
+   («Яна») ustida turardi — barmoq qaysi biriga tegishini bilmasdi.
+   Pastki menyu ko'ringan holatda tugma uning USTIGA ko'tariladi.
+   ===================================================================== */
+@media (max-width:860px){
+  .agent-och{
+    right:var(--lg-chet);
+    /* pastki menyu balandligi + o'z chekkasi */
+    bottom:calc(64px + var(--lg-chet) * 2);
+  }
+}
+
+/* =====================================================================
    HARAKATNI KAMAYTIRISH
    `quality.css` da global himoya bor; bu yerda shu qatlamdagi
    ko'chish va masshtab aniq nomlanadi — mazmun beruvchi rang va

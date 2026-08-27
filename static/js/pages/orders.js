@@ -49,7 +49,12 @@ function renderOrders(){
         onclick="rasmniKatta('${esc(o.photo_url)}')"/>`:''}
       <div style="font-size:12.5px;margin-top:4px"><b>${esc(o.company)}</b></div>
       ${o.product_name ? `<div style="font-size:12px;margin-top:2px;color:var(--text-main)">${icon('box',12)} ${esc(o.product_name)}</div>` : ''}
-      <div class="muted" style="font-size:11.5px;margin-top:2px">${esc(o.size||'')}${o.tur?` · <b>${esc(o.tur)}</b>`:''}${o.tarkib?` · ${esc(o.tarkib)}`:''}</div>
+      ${(()=>{ // Bo'sh qismlar tashlanadi: aks holda qator «· eshik» bo'lib
+               // boshlanardi — birinchi qism yo'q, ajratgichi qolgan.
+          const q=[o.size&&esc(o.size), o.tur&&`<b>${esc(o.tur)}</b>`,
+                   o.tarkib&&esc(o.tarkib)].filter(Boolean);
+          return q.length?`<div class="muted" style="font-size:11.5px;margin-top:2px">${q.join(' · ')}</div>`:'';
+        })()}
       ${o.note?`<div class="muted" style="font-size:11px;margin-top:3px;font-style:italic">${icon('doc',12)} ${esc(o.note)}</div>`:''}
       <div class="between" style="margin-top:8px;font-size:13px">
         <span>${new Intl.NumberFormat('ru-RU').format(o.qty)} ${esc(o.qty_birlik||'')}</span><b>${money(o.total)}</b></div>
@@ -59,13 +64,13 @@ function renderOrders(){
         <span>Тўлов: ${o.payment_due_date ? o.payment_due_date : 'номаълум'}</span>
         <span>Тайёр бўлиши: ${o.due_date ? o.due_date : 'номаълум'}</span>
       </div>
-      ${['Rahbar','Menejer'].includes(ME.role)?`<div class="between" style="font-size:10.5px;margin-top:3px"><span class="muted">Фойда улуши</span><span class="tag ${o.margin>=15?'ok':'warn'}" style="font-size:9.5px">${o.margin}%</span></div>`:''}
+      ${['Rahbar','Menejer'].includes(ME.role)?`<div class="row" style="gap:6px;font-size:10.5px;margin-top:5px"><span class="muted">Фойда улуши</span><span class="tag ${o.margin>=15?'ok':'warn'}" style="font-size:9.5px">${o.margin}%</span></div>`:''}
       ${tracker}
       <div class="row" style="flex-wrap:wrap;gap:5px;margin-top:8px">
         <button class="btn sm" onclick="orderCard(${o.id})">${o.photo_url?icon('image',14):icon('camera',14)} Ичини кўриш</button>
         ${sohaKeyingi(o.status).filter(s=>!['bekor','boshlanish'].includes(sohaMano(s))).map(s=>sohaMano(s)==='topshirildi'
           ?`<button class="btn sm pri" onclick='deliverForm(${JSON.stringify(o).replace(/'/g,"&#39;")})'>${icon('upload',14)} ${o.delivered_qty>0?'Яна топшириш':'Мижозга топшириш'}</button>`
-          :`<button class="btn sm ${sohaMano(s)==='muzokara'?'':'pri'}" onclick="setStatus(${o.id},'${esc(s)}',this)">${esc(sohaTugmaMatni(s))}</button>`).join('')}
+          :`<button class="btn sm ${sohaMano(s)==='muzokara'?'':'pri'}" onclick="setStatus(${o.id},'${esc(s)}',this)">${icon(sohaTugmaIkoni(s),13)} ${esc(sohaTugmaMatni(s))}</button>`).join('')}
         ${o.delivered_qty>0&&!['topshirildi','bekor'].includes(sohaMano(o.status))&&['Rahbar','Menejer','Sklad mudiri'].includes(ME.role)
           ?`<button class="btn sm${o.qolgan_qty<=0?' pri':''}" onclick="yakunla(${o.id},${o.delivered_qty},${o.qty},this)" title="${o.qolgan_qty<=0?'Ҳаммаси берилган — архивга ўтказиш':'Тираж кам чиққан бўлса — шу берилган миқдор билан ёпиш'}">${icon('flag',13)} Якунлаш</button>`:''}
         ${sohaKeyingi(o.status).some(s=>sohaMano(s)==='bekor')&&['Rahbar','Menejer'].includes(ME.role)?`<button class="btn sm dngr" onclick="if(confirm('№${o.id} буюртма бекор қилинсинми? Материал омборга қайтади.'))setStatus(${o.id},'${esc(sohaKeyingi(o.status).find(s=>sohaMano(s)==='bekor')||'')}',this)">${icon('x',13)} Бекор</button>`:''}

@@ -138,7 +138,12 @@ function sohaTag(nom) { return MANO_RANG[sohaMano(nom)] || stTag(nom); }
 const MANO_TUGMA = {
   muzokara: 'chat', ishlab_chiqarish: 'play', tayyor: 'tick', topshirildi: 'upload',
 };
-function sohaTugmaMatni(nom) {
-  const belgi = MANO_TUGMA[sohaMano(nom)] || 'arrowRight';
-  return `${icon(belgi, 14)} ${kir(nom)}`;
+// DIQQAT: bu funksiya faqat MATN qaytaradi. Ikonka alohida qo'yiladi.
+// Ilgari bu yerda `icon()` chaqirilardi va natija `esc()` dan
+// o'tkazilardi — ekranda xom `<svg ...>` matni ko'rinardi.
+function sohaTugmaMatni(nom) { return kir(nom); }
+
+/** Holat tugmasi uchun ikonka NOMI (chizish chaqiruvchida). */
+function sohaTugmaIkoni(nom) {
+  return MANO_TUGMA[sohaMano(nom)] || 'arrowRight';
 }
