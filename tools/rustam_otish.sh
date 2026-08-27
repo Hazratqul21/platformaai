@@ -26,8 +26,10 @@ mkdir -p "$ISH" "$ZAXIRA"
 
 qadam(){ printf "\n\033[1;36m▶ %s\033[0m\n" "$*"; }
 xato(){ printf "\n\033[1;31m✖ TO'XTATILDI: %s\033[0m\n" "$*"; echo
-        echo "Eski tizim hali JOYIDA. Qaytarish:"
-        echo "  systemctl start tizim.service"
+        echo "Ma'lumot YO'QOLMADI: eski baza faqat o'qildi, o'zgartirilmadi."
+        echo
+        echo "QAYTARISH (qaysi qadamda to'xtagan bo'lsa ham ishlaydi):"
+        echo "  sudo bash tools/rustam_qaytarish.sh $ZAXIRA"
         exit 1; }
 ok(){ printf "  \033[1;32m✓\033[0m %s\n" "$*"; }
 

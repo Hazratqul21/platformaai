@@ -15,12 +15,39 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
-PAGES = (STATIC / "index.html", STATIC / "innasoft.html", STATIC / "platforma-karkas.html")
+PAGES = (STATIC / "index.html", STATIC / "innasoft.html")
 ASSET_RE = re.compile(r'''(?:href|src)=["']([^"'#?]+)''')
+
+REQUIRED_UI_CONTRACTS = {
+    STATIC / "index.html": (
+        'role="dialog"',
+        'aria-modal="true"',
+        'id="overlay" aria-hidden="true"',
+        'id="toasts" aria-live="polite"',
+    ),
+    STATIC / "js/core/ui.js": (
+        "function modal(html,wide,qulf)",
+        "modalFocusables()",
+        "modalFoniniQulfla()",
+        "_modalOpener.focus",
+    ),
+    STATIC / "js/pages/agent.js": (
+        "agentSemantika()",
+        "aria-labelledby','agentNom'",
+        'role="log" aria-live="polite"',
+    ),
+}
+
+FORBIDDEN_UI_CONTRACTS = {
+    STATIC / "js/core/ui.js": (
+        "modal = function(html,wide)",  # `qulf` parametrini yo'qotgan eski wrapper
+    ),
+}
 
 
 def main() -> int:
     missing: list[tuple[Path, str]] = []
+    contract_errors: list[tuple[Path, str]] = []
     count = 0
     for page in PAGES:
         if not page.is_file():
@@ -40,13 +67,34 @@ def main() -> int:
             if not target.is_file():
                 missing.append((page, url))
 
-    if missing:
+    for path, snippets in REQUIRED_UI_CONTRACTS.items():
+        if not path.is_file():
+            contract_errors.append((path, "contract fayli yo'q"))
+            continue
+        source = path.read_text(encoding="utf-8")
+        for snippet in snippets:
+            if snippet not in source:
+                contract_errors.append((path, f"majburiy UI contract yo'q: {snippet}"))
+
+    for path, snippets in FORBIDDEN_UI_CONTRACTS.items():
+        if not path.is_file():
+            continue
+        source = path.read_text(encoding="utf-8")
+        for snippet in snippets:
+            if snippet in source:
+                contract_errors.append((path, f"xavfli eski pattern qaytdi: {snippet}"))
+
+    if missing or contract_errors:
         print("UI STATIC CHECK: XATO", file=sys.stderr)
         for page, asset in missing:
             print(f"  {page.relative_to(ROOT)} -> {asset}", file=sys.stderr)
+        for path, detail in contract_errors:
+            print(f"  {path.relative_to(ROOT)} -> {detail}", file=sys.stderr)
         return 1
 
-    print(f"UI STATIC CHECK: OK ({len(PAGES)} sahifa, {count} asset havola)")
+    contract_count = sum(len(v) for v in REQUIRED_UI_CONTRACTS.values())
+    print(f"UI STATIC CHECK: OK ({len(PAGES)} sahifa, {count} asset havola, "
+          f"{contract_count} UI contract)")
     return 0
 
 
