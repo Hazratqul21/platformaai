@@ -96,8 +96,13 @@ const BOLIM_IKON=[
 const bolimIkon=(v,o=18)=>I[v]?icon(v,o):esc(String(v||''));
 
 const boxLogo=s=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>`;
-document.getElementById('loginLogo').innerHTML=boxLogo(36);
-document.getElementById('brandLogo').innerHTML=boxLogo(22);
+// Element yo'q bo'lsa YIQILMAYDI. Ilgari to'g'ridan-to'g'ri
+// `.innerHTML` qo'yilardi va sahifada `loginLogo` bo'lmasa butun
+// `globals.js` shu yerda uzilardi — undan keyingi hamma narsa
+// (`esc`, `t`, tarjimalar) e'lon qilinmay qolardi.
+const _logo=(id,o)=>{const e=document.getElementById(id); if(e)e.innerHTML=boxLogo(o);};
+_logo('loginLogo',36);
+_logo('brandLogo',22);
 
 /* ================= API ================= */
 const API='';

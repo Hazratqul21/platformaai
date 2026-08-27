@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="uz"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TIZIM — dizayn karkasi</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/brand.css">
+<link rel="stylesheet" href="/static/css/platform-theme.css">
+<link rel="stylesheet" href="/static/css/onboarding-premium.css">
+<link rel="stylesheet" href="/static/css/quality.css">
+<link rel="stylesheet" href="/static/css/liquid-glass.css">
+<link rel="stylesheet" href="/static/css/liquid-glass-refinement.css">
+<style>
+  /* Faqat KARKAS sahifasining o'z tartibi. Komponentlarning
+     ko'rinishi loyihaning haqiqiy CSS'idan keladi — bu yerda
+     hech qanday rang yoki soya qayta ta'riflanmaydi. */
+  html,body{overflow:auto;height:auto}
+  .krk{max-width:1180px;margin:0 auto;padding:40px 24px 96px}
+  .krk-bosh{margin:0 0 8px;font-family:var(--serif);font-size:40px;
+    font-weight:500;letter-spacing:-.025em;color:var(--lg-text)}
+  .krk-izoh{margin:0 0 38px;font-size:14.5px;color:var(--lg-text-2);max-width:58ch}
+  .krk-bolim{margin:56px 0 18px;display:flex;align-items:baseline;gap:12px}
+  .krk-bolim h2{margin:0;font-size:12px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--lg-primary)}
+  .krk-bolim i{flex:1;height:1px;background:rgba(23,24,43,.09)}
+  .krk-bolim small{font-size:12px;color:var(--lg-text-3);font-style:normal}
+  .krk-qator{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .krk-panjara{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+  .krk-yorliq{font-size:10.5px;letter-spacing:.06em;color:var(--lg-text-3);
+    text-transform:uppercase;font-weight:650;margin:0 0 8px}
+  .krk-quti{padding:18px}
+  .krk-fon-tanla{position:fixed;right:20px;top:20px;z-index:80;display:flex;gap:6px}
+</style>
+</head>
+<body>
+
+<div class="krk-fon-tanla" id="fonTanla"></div>
+
+<div class="krk">
+  <h1 class="krk-bosh">Dizayn karkasi</h1>
+  <p class="krk-izoh">Loyihaning butun vizual tili bitta sahifada.
+     Bu yerdagi hech narsa alohida bo'yalmagan — hammasi
+     <code>liquid-glass.css</code> dan keladi. Shu sahifada to'g'ri
+     ko'rinsa, ilovada ham to'g'ri ko'rinadi.</p>
+
+  <!-- ============ FON ============ -->
+  <div class="krk-bolim"><h2>Fon</h2><i></i><small>uch qatlam: yorug'lik · to'r · dona</small></div>
+  <div class="glass card krk-quti">
+    <p class="krk-yorliq">O'ng yuqoridagi tugmalar bilan almashtiring</p>
+    <div class="muted" style="font-size:13px;line-height:1.6">
+      Tekis rang arzon ko'rinadi, kuchli gradient esa kontentni yeydi.
+      Shuning uchun fon uchta juda sust qatlamdan yig'ilgan va har biri
+      o'z vazifasini bajaradi: yorug'lik chuqurlik beradi, to'r o'lcham
+      hissini beradi, dona esa yalang'och rangdagi «raqamli» tuyg'uni
+      yo'qotadi.
+    </div>
+  </div>
+
+  <!-- ============ MATERIAL ============ -->
+  <div class="krk-bolim"><h2>Material</h2><i></i><small>besh daraja — har biri o'z shaffofligi, blur va soyasi bilan</small></div>
+  <div class="krk-panjara" id="material"></div>
+
+  <!-- ============ TIPOGRAFIKA ============ -->
+  <div class="krk-bolim"><h2>Tipografika</h2><i></i><small>bitta ierarxiya</small></div>
+  <div class="glass card krk-quti" id="tipografika"></div>
+
+  <!-- ============ RANG ============ -->
+  <div class="krk-bolim"><h2>Rang</h2><i></i><small>semantik — bezak emas</small></div>
+  <div class="glass card krk-quti"><div class="krk-panjara" id="ranglar"></div></div>
+
+  <!-- ============ IKONKA ============ -->
+  <div class="krk-bolim"><h2>Ikonografiya</h2><i></i><small>bitta oila · 24×24 · chiziqli 1.7</small></div>
+  <div class="glass card krk-quti"><div class="krk-qator" id="ikonlar"></div></div>
+
+  <!-- ============ TUGMA ============ -->
+  <div class="krk-bolim"><h2>Tugmalar</h2><i></i><small>hover — yorishadi va ko'tariladi · bosilganda siqiladi</small></div>
+  <div class="glass card krk-quti">
+    <p class="krk-yorliq">Asosiy o'lcham</p>
+    <div class="krk-qator" id="tugma1"></div>
+    <p class="krk-yorliq" style="margin-top:20px">Kichik</p>
+    <div class="krk-qator" id="tugma2"></div>
+  </div>
+
+  <!-- ============ MAYDON ============ -->
+  <div class="krk-bolim"><h2>Maydonlar</h2><i></i><small>fokusda lavanda halqa</small></div>
+  <div class="glass card krk-quti"><div class="krk-panjara" id="maydonlar"></div></div>
+
+  <!-- ============ CHIP ============ -->
+  <div class="krk-bolim"><h2>Nishonlar va filtrlar</h2><i></i></div>
+  <div class="glass card krk-quti">
+    <div class="krk-qator" id="chiplar"></div>
+    <div class="krk-qator" style="margin-top:14px" id="taglar"></div>
+  </div>
+
+  <!-- ============ KPI ============ -->
+  <div class="krk-bolim"><h2>Ko'rsatkich kartochkalari</h2><i></i><small>joyiga qarab tiziladi</small></div>
+  <div class="grid g3" id="kpilar"></div>
+
+  <!-- ============ JADVAL ============ -->
+  <div class="krk-bolim"><h2>Ro'yxat va jadval</h2><i></i><small>o'qilishi effektdan ustun</small></div>
+  <div class="glass card" id="jadval"></div>
+
+  <!-- ============ HOLATLAR ============ -->
+  <div class="krk-bolim"><h2>Holatlar</h2><i></i><small>bo'sh · yuklanmoqda · xato</small></div>
+  <div class="krk-panjara" id="holatlar"></div>
+
+  <!-- ============ SUZUVCHI ============ -->
+  <div class="krk-bolim"><h2>Suzuvchi yuzalar</h2><i></i><small>modal · dropdown · toast</small></div>
+  <div class="krk-qator" id="suzuvchi"></div>
+
+  <!-- ============ MOTION ============ -->
+  <div class="krk-bolim"><h2>Harakat</h2><i></i><small>180–300ms · ease-out · maqsadsiz animatsiya yo'q</small></div>
+  <div class="glass card krk-quti" id="motion"></div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()"><div class="modal glass" id="modalBox"></div></div>
+
+<script src="/static/js/core/globals.js"></script>
+<script src="/static/js/core/ui.js"></script>
+<script src="/tools/karkas.js"></script>
+</body></html>

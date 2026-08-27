@@ -148,6 +148,28 @@ body{
    kontentdan past. Endi shisha yuzalar orqali HAQIQATAN rang
    ko'rinadi va material «shisha»dek o'qiladi.
    --------------------------------------------------------------------- */
+/* =====================================================================
+   FON — UCH QATLAM
+
+   Tekis rang arzon ko'rinadi, kuchli gradient esa kontentni yeydi.
+   Shuning uchun fon uchta juda sust qatlamdan yig'iladi va HAR BIRI
+   o'z vazifasini bajaradi:
+
+     1. YORUG'LIK  — chuqurlik beradi, yuzalar suzayotgandek ko'rinadi
+     2. TO'R       — o'lcham hissi, «tizim» tuyg'usi
+     3. DONA       — yalang'och rangdagi «raqamli» hissini yo'qotadi
+
+   Uchalasi ham `pointer-events:none` va salbiy z-index'da — hech
+   qanday bosishga xalaqit bermaydi.
+   ===================================================================== */
+:root{
+  /* To'r qadami — masofa shkalasidan olinadi, tasodifiy son emas */
+  --pat-tor:44px;
+  --pat-tor-rang:rgba(91,91,239,.055);
+  --pat-nuqta-rang:rgba(91,91,239,.085);
+}
+
+/* 1-QATLAM — yorug'lik dog'lari */
 body::before{
   content:"";
   position:fixed;inset:0;z-index:-1;pointer-events:none;
@@ -156,6 +178,38 @@ body::before{
     radial-gradient(880px 620px at 86% 10%, rgba(99,102,246,.34)  0%, transparent 56%),
     radial-gradient(820px 620px at 52% 66%, rgba(150,142,255,.26) 0%, transparent 60%),
     radial-gradient(700px 540px at 90% 88%, rgba(201,240,90,.14)  0%, transparent 58%);
+}
+
+/* 2 va 3-QATLAM — to'r va dona.
+   Ikkalasi bitta elementda: brauzer uchun bitta qatlam arzonroq. */
+body::after{
+  content:"";
+  position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:
+    /* dona — SVG shovqin, rasm fayli kerak emas */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E"),
+    /* to'r — ikki yo'nalishli ingichka chiziq */
+    linear-gradient(var(--pat-tor-rang) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pat-tor-rang) 1px, transparent 1px);
+  background-size:140px 140px, var(--pat-tor) var(--pat-tor), var(--pat-tor) var(--pat-tor);
+  opacity:.5;
+  /* To'r ekran chetlarida so'nadi — ramka hissi bermaydi */
+  -webkit-mask-image:radial-gradient(130% 110% at 50% 40%, #000 42%, transparent 92%);
+  mask-image:radial-gradient(130% 110% at 50% 40%, #000 42%, transparent 92%);
+}
+
+/* NAQSH VARIANTLARI — `<body class="fon-nuqta">` bilan almashtiriladi.
+   Mijozga ko'ra fon xarakterini o'zgartirish uchun; standarti to'r. */
+body.fon-nuqta::after{
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E"),
+    radial-gradient(var(--pat-nuqta-rang) 1.4px, transparent 1.5px);
+  background-size:140px 140px, var(--pat-tor) var(--pat-tor);
+}
+body.fon-toza::after{
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
+  background-size:140px 140px;
 }
 
 /* =====================================================================
