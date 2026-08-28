@@ -856,6 +856,36 @@ select option{background:#fff;color:var(--lg-text)}
 }
 
 /* =====================================================================
+   ORDO LOGOTIP (wordmark)
+
+   Brend rasm sifatida — SVG emas, optimallashtirilgan PNG (shaffof,
+   288x96, 18KB). Ikki joyda: yon menyu boshi va kirish ekrani.
+   ===================================================================== */
+/* Yon menyu — brend ustun ko'rinishida */
+.side .brand{flex-direction:column;align-items:flex-start;gap:5px;padding:6px 4px 16px}
+.brand-wordmark{
+  height:26px;width:auto;display:block;
+  /* Logotip o'z rangida (binafsha+turkuaz) — currentColor bilan
+     bo'yalmaydi, shuning uchun oddiy rasm. */
+}
+.brand-sub{
+  display:block;color:var(--lg-text-3);font-size:10px;
+  letter-spacing:.4px;text-transform:uppercase;
+}
+/* Yig'ilgan yon menyuda wordmark sig'maydi — yashiriladi.
+   (nav ikonkalari asosiy ko'rsatkich bo'lib qoladi) */
+@supports (backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px)){
+  body.ai-ochiq .side .brand-wordmark,
+  body.ai-ochiq .side .brand-sub{display:none}
+}
+@media (max-width:1180px){
+  .side .brand-wordmark,.side .brand-sub{display:none}
+}
+
+/* Kirish ekrani — yuqori chap wordmark */
+.login-wordmark img{height:30px;width:auto;display:block}
+
+/* =====================================================================
    KIRISH EKRANI — tinch, iliq, yirik sarlavha
 
    Namuna: markazdagi tor kartochka emas, IKKI USTUN. Chapda gap —
