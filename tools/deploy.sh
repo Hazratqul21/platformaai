@@ -63,15 +63,18 @@ ok "app/ Python sintaksisi to'g'ri"
 
 # ---------------------------------------------------------------- 3
 qadam "3/6  Paket (git archive HEAD — to'liq, tanlovsiz)"
-mkdir -p "$ISH"
-git archive HEAD app static tools | tar -x -C "$ISH"
-FAYL=$(find "$ISH" -type f | wc -l | tr -d ' ')
+# MUHIM: `git archive` TOZA tarball beradi — macOS ning `._*` (AppleDouble)
+# fayllari YO'Q. 2026-08-28 da oraliq `tar czf` shu ._ fayllarni yaratgan,
+# ular konteynerga tushib `modullar()` ni yiqitgan (JSON emas, decode xato).
+# Endi oraliq tar yo'q: git archive to'g'ridan-to'g'ri gzip tar chiqaradi.
+git archive --format=tar.gz HEAD app static tools -o "$ISH.tar.gz"
+FAYL=$(tar tzf "$ISH.tar.gz" | grep -c '/' || true)
 [ "$FAYL" -gt 50 ] || xato "paket juda kichik ($FAYL fayl) — nimadir noto'g'ri"
-ok "$FAYL fayl paketlandi"
+tar tzf "$ISH.tar.gz" | grep -qE '(^|/)\._|\.DS_Store' && xato "paketda ._/.DS_Store bor — to'xtatildi" || true
+ok "$FAYL fayl paketlandi (toza, ._ yo'q)"
 
 # ---------------------------------------------------------------- 4
 qadam "4/6  Serverga yuborish va zaxira"
-tar czf "$ISH.tar.gz" -C "$ISH" app static tools
 scp -q -o BatchMode=yes -o ConnectTimeout=25 "$ISH.tar.gz" "$SRV:/tmp/deploy.tar.gz" \
   || xato "serverga ulanib bo'lmadi"
 ssh -o BatchMode=yes -o ConnectTimeout=25 "$SRV" bash -s <<REMOTE || xato "server tomonida xato"
@@ -81,6 +84,7 @@ tar czf /tmp/prod-oldin-$SANA.tar.gz -C "$JOY" app static 2>/dev/null
 echo "    zaxira: /tmp/prod-oldin-$SANA.tar.gz"
 rm -rf /tmp/dep-$SANA && mkdir -p /tmp/dep-$SANA
 tar xzf /tmp/deploy.tar.gz -C /tmp/dep-$SANA
+find /tmp/dep-$SANA \( -name "._*" -o -name .DS_Store \) -delete 2>/dev/null || true
 # Manba papka (.env, compose, zaxira, uploads tegilmaydi)
 cp -r /tmp/dep-$SANA/app/. "$JOY/app/"
 cp -r /tmp/dep-$SANA/static/. "$JOY/static/"
@@ -116,5 +120,5 @@ for h in billiard karton mebel test; do
 done
 [ "$BUZUQ" -eq 0 ] || xato "$BUZUQ ta akkaunt javob bermadi — zaxiradan tiklashni ko'ring"
 
-rm -rf "$ISH" "$ISH.tar.gz"
+rm -f "$ISH.tar.gz"
 printf "\n\033[1;32m✅ DEPLOY TUGADI\033[0m — versiya %s jonli\n" "$REV"

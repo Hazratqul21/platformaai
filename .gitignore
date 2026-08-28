@@ -41,3 +41,4 @@ remote_logs.txt
 app/real_data.json
 real_data*.json
 zaxira/
+._*
