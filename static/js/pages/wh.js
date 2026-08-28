@@ -94,7 +94,7 @@ function supForm(sp){
   <label class="fl">Телефон</label><input class="fld" id="sp_phone" value="${esc(sp.phone||'')}" placeholder="+998 xx xxx xx xx"/>
   <label class="fl">Тури</label>
   <select class="fld" id="sp_kind">
-    <option value="Qog'oz" ${(sp.kind||"Qog'oz")==="Qog'oz"?'selected':''}>Қоғоз/материал етказиб берувчи</option>
+    <option value="Qog'oz" ${(sp.kind||"Qog'oz")==="Qog'oz"?'selected':''}>Материал етказиб берувчи</option>
     <option value="Pechat" ${sp.kind==='Pechat'?'selected':''}>Печат — кўчада принт қиладиган фирма</option>
     <option value="Boshqa" ${sp.kind==='Boshqa'?'selected':''}>Бошқа</option>
   </select>

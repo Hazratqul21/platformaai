@@ -48,7 +48,7 @@ function matForm(x){
   <select class="fld" id="m_cat">${window._cats.map(c=>`<option value="${esc(c.name)}" ${x.category===c.name?'selected':''}>${kir(c.name)}</option>`).join('')}</select>
   <label class="fl">Номи (масалан: Silver pak)</label><input class="fld" id="m_name" value="${esc(x.name||'')}"/>
   <div class="grid g2" style="gap:8px">
-    <div><label class="fl">Граммаж (қоғоз учун)</label><input class="fld" id="m_gr" value="${esc(x.grammaj||'')}" placeholder="140 гр"/></div>
+    <div><label class="fl">Граммаж (ихтиёрий)</label><input class="fld" id="m_gr" value="${esc(x.grammaj||'')}" placeholder="140 гр"/></div>
     <div><label class="fl">Ўлчов бирлиги</label><select class="fld" id="m_unit">${window._units.map(u=>`<option ${(x.unit||'kg')===u.name?'selected':''}>${esc(u.name)}</option>`).join('')}</select></div>
   </div>
   <div class="grid g2" style="gap:8px">

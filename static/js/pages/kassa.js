@@ -57,7 +57,7 @@ function kassaForm(dir){
   const defFirm=FIRM||window._kassaFirm||firms[0];
   modal(`<h2 class="sec mb">${dir==='Kirim'?icon('arrowDown',17)+' Кирим (pul keldi)':icon('arrowUp',17)+' Чиқим (pul ketdi)'}</h2>
   <label class="fl">${dir==='Kirim'?'Kimdan':'Kimga - nimaga'}</label>
-  <input class="fld" id="k_who" placeholder="${dir==='Kirim'?'mijoz/manba nomi':'masalan: Remont, Avans, Kley...'}"/>
+  <input class="fld" id="k_who" placeholder="${dir==='Kirim'?'mijoz/manba nomi':'masalan: Remont, Avans, Xarajat...'}"/>
   <label class="fl">Изоҳ (ixtiyoriy)</label><input class="fld" id="k_note"/>
   <div class="grid g2" style="gap:8px">
     <div><label class="fl">Сумма</label><input class="fld" id="k_amount" inputmode="numeric" oninput="pulFmt(this)"/></div>
