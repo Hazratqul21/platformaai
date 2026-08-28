@@ -116,7 +116,7 @@ def xodim_avansi(db: Session, c: m.CashEntry, kim: str = "") -> m.KassaEntry | N
 
 
 def sex_xarajati(db: Session, c: m.CashEntry, kim: str = "") -> m.KassaEntry | None:
-    """Sex rasxodi (kley, skotch, yo'lkira...) — kassadan chiqim."""
+    """Sex/xizmat rasxodi (material, ta'mir, yo'lkira...) — kassadan chiqim."""
     izoh = (c.note or "").strip()
     return yoz(db, tur="cash", manba_id=c.id, direction="Chiqim",
                who=(izoh or "Цех харажати"), note="Цех харажати",

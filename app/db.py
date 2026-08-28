@@ -17,7 +17,7 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-_default_db = Path(__file__).resolve().parent.parent / "gofra_erp.db"
+_default_db = Path(__file__).resolve().parent.parent / "ordo.db"  # lokal SQLite fallback (prod Postgres)
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_default_db}")
 
 # `postgres://` — eski shakl, SQLAlchemy 2 uni tanimaydi. Ko'p hosting
