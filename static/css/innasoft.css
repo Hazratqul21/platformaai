@@ -12,3 +12,80 @@
 .menu-toggle{display:none;border:0;background:transparent;color:var(--ink);font:inherit;font-size:11px;font-weight:850;cursor:pointer;align-items:center;gap:8px}.menu-toggle i,.menu-toggle i::after{display:block;width:16px;height:1.5px;background:currentColor;content:""}.menu-toggle i::after{transform:translateY(5px)}
 @media(max-width:760px){.site-header{overflow:visible}.menu-toggle{display:flex;justify-self:end;margin-right:83px}.site-nav{display:none}.site-nav.open{position:absolute;left:0;right:0;top:calc(100% + 1px);z-index:12;display:flex;flex-direction:column;gap:0;background:var(--paper);border:1px solid var(--ink);box-shadow:0 18px 30px rgba(9,9,9,.12)}.site-nav.open a{padding:17px 14px;border-bottom:1px solid var(--line)}.site-nav.open a:last-child{border-bottom:0}.menu-toggle[aria-expanded="true"] i{transform:rotate(45deg)}.menu-toggle[aria-expanded="true"] i::after{transform:rotate(-90deg)}body.menu-open{overflow:hidden}}
 .product-grid--single{grid-template-columns:minmax(0,1fr)}.product-grid--single .product-card-featured{min-height:430px;display:grid;grid-template-columns:1fr 1.45fr 1fr;gap:24px;align-items:end}.product-grid--single .product-symbol{margin:0;align-self:center;font-size:88px}.product-grid--single .card-action{margin:0;align-self:end}@media(max-width:760px){.product-grid--single .product-card-featured{display:flex;min-height:330px}.product-grid--single .product-symbol{margin:30px 0 auto;font-size:52px}}
+
+/* =====================================================================
+   MOTION QATLAMI (agency uslubi: netguru / metalab / cuberto ruhida)
+
+   TAMOYIL: progressiv yaxshilanish. Barcha animatsiya FAQAT `.motion`
+   sinfi ostida ishlaydi — uni JS qo'yadi, va faqat foydalanuvchi
+   `prefers-reduced-motion` yoqmagan bo'lsa. Ya'ni JS'siz yoki
+   harakat kamaytirilgan holatda kontent DARROV va TO'LIQ ko'rinadi
+   (hech narsa yashirin qolmaydi). Bu senior yondashuv.
+   ===================================================================== */
+
+/* --- 1. Jonli fon: sekin suzadigan yumshoq maydon --- */
+/* Hero ortida turadi, past shaffoflik, 32s sekin harakat. Rang —
+   ORDO turkuazi + brend binafsha. Rangli "blob" emas, yorug'lik. */
+.hero{position:relative;isolation:isolate}
+.hero::before{
+  content:"";position:absolute;inset:-20% -10% -30%;z-index:-1;
+  pointer-events:none;opacity:.5;
+  background:
+    radial-gradient(38% 46% at 22% 30%, color-mix(in oklab, var(--violet) 22%, transparent) 0%, transparent 70%),
+    radial-gradient(34% 42% at 82% 68%, color-mix(in oklab, var(--lime) 20%, transparent) 0%, transparent 70%);
+  filter:blur(20px);
+}
+.motion .hero::before{
+  animation:fonSuz 34s ease-in-out infinite alternate;
+}
+@keyframes fonSuz{
+  0%  {transform:translate3d(0,0,0) scale(1)}
+  50% {transform:translate3d(2.5%,-2%,0) scale(1.06)}
+  100%{transform:translate3d(-2%,2.5%,0) scale(1.03)}
+}
+
+/* --- 2. Scroll-reveal: element ko'rinishga kirganda yumshoq chiqadi --- */
+.motion [data-reveal]{
+  opacity:0;transform:translateY(18px);
+  transition:opacity .7s cubic-bezier(.22,1,.36,1),
+             transform .7s cubic-bezier(.22,1,.36,1);
+  will-change:opacity,transform;
+}
+.motion [data-reveal].in{opacity:1;transform:none}
+/* Ketma-ket (stagger) — bir guruh ichidagi bolalar navbat bilan */
+.motion [data-reveal-stagger].in > *{animation:staggerIn .7s cubic-bezier(.22,1,.36,1) both}
+.motion [data-reveal-stagger] > *:nth-child(1){animation-delay:.00s}
+.motion [data-reveal-stagger] > *:nth-child(2){animation-delay:.08s}
+.motion [data-reveal-stagger] > *:nth-child(3){animation-delay:.16s}
+.motion [data-reveal-stagger] > *:nth-child(4){animation-delay:.24s}
+.motion [data-reveal-stagger]:not(.in) > *{opacity:0}
+@keyframes staggerIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* --- 3. Hero kirish animatsiyasi (yuklanganda, bir marta) --- */
+.motion .hero-copy > *{animation:heroIn .8s cubic-bezier(.22,1,.36,1) both}
+.motion .hero-kicker{animation-delay:.05s}
+.motion #hero-title{animation-delay:.13s}
+.motion .hero-description{animation-delay:.24s}
+.motion .hero-actions{animation-delay:.34s}
+@keyframes heroIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+
+/* --- 4. Orbit diagramma: sekin aylanadi, yadro nafas oladi --- */
+.motion .stage-orbit{animation:orbitAyl 48s linear infinite}
+.motion .orbit-b{animation-duration:34s;animation-direction:reverse}
+@keyframes orbitAyl{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.motion .stage-core{animation:yadroNafas 6s ease-in-out infinite}
+@keyframes yadroNafas{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.045)}}
+
+/* --- 5. Scroll progress — yuqorida ingichka chiziq (netguru uslubi) --- */
+.scroll-progress{
+  position:fixed;left:0;top:0;height:2px;width:0;z-index:50;
+  background:linear-gradient(90deg,var(--violet),var(--lime));
+  transition:width .1s linear;
+}
+
+/* --- 6. Tugma/karta mikro-ko'tarilish --- */
+.motion .button-primary,.motion .cta-button,.motion .product-card{
+  transition:transform .35s cubic-bezier(.22,1,.36,1),
+             background .18s,color .18s,box-shadow .35s;
+}
+.motion .button-primary:hover,.motion .cta-button:hover{transform:translateY(-2px)}
