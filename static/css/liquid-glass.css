@@ -173,11 +173,17 @@ body{
 body::before{
   content:"";
   position:fixed;inset:0;z-index:-1;pointer-events:none;
+  /* SENIOR YONDASHUV: BITTA yorug'lik manbai, ikki rangdan boshqa yo'q.
+     Ilgari to'rtta sochilgan rangli dog' bor edi (ikki indigo + lavanda
+     + lime) — bu «gradient generator»/AI ko'rinishi. Endi:
+       · yuqori chapdan bitta yumshoq brend-binafsha yorug'lik (asosiy);
+       · pastki o'ngdan bitta juda sust turkuaz aks-sado (ORDO
+         logotipining rangi — chuqurlik beradi, e'tibor tortmaydi).
+     Lime OLIB TASHLANDI: u ambient fon rangi emas, semantik urg'u.
+     Ikkala qatlam ham past shaffoflik — kontent ustun bo'lib qoladi. */
   background:
-    radial-gradient(980px 700px at 16% 2%,  rgba(129,133,255,.42) 0%, transparent 58%),
-    radial-gradient(880px 620px at 86% 10%, rgba(99,102,246,.34)  0%, transparent 56%),
-    radial-gradient(820px 620px at 52% 66%, rgba(150,142,255,.26) 0%, transparent 60%),
-    radial-gradient(700px 540px at 90% 88%, rgba(201,240,90,.14)  0%, transparent 58%);
+    radial-gradient(1200px 860px at 8% -8%,  rgba(85,32,207,.10) 0%, transparent 56%),
+    radial-gradient(1000px 780px at 104% 108%, rgba(27,184,166,.055) 0%, transparent 52%);
 }
 
 /* 2 va 3-QATLAM — to'r va dona.
