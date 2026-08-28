@@ -25,30 +25,30 @@
 
 :root{
   /* ---- FON ---- */
-  --lg-paper:#F7F6F2;              /* iliq off-white */
-  --lg-atmos:#EEF0FF;              /* lavender-blue nafas */
+  --lg-paper:var(--product-canvas);              /* iliq off-white */
+  --lg-atmos:var(--product-canvas-accent);       /* sokin violet nafas */
 
   /* ---- ASOSIY RANG ---- */
-  --lg-primary:#5B5BEF;
-  --lg-primary-light:#7B7CF6;
-  --lg-primary-soft:rgba(91,91,239,.10);
-  --lg-primary-ring:rgba(91,91,239,.28);
+  --lg-primary:var(--product-primary);
+  --lg-primary-light:#7445dd;
+  --lg-primary-soft:rgba(85,32,207,.10);
+  --lg-primary-ring:rgba(85,32,207,.24);
 
   /* ---- IKKINCHI DARAJALI URG'U (lime) ----
      ATAYLAB faqat success / ijobiy holat / AI insight uchun.
      Asosiy UI rangiga aylanmaydi. */
-  --lg-lime:#8FBF00;
-  --lg-lime-soft:rgba(143,191,0,.14);
+  --lg-lime:var(--brand-lime);
+  --lg-lime-soft:rgba(201,240,0,.14);
 
   /* ---- MATN ---- */
-  --lg-text:#17182B;
-  --lg-text-2:#6D708C;
-  --lg-text-3:#83869E;
+  --lg-text:var(--product-ink);
+  --lg-text-2:var(--product-ink-secondary);
+  --lg-text-3:var(--product-ink-tertiary);
 
   /* ---- SEMANTIK ---- */
-  --lg-neg:#E5484D;
+  --lg-neg:var(--product-danger);
   --lg-neg-soft:rgba(229,72,77,.12);
-  --lg-warn:#C98A14;
+  --lg-warn:var(--product-warning);
   --lg-warn-soft:rgba(201,138,20,.14);
 
   /* ---- RADIUS ---- */
@@ -58,8 +58,8 @@
   --lg-r-pill:999px;
 
   /* ---- MATERIAL DARAJALARI ---- */
-  --lg-l2-bg:rgba(255,255,255,.46);
-  --lg-l2-blur:blur(30px) saturate(165%);
+  --lg-l2-bg:var(--product-surface-translucent);
+  --lg-l2-blur:blur(16px) saturate(125%);
   --lg-l2-line:rgba(255,255,255,.95);
   /* Ikki qatlamli soya: yaqin (shakl) + uzoq (chuqurlik) + ichki
      yuqori highlight (yorug'lik sinishi). Shu uchtasi birga
@@ -70,17 +70,17 @@
                  inset 0 -18px 30px -22px rgba(120,124,220,.16);
 
   --lg-l3-bg:rgba(255,255,255,.68);
-  --lg-l3-blur:blur(18px) saturate(150%);
+  --lg-l3-blur:blur(12px) saturate(125%);
   --lg-l3-shadow:0 6px 18px rgba(70,70,150,.10),
                  inset 0 1px 0 rgba(255,255,255,.85);
 
   --lg-l4-bg:rgba(255,255,255,.78);
-  --lg-l4-blur:blur(40px) saturate(160%);
+  --lg-l4-blur:blur(24px) saturate(130%);
   --lg-l4-shadow:0 32px 80px rgba(40,42,110,.20),
                  inset 0 1px 0 rgba(255,255,255,.9);
 
   --lg-l5-bg:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.70));
-  --lg-l5-blur:blur(30px) saturate(150%);
+  --lg-l5-blur:blur(20px) saturate(130%);
   --lg-l5-shadow:-1px 0 2px rgba(40,42,110,.05),
                  -26px 0 70px -24px rgba(60,62,140,.26),
                  inset 1px 0 0 rgba(255,255,255,.95),
@@ -90,7 +90,7 @@
   --lg-fast:180ms;
   --lg-mid:240ms;
   --lg-slow:300ms;
-  --lg-ease:cubic-bezier(.22,1,.36,1);   /* ease-out, spring hissi */
+  --lg-ease:var(--product-ease-out);     /* tez va sokin ease-out */
 
   /* Mavjud tokenlarni ham yangi palitraga bog'laymiz — eski
      komponentlar avtomat moslashadi, ular uchun alohida qoida
@@ -104,7 +104,7 @@
   --ink-3:var(--lg-text-3);
   --danger:var(--lg-neg);
   --warn:var(--lg-warn);
-  --ok:var(--lg-lime);
+  --ok:var(--product-success);
   --hair:rgba(23,24,43,.08);
   --radius:var(--lg-r-lg);
 }
@@ -291,7 +291,7 @@ body,.btn,.fld,input,select,textarea,button{
   grid-template-columns:250px 1fr;
   padding:var(--lg-chet);
   gap:var(--lg-chet);
-  transition:grid-template-columns var(--lg-mid) var(--lg-ease);
+  transition:none;
 }
 body.ai-ochiq .app.on{grid-template-columns:78px 1fr}
 
@@ -313,8 +313,7 @@ body.ai-ochiq .app.on{grid-template-columns:78px 1fr}
      ustun esa 14px da turardi va tepalari bir chiziqqa tushmasdi. */
   margin:0;
   background:rgba(255,255,255,.42);
-  transition:width var(--lg-mid) var(--lg-ease),
-             padding var(--lg-mid) var(--lg-ease);
+  transition:none;
 }
 .side .nav a{
   border-radius:var(--lg-r-md);
@@ -398,7 +397,7 @@ body.ai-ochiq .app.on{grid-template-columns:78px 1fr}
      to'ldirma beriladi. */
   body.ai-ochiq .main{
     padding-right:calc(min(420px,100vw) + var(--lg-chet));
-    transition:padding-right var(--lg-slow) var(--lg-ease);
+    transition:none;
   }
 
   /* Yig'ilganda tooltip — label hover bilan ko'rinadi */

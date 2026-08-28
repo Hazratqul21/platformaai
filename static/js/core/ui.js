@@ -6,24 +6,102 @@ function toast(c,ic,t,p){
     return toast(kind, kind==='d'?'alertic':'check', msg, '');
   }
   const el=document.createElement('div');el.className='toast glass alert '+c;
+  const keskin=['d','w'].includes(c);
+  el.setAttribute('role',keskin?'alert':'status');
+  el.setAttribute('aria-live',keskin?'assertive':'polite');
+  el.setAttribute('aria-atomic','true');
   el.innerHTML=`<div class="ai">${icon(ic,16)}</div><div><b>${esc(t)}</b><p>${esc(p)}</p></div>`;
   document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),4200);}
+
+let _modalOpener=null;
+let _modalBackground=[];
+let _modalTitleSeq=0;
+
+function modalFocusables(){
+  return [...document.querySelectorAll('#modalBox button:not([disabled]), #modalBox input:not([disabled]), #modalBox select:not([disabled]), #modalBox textarea:not([disabled]), #modalBox a[href], #modalBox [tabindex]:not([tabindex="-1"])')]
+    .filter(el=>el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden');
+}
+
+function modalFoniniQulfla(){
+  _modalBackground=['lending','loginScreen','app','bottomNav']
+    .map(id=>document.getElementById(id))
+    .filter(el=>el&&getComputedStyle(el).display!=='none')
+    .map(el=>({el,inert:el.inert,ariaHidden:el.getAttribute('aria-hidden')}));
+  _modalBackground.forEach(({el})=>{
+    el.inert=true;
+    el.setAttribute('aria-hidden','true');
+  });
+}
+
+function modalFoniniOch(){
+  _modalBackground.forEach(({el,inert,ariaHidden})=>{
+    el.inert=inert;
+    if(ariaHidden===null)el.removeAttribute('aria-hidden');
+    else el.setAttribute('aria-hidden',ariaHidden);
+  });
+  _modalBackground=[];
+}
+
 function modal(html,wide,qulf){
   const box=document.getElementById('modalBox');
+  const ov=document.getElementById('overlay');
+  if(!ov.classList.contains('show')){
+    _modalOpener=document.activeElement;
+    modalFoniniQulfla();
+  }
   box.innerHTML=html;
   box.classList.toggle('wide',!!wide);   // keng jadvalli oynalar uchun
-  const ov=document.getElementById('overlay');
+  const title=box.querySelector('h1,h2,h3');
+  if(title){
+    if(!title.id)title.id='modalTitle-'+(++_modalTitleSeq);
+    box.setAttribute('aria-labelledby',title.id);
+    box.removeAttribute('aria-label');
+  }else{
+    box.removeAttribute('aria-labelledby');
+    box.setAttribute('aria-label','Muloqot oynasi');
+  }
   // `qulf` — fon bosilganda yopilmaydi. Majburiy qadamlar uchun
   // (masalan standart parolni almashtirish): oyna yopilsa foydalanuvchi
   // hech narsa qila olmaydigan bo'sh ekranda qolardi.
   if(qulf)ov.dataset.qulf='1'; else delete ov.dataset.qulf;
   ov.classList.add('show');
+  ov.setAttribute('aria-hidden','false');
+  requestAnimationFrame(()=>{
+    const birinchi=modalFocusables()[0];
+    (birinchi||box).focus({preventScroll:true});
+  });
 }
 function closeModal(){
   const ov=document.getElementById('overlay');
+  if(!ov.classList.contains('show'))return;
   delete ov.dataset.qulf;
   ov.classList.remove('show');
+  modalFoniniOch();
+  if(_modalOpener&&_modalOpener.isConnected){
+    _modalOpener.focus({preventScroll:true});
+  }
+  ov.setAttribute('aria-hidden','true');
+  _modalOpener=null;
 }
+
+document.getElementById('overlay').addEventListener('click',e=>{
+  if(e.target===e.currentTarget&&!e.currentTarget.dataset.qulf)closeModal();
+});
+
+document.addEventListener('keydown',e=>{
+  const ov=document.getElementById('overlay');
+  if(!ov.classList.contains('show'))return;
+  if(e.key==='Escape'){
+    if(!ov.dataset.qulf){e.preventDefault();closeModal();}
+    return;
+  }
+  if(e.key!=='Tab')return;
+  const focusable=modalFocusables();
+  if(!focusable.length){e.preventDefault();document.getElementById('modalBox').focus();return;}
+  const first=focusable[0],last=focusable[focusable.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+});
 const f=id=>document.getElementById(id)?.value||'';
 // Pul maydoni qiymatini toza son qilib olish (probel/vergul olib tashlanadi): fnum('id')
 const fnum=id=>+String(f(id)).replace(/[\s,]/g,'')||0;
@@ -84,13 +162,6 @@ function setTitle(title, sub){
   if(pt)pt.textContent=title||'';
   if(ps)ps.textContent=sub||'';
 }
-
-// modal ochilganda birinchi maydonga fokus (qulaylik)
-const _origModal = modal;
-modal = function(html,wide){
-  _origModal(html,wide);
-  setTimeout(()=>{const el=document.querySelector('#modalBox input.fld, #modalBox select.fld');if(el)el.focus();},60);
-};
 
 // yangi sahifalar uslubi uchun taxallus
 const openModal = (html)=>modal(html);

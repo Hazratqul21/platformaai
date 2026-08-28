@@ -21,15 +21,15 @@ async function logout(){
 /* ---- Биринчи кириш: стандарт паролни алмаштириш мажбурий ---- */
 function parolMajburiy(){
   modal(`<h2 class="sec">Паролни алмаштиринг</h2>
-  <div class="muted" style="font-size:12px;margin:4px 0 10px;line-height:1.5">
+  <div class="muted" id="pmHelp" style="font-size:12px;margin:4px 0 10px;line-height:1.5">
     Тизимга стандарт пароль (<b>1234</b>) билан кирилди. Бу ерда пул, қарз ва
     мижозлар базаси турибди — янги пароль ўрнатмагунингизча тизим очилмайди.</div>
-  <label class="fl">Эски пароль</label>
-  <input class="fld" id="pm_old" type="password" value="1234"/>
-  <label class="fl">Янги пароль (камида 8 белги)</label>
-  <input class="fld" id="pm_new" type="password" autocomplete="new-password"/>
-  <label class="fl">Янги паролни такрорланг</label>
-  <input class="fld" id="pm_new2" type="password" autocomplete="new-password"/>
+  <label class="fl" for="pm_old">Эски пароль</label>
+  <input class="fld" id="pm_old" type="password" value="1234" aria-describedby="pmHelp" required/>
+  <label class="fl" for="pm_new">Янги пароль (камида 8 белги)</label>
+  <input class="fld" id="pm_new" type="password" autocomplete="new-password" minlength="8" required/>
+  <label class="fl" for="pm_new2">Янги паролни такрорланг</label>
+  <input class="fld" id="pm_new2" type="password" autocomplete="new-password" minlength="8" required/>
   <div class="row" style="margin-top:16px;justify-content:flex-end">
     <button class="btn pri" onclick="parolMajburiySaqla()">Сақлаш ва кириш</button></div>`,
     false, true);

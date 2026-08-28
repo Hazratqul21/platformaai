@@ -104,14 +104,15 @@ function qurBoshla(){
         </div>
       </div>
       <div class="qur-past">
-        <button class="btn ghost sm" onclick="qurOvozAlmash()" id="qurOvozBtn"
-          title="Ovoz">${icon('sound',14)} Ovoz yoniq</button>
+        <button type="button" class="btn ghost sm" onclick="qurOvozAlmash()" id="qurOvozBtn"
+          title="Ovoz" aria-pressed="true">${icon('sound',14)} Ovoz yoniq</button>
         <button class="btn pri" id="qurKirBtn" onclick="qurTizimgaKir()" disabled>
           Tizimga kirish</button>
       </div>
     </div>
-    <button class="qur-chat-tugma" id="qurChatTugma" onclick="qurChatAlmash()"
-      title="Suhbatni ko'rsatish/yashirish">${icon('ai',15)}</button>`;
+    <button type="button" class="qur-chat-tugma" id="qurChatTugma" onclick="qurChatAlmash()"
+      title="Suhbatni ko'rsatish/yashirish" aria-label="AI suhbatini ko‘rsatish yoki yashirish"
+      aria-controls="agentPanel">${icon('ai',15)}</button>`;
   ek.classList.add('on');
 
   // AI paneli o'ngda — ERP dagi bilan BIR XIL panel. Ikkinchi chat
@@ -158,8 +159,9 @@ function qurChatAlmash(){
 
 function qurOvozAlmash(){
   QUR.ovoz=!QUR.ovoz;
-  document.getElementById('qurOvozBtn').textContent =
-    QUR.ovoz ? icon('sound',14)+' Ovoz yoniq' : icon('mute',14)+' Ovoz o\'chiq';
+  const tugma=document.getElementById('qurOvozBtn');
+  tugma.innerHTML=QUR.ovoz ? icon('sound',14)+' Ovoz yoniq' : icon('mute',14)+' Ovoz o\'chiq';
+  tugma.setAttribute('aria-pressed',String(QUR.ovoz));
   if(QUR.ovoz) qurDing(false);
 }
 
@@ -217,7 +219,8 @@ function qurBolimQosh(asbob){
     <div class="qur-karta-izoh">${esc(izoh)}</div></div>`;
   document.getElementById('qurTasma').appendChild(k);
   requestAnimationFrame(()=>k.classList.add('kirdi'));
-  k.scrollIntoView({behavior:'smooth', block:'nearest'});
+  const kamHarakat=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  k.scrollIntoView({behavior:kamHarakat?'auto':'smooth', block:'nearest'});
   qurDing(false);
 
   // Profil yoqilgan bo'lsa — tizim ishlashga tayyor.

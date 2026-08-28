@@ -10,6 +10,33 @@ let AGENT_SUHBAT = null;      // joriy suhbat id (null = yangi)
 let AGENT_BAND = false;       // javob kutilyaptimi
 let AGENT_KALIT = null;       // qaysi bo'lim agenti
 let AGENT_ROYXAT = [];        // rolga ochiq agentlar
+let AGENT_OPENER = null;      // panel yopilganda fokus qaytadigan element
+let AGENT_APP_OLD_INERT = false;
+let AGENT_APP_QULFLANGAN = false;
+
+function agentMobilmi(){return matchMedia('(max-width:900px)').matches;}
+
+function agentSemantika(){
+  const panel=document.getElementById('agentPanel');
+  if(!panel)return;
+  const mobil=agentMobilmi();
+  panel.setAttribute('role',mobil?'dialog':'complementary');
+  if(mobil)panel.setAttribute('aria-modal','true');
+  else panel.removeAttribute('aria-modal');
+  const app=document.getElementById('app');
+  if(panel.classList.contains('ochiq')&&mobil&&app&&!AGENT_APP_QULFLANGAN){
+    AGENT_APP_OLD_INERT=app.inert;app.inert=true;AGENT_APP_QULFLANGAN=true;
+  }else if((!mobil||!panel.classList.contains('ochiq'))&&app&&AGENT_APP_QULFLANGAN){
+    app.inert=AGENT_APP_OLD_INERT;AGENT_APP_QULFLANGAN=false;
+  }
+}
+
+function agentFocusables(){
+  const panel=document.getElementById('agentPanel');
+  if(!panel)return[];
+  return [...panel.querySelectorAll('button:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')]
+    .filter(el=>el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden');
+}
 
 function agentPanelYasa() {
   if (document.getElementById('agentPanel')) return;
@@ -17,23 +44,25 @@ function agentPanelYasa() {
   const panel = document.createElement('div');
   panel.id = 'agentPanel';
   panel.className = 'agent-panel';
+  panel.setAttribute('aria-hidden','true');
+  panel.setAttribute('aria-labelledby','agentNom');
   panel.innerHTML = `
     <div class="agent-head">
       <div style="flex:1;min-width:0">
         <div class="agent-title" id="agentNom">Ёрдамчи</div>
-        <select class="agent-tanla" id="agentTanla"></select>
-        <div class="agent-sub" id="agentHolat">tekshirilmoqda…</div>
+        <select class="agent-tanla" id="agentTanla" aria-label="AI yordamchini tanlash"></select>
+        <div class="agent-sub" id="agentHolat" aria-live="polite">tekshirilmoqda…</div>
       </div>
       <div class="agent-head-btns">
-        <button class="agent-icon" id="agentYangi" title="Yangi suhbat">${icon('pencil',15)}</button>
-        <button class="agent-icon" id="agentYop" title="Yopish">${icon('x',15)}</button>
+        <button type="button" class="agent-icon" id="agentYangi" title="Yangi suhbat" aria-label="Yangi suhbat">${icon('pencil',15)}</button>
+        <button type="button" class="agent-icon" id="agentYop" title="Yopish" aria-label="AI yordamchini yopish">${icon('x',15)}</button>
       </div>
     </div>
-    <div class="agent-oqim" id="agentOqim"></div>
+    <div class="agent-oqim" id="agentOqim" role="log" aria-live="polite" aria-relevant="additions"></div>
     <div class="agent-kirish">
-      <textarea id="agentMatn" rows="2"
+      <textarea id="agentMatn" rows="2" aria-label="AI yordamchiga savol"
         placeholder="Savolingizni yozing…"></textarea>
-      <button class="btn agent-yubor" id="agentYubor">Yuborish</button>
+      <button type="button" class="btn agent-yubor" id="agentYubor">Yuborish</button>
     </div>`;
   document.body.appendChild(panel);
 
@@ -41,6 +70,10 @@ function agentPanelYasa() {
   tugma.id = 'agentOch';
   tugma.className = 'agent-och';
   tugma.title = 'Sozlash yordamchisi';
+  tugma.type = 'button';
+  tugma.setAttribute('aria-label','AI yordamchini ochish');
+  tugma.setAttribute('aria-controls','agentPanel');
+  tugma.setAttribute('aria-expanded','false');
   tugma.innerHTML = icon('ai', 24);
   document.body.appendChild(tugma);
 
@@ -57,19 +90,46 @@ function agentPanelYasa() {
     // odatiy xulq; aks holda uzun matn yozayotgan odam adashadi.
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agentYubor(); }
   });
+  panel.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      e.preventDefault();
+      agentOchYop(false);
+      return;
+    }
+    if(e.key!=='Tab'||!agentMobilmi())return;
+    const focusable=agentFocusables();
+    if(!focusable.length)return;
+    const first=focusable[0],last=focusable[focusable.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  });
+  agentSemantika();
+  matchMedia('(max-width:900px)').addEventListener('change',agentSemantika);
 }
 
 function agentOchYop(ochiq) {
-  document.getElementById('agentPanel').classList.toggle('ochiq', ochiq);
+  const panel=document.getElementById('agentPanel');
+  const tugma=document.getElementById('agentOch');
+  if(ochiq&&!panel.classList.contains('ochiq'))AGENT_OPENER=document.activeElement;
+  panel.classList.toggle('ochiq', ochiq);
+  tugma.setAttribute('aria-expanded',String(ochiq));
+  const qurTugma=document.getElementById('qurChatTugma');
+  if(qurTugma)qurTugma.setAttribute('aria-expanded',String(ochiq));
   // Panel holati BODY ga ham chiqariladi: layout (sidebar yig'ilishi,
   // kontentning qayta joylashuvi) shu sinfga tayanadi. `:has()` ga
   // tayanib bo'lmadi — panel qayta ochilganda brauzer `.main` uchun
   // uslubni qayta hisoblamadi (o'lchab tekshirildi: 438px -> 0px).
   document.body.classList.toggle('ai-ochiq', ochiq);
-  document.getElementById('agentOch').classList.toggle('yashir', ochiq);
+  tugma.classList.toggle('yashir', ochiq);
+  agentSemantika();
   if (ochiq) {
+    panel.setAttribute('aria-hidden','false');
     agentHolatniOl();
     document.getElementById('agentMatn').focus();
+  } else {
+    if(AGENT_OPENER&&AGENT_OPENER.isConnected)AGENT_OPENER.focus({preventScroll:true});
+    panel.setAttribute('aria-hidden','true');
+    AGENT_OPENER=null;
   }
 }
 

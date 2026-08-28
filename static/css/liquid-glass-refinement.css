@@ -10,8 +10,8 @@
   /* Bir xil "sutli" yuzani yo'qotish uchun darajalar orasidagi farq
      ataylab kattalashtirildi. Blur 30–40px dan pastroq: kontur aniq,
      shisha hissi esa orqa fon ranglari orqali saqlanadi. */
-  --lg-l2-bg:rgba(255,255,255,.58);
-  --lg-l2-blur:blur(20px) saturate(135%);
+  --lg-l2-bg:var(--product-surface-translucent);
+  --lg-l2-blur:blur(16px) saturate(125%);
   --lg-l2-line:rgba(255,255,255,.72);
   --lg-l2-shadow:
     0 1px 1px rgba(39,40,92,.05),
@@ -20,21 +20,21 @@
     inset 0 0 0 1px rgba(36,38,82,.035);
 
   --lg-l3-bg:rgba(255,255,255,.74);
-  --lg-l3-blur:blur(14px) saturate(135%);
+  --lg-l3-blur:blur(12px) saturate(125%);
   --lg-l3-shadow:
     0 8px 22px -14px rgba(51,52,123,.28),
     inset 0 1px 0 rgba(255,255,255,.88),
     inset 0 0 0 1px rgba(35,37,78,.035);
 
   --lg-l4-bg:rgba(251,251,255,.86);
-  --lg-l4-blur:blur(28px) saturate(140%);
+  --lg-l4-blur:blur(24px) saturate(130%);
   --lg-l4-shadow:
     0 34px 86px -30px rgba(35,37,92,.38),
     0 8px 24px -16px rgba(35,37,92,.22),
     inset 0 1px 0 rgba(255,255,255,.92);
 
   --lg-l5-bg:linear-gradient(180deg,rgba(252,252,255,.88),rgba(247,248,255,.78));
-  --lg-l5-blur:blur(24px) saturate(140%);
+  --lg-l5-blur:blur(20px) saturate(130%);
   --lg-l5-shadow:
     -22px 0 64px -34px rgba(48,49,126,.42),
     0 18px 52px -30px rgba(48,49,126,.28),
@@ -52,13 +52,13 @@ body{
    tumanga ko'mmaydi. Markazdagi oqish zona o'qishni tinch saqlaydi. */
 body::before{
   background:
-    radial-gradient(760px 520px at 5% 0%,rgba(111,114,244,.26),transparent 67%),
-    radial-gradient(820px 560px at 96% 8%,rgba(136,139,255,.22),transparent 68%),
-    radial-gradient(700px 520px at 52% 62%,rgba(118,121,246,.11),transparent 72%),
-    radial-gradient(640px 480px at 92% 94%,rgba(201,240,90,.07),transparent 70%),
-    linear-gradient(145deg,rgba(247,246,242,.5),rgba(238,240,255,.42));
+    radial-gradient(760px 520px at 5% 0%,rgba(85,32,207,.14),transparent 67%),
+    radial-gradient(820px 560px at 96% 8%,rgba(116,69,221,.11),transparent 68%),
+    radial-gradient(700px 520px at 52% 62%,rgba(85,32,207,.055),transparent 72%),
+    radial-gradient(640px 480px at 92% 94%,rgba(201,240,0,.045),transparent 70%),
+    linear-gradient(145deg,rgba(247,240,234,.62),rgba(238,234,248,.42));
 }
-.paper-bg{opacity:.82}
+.paper-bg{opacity:.38}
 
 /* Apple-inspired degani Apple UI nusxasi emas: system font, aniq
    tracking va o'qiladigan leading. Eski serif page title olib tashlandi. */
@@ -69,6 +69,7 @@ body::before{
 .page-title{font-size:24px;line-height:1.12;font-weight:720;letter-spacing:-.035em}
 .page-sub{margin-top:4px;line-height:1.35;color:#62657f}
 .sec{line-height:1.25;letter-spacing:-.02em}
+.page{animation:none}
 
 /* L2 — umumiy ish yuzasi. Oq highlight endi kontur emas, yorug'lik
    qatlami sifatida seziladi; to'q ichki hairline shaklni ushlab turadi. */
@@ -79,7 +80,9 @@ body::before{
 }
 .card,.ccard{
   background:
-    linear-gradient(145deg,rgba(255,255,255,.72),rgba(250,250,255,.49));
+    linear-gradient(145deg,rgba(255,255,255,.96),rgba(252,251,248,.9));
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
 }
 
 /* Strukturaviy chrome ish kartasidan biroz zichroq bo'lishi kerak. */
@@ -217,7 +220,28 @@ input[type=text],input[type=number],input[type=date],input[type=password],select
   border-color:rgba(255,255,255,.82);
   box-shadow:var(--lg-l4-shadow),inset 0 0 0 1px rgba(37,39,80,.035);
 }
-.overlay{background:rgba(40,42,92,.16);backdrop-filter:blur(7px) saturate(115%)}
+.overlay{
+  display:flex;
+  visibility:hidden;
+  pointer-events:none;
+  opacity:0;
+  background:rgba(28,20,42,.2);
+  backdrop-filter:blur(7px) saturate(115%);
+  transition:opacity 180ms var(--product-ease-out),visibility 0s linear 180ms;
+}
+.overlay.show{
+  visibility:visible;
+  pointer-events:auto;
+  opacity:1;
+  transition:opacity 180ms var(--product-ease-out);
+}
+.modal{
+  animation:none;
+  opacity:0;
+  transform:translateY(10px) scale(.98);
+  transition:transform 240ms var(--product-ease-out),opacity 180ms var(--product-ease-out);
+}
+.overlay.show .modal{opacity:1;transform:none}
 
 /* Kontrast va transparency accessibility — effect hech qachon
    foydalanuvchini interfeysdan mahrum qilmaydi. */
@@ -236,6 +260,9 @@ input[type=text],input[type=number],input[type=date],input[type=password],select
 @media(prefers-reduced-motion:reduce){
   .btn,.fchip,.agent-icon,.side .nav a{transition-property:background-color,border-color,color,box-shadow}
   .btn:hover,.btn:active,.fchip:active,.agent-icon:active{transform:none!important}
+  .overlay{transition:opacity 120ms linear,visibility 0s linear 120ms}
+  .overlay.show{transition:opacity 120ms linear}
+  .modal{transform:none!important;transition:opacity 120ms linear}
 }
 
 @media(max-width:900px){

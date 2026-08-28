@@ -24,6 +24,7 @@ from .routers import admin as admin_router  # noqa: E402
 from .migrate import (run_migrations, backfill_soha,  # noqa: E402
                       profillarni_yukla, jadvalni_qayta_qur)
 from . import models as m  # noqa: E402
+from . import eauksion  # noqa: E402,F401  # ea_ jadvallarni Base.metadata ga ro'yxatga oladi
 from . import domain  # noqa: E402
 from .seed import seed  # noqa: E402
 from .bot import start_bot_bg  # noqa: E402
@@ -124,7 +125,7 @@ async def ijarachilik(request, call_next):
     # Akkauntsiz ochiq yo'llar: statik, salomatlik, ro'yxatdan o'tish.
     # `/api/platforma/*` — odam hali subdomenga ega emas (app.innasoft.uz
     # da ro'yxatdan o'tyapti), shuning uchun akkaunt talab qilinmaydi.
-    if (yol == "/" or yol.startswith("/static") or yol == "/api/health"
+    if (yol in ("/", "/innasoft") or yol.startswith("/static") or yol == "/api/health"
             or yol.startswith("/api/platforma/")
             or yol.startswith("/api/kabinet/")
             or yol.startswith("/api/admin/")):
@@ -240,12 +241,28 @@ def health(db: Session = Depends(get_db)):
 
 @app.get("/", include_in_schema=False)
 def index(request: Request):
+    # innaoft.uz — kompaniyaning ochiq sayti. `app.innasoft.uz` esa
+    # mahsulotga kirish nuqtasi, mijoz subdomenlari esa o'z ERP'ida qoladi.
+    from . import tenancy
+    host = (request.headers.get("host") or "").split(":")[0].lower()
+    domen = tenancy.asosiy_domen()
+    if host in {domen, "www." + domen}:
+        return FileResponse(STATIC_DIR / "innasoft.html")
     # admin.innasoft.uz -> platforma admin paneli (boshqa sahifa).
     # Bu bizning (operatorlar) paneli — akkauntlar, AI sarfi, muzlatish.
-    host = (request.headers.get("host") or "").split(":")[0].lower()
     if host.split(".")[0] == "admin":
         return FileResponse(STATIC_DIR / "admin.html")
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/innasoft", include_in_schema=False)
+def innasoft_preview():
+    """Lokal ishlab chiqishda korporativ sayt ko'rigi.
+
+    Prod'da asosiy domenning `/` manzili shu faylni beradi; lokalda esa
+    `localhost:8070/innasoft` ERP kirish sahifasini buzmasdan preview beradi.
+    """
+    return FileResponse(STATIC_DIR / "innasoft.html")
 
 
 @app.get("/favicon.ico", include_in_schema=False)

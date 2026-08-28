@@ -306,9 +306,9 @@
         <div class="kicker" id="loginKicker">INNASOFT · boshqaruv platformasi</div>
         <p class="login-intro" id="loginIntro">Ish joyingizga kirish uchun ma'lumotlaringizni yozing.</p>
         <div class="login-fields">
-          <label class="fl">Login</label>
+          <label class="fl" for="lg">Login</label>
           <input class="fld" id="lg" placeholder="telefon yoki email" autocomplete="username"/>
-          <label class="fl">Parol</label>
+          <label class="fl" for="pw">Parol</label>
           <div class="login-password">
             <input class="fld" id="pw" type="password" placeholder="Parolingizni kiriting" autocomplete="current-password"/>
             <button class="login-password-toggle" id="loginPasswordToggle" type="button" aria-label="Parolni ko'rsatish" aria-pressed="false">Ko'rsatish</button>
@@ -343,24 +343,24 @@
       <div class="logo" id="brandLogo"></div>
       <div><h1>TIZIM</h1><small>Бошқарув панели</small></div>
     </div>
-    <nav class="nav" id="nav"></nav>
+    <nav class="nav" id="nav" aria-label="Asosiy bo‘limlar"></nav>
     <div class="side-foot">© INNASOFT MChJ<br>TIZIM · v1.0</div>
   </aside>
-  <div class="main">
+  <main class="main">
     <header class="topbar glass">
       <div><div class="page-title" id="ptitle">—</div><div class="page-sub" id="psub"></div></div>
       <div class="spacer"></div>
       <select class="fld" id="firmSel" style="width:auto;padding:8px 12px;font-size:12px;font-weight:600;display:none"
         onchange="setFirm(this.value)"></select>
       <div class="userchip"><div class="av" id="uav">?</div><span id="uname">—</span><small id="urole"></small></div>
-      <button class="btn sm ghost" onclick="logout()" title="Chiqish">⎋</button>
+      <button class="btn sm ghost" onclick="logout()" title="Chiqish" aria-label="Tizimdan chiqish">⎋</button>
     </header>
     <div class="content" id="content"></div>
-  </div>
+  </main>
 </div>
-<nav class="bottom-nav glass" id="bottomNav"></nav>
-<div class="toasts" id="toasts"></div>
-<div class="overlay" id="overlay" onclick="if(event.target===this&&!this.dataset.qulf)closeModal()"><div class="modal glass" id="modalBox"></div></div>
+<nav class="bottom-nav glass" id="bottomNav" aria-label="Mobil bo‘limlar"></nav>
+<div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+<div class="overlay" id="overlay" aria-hidden="true"><div class="modal glass" id="modalBox" role="dialog" aria-modal="true" tabindex="-1"></div></div>
 
 </body>
 </html>
