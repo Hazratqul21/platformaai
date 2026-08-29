@@ -79,6 +79,7 @@ egasi va yangilanishi noma’lum qolmaydi.
 |---|---|---|---|
 | Logo lockup | SVG, dark/light | header, login, favicon | kerak |
 | INNA product preview | 16:10 PNG/WebP, 2x | corporate hero, login o‘ngi | keyin haqiqiy screenshot bilan |
+| ORDO login preview v2 | 1586×992 WebP, 16:10 | ORDO kirish sahifasi o‘ngi | konseptual, customer-safe; keyin haqiqiy screenshot bilan |
 | ERP modul previewlari | 4:3 PNG/WebP, 2x | product cards, case | kerak |
 | Customer-safe case media | WebP/MP4 | case study | faqat ruxsat bilan |
 | UI icons | SVG, 24px grid | mahsulot va sahifalar | bitta icon set |

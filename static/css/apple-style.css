@@ -1,0 +1,658 @@
+/* =====================================================
+   ORDO — APPLE STYLE UI (V2 - ULTRA PREMIUM)
+   Dizayn va xatolar tuzatilgan, tipografiya sayqallangan versiyasi.
+   ===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Apple Tipografiyasi */
+  --sans: "SF Pro Display", "SF Pro Text", "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  
+  /* Toza ranglar (Clean Colors) */
+  --ink: #111111;      /* macOS qora matn, yanada to'qroq */
+  --ink-2: #6E6E73;    /* Apple secondary gray */
+  --ink-3: #86868B;
+  
+  /* Accent — Apple Blue (Yumshoqroq va premium) */
+  --primary: #5520cf;          /* ORDO binafsha (Apple ko'ki emas) */
+  --primary-deep: #3d11a2;
+  --accent: #0fbeb4;           /* ORDO turkuaz (logotip) */
+  --primary-glow: rgba(85, 32, 207, 0.15);
+  
+  /* Squircles (Yumshoq burchaklar) */
+  --radius: 20px;
+  
+  /* Apple Soyalar (Layered soft shadows) */
+  --shadow: 0 4px 16px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.02);
+  --shadow-hover: 0 12px 32px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03);
+  
+  /* Apple Glassmorphism (High blur, saturation) - Yanada qalinroq shisha */
+  --blur: saturate(200%) blur(32px);
+}
+
+/* 1. Fon va Asos */
+body {
+  background: #F5F5F7 !important;
+  color: var(--ink) !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* Tipografiya sayqallanishi (Kerning va Spacing) */
+h1, h2, h3, .page-title {
+  letter-spacing: -0.02em !important; /* Apple katta matnlarda doim shunday qiladi */
+  font-weight: 600 !important;
+}
+.page-sub, small, .muted {
+  letter-spacing: 0.01em !important;
+}
+
+.paper-bg rect { display: none !important; }
+.paper-bg { background: #F5F5F7 !important; }
+
+/* 2. Glass (Shisha) Effektlari va Sticky Header muammosi */
+.glass {
+  background: rgba(255, 255, 255, 0.75) !important; /* Shaffoflik biroz kamaytirildi, matn o'qilishi uchun */
+  backdrop-filter: var(--blur) !important;
+  -webkit-backdrop-filter: var(--blur) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important; /* Oq hoshiya o'rniga nozik kulrang */
+  box-shadow: var(--shadow) !important;
+}
+.glass::after { display: none !important; }
+
+/* Topbar (Tepadagi Sticky Menu) */
+.topbar {
+  background: rgba(245, 245, 247, 0.85) !important;
+  backdrop-filter: saturate(200%) blur(40px) !important;
+  -webkit-backdrop-filter: saturate(200%) blur(40px) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: none !important;
+  border-radius: 0 !important; /* Tepaga to'liq yopishishi uchun */
+}
+
+/* 3. Sidebar (Yon panel) */
+.side {
+  background: transparent !important;
+  border-right: 1px solid rgba(0,0,0,0.05);
+  box-shadow: none !important;
+}
+.nav a {
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+  color: var(--ink-2) !important;
+  padding: 10px 14px !important;
+  font-size: 13.5px !important;
+}
+.nav a:hover {
+  background: rgba(0,0,0,0.04) !important;
+  color: var(--ink) !important;
+}
+.nav a.active {
+  background: #FFFFFF !important;
+  color: var(--primary) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
+  border: 1px solid rgba(0,0,0,0.02) !important;
+  font-weight: 500 !important;
+}
+
+/* 4. Animatsiyalar (Fluid UI) */
+.page {
+  animation: appleScaleFade 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+@keyframes appleScaleFade {
+  from { opacity: 0; transform: scale(0.98) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal {
+  animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 5. Jadvallar (CRM, Kadrlar) */
+.table-wrap, .t-wrap {
+  background: #FFFFFF !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  overflow: hidden !important;
+}
+table, .tbl {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  background: transparent !important;
+}
+table th, .tbl th {
+  /* TO'Q RANG USTIGA KELGANDA O'QILISHI UCHUN QUVVATLI SHISHA */
+  background: rgba(250, 250, 252, 0.9) !important; 
+  backdrop-filter: saturate(200%) blur(40px) !important;
+  -webkit-backdrop-filter: saturate(200%) blur(40px) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  padding: 12px 16px !important;
+  color: var(--ink-2) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  border-bottom: 1px solid rgba(0,0,0,0.08) !important;
+  text-transform: uppercase !important;
+}
+table td, .tbl td {
+  padding: 14px 16px !important;
+  font-size: 13.5px !important;
+  color: var(--ink) !important;
+  border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+}
+table tr:last-child td, .tbl tr:last-child td {
+  border-bottom: none !important;
+}
+table tr:hover td, .tbl tr:hover td {
+  background: rgba(0, 0, 0, 0.015) !important;
+}
+
+/* 6. Inputlar va Tugmalar */
+.fld {
+  border-radius: 10px !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  background: #FFFFFF !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.01) inset !important;
+  padding: 10px 14px !important;
+}
+.fld:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px var(--primary-glow) !important;
+}
+.btn {
+  border-radius: 99px !important;
+  font-weight: 500 !important;
+  transition: all 0.15s ease !important;
+  letter-spacing: 0.01em !important;
+  border: none !important;
+}
+.btn:active {
+  transform: scale(0.96) !important;
+}
+.btn.pri {
+  background: var(--primary) !important;
+  color: #FFF !important;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3) !important;
+}
+.btn.pri:hover {
+  background: var(--primary-deep) !important;
+}
+
+/* 7. Kichik xabarlar (Toasts) Dynamic Island */
+.toast {
+  border-radius: 99px !important;
+  background: rgba(29, 29, 31, 0.85) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  color: #FFF !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* 8. AI Yordamchi */
+.ai-sahifa { gap: 24px !important; padding: 12px !important; }
+.ai-chat-quti {
+  border-radius: 24px !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.04) !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+}
+.ai-bosh { border-bottom: 1px solid rgba(0,0,0,0.04) !important; padding-bottom: 12px !important; }
+.ai-xabar { animation: appleScaleFade 0.3s ease !important; }
+.ai-matn {
+  padding: 12px 18px !important;
+  border-radius: 20px !important;
+  font-size: 14.5px !important;
+  line-height: 1.5 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+}
+.ai-xabar.meniki .ai-matn {
+  background: var(--primary) !important;
+  color: #FFF !important;
+  border-bottom-right-radius: 4px !important;
+}
+.ai-xabar.agentniki .ai-matn {
+  background: #F5F5F7 !important;
+  color: var(--ink) !important;
+  border: 1px solid rgba(0,0,0,0.02) !important;
+  border-bottom-left-radius: 4px !important;
+  box-shadow: none !important;
+}
+.ai-kirish {
+  background: #F5F5F7 !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(0,0,0,0.03) !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.02) !important;
+}
+
+/* 9. Buyurtmalar (Kanban) */
+.chips { background: rgba(0,0,0,0.05) !important; padding: 4px !important; border-radius: 12px !important; }
+.fchip { padding: 6px 16px !important; color: var(--ink-2) !important; font-weight: 500 !important; }
+.fchip.on { background: #FFF !important; color: var(--ink) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important; border-radius: 9px !important; }
+.ccard {
+  border-radius: 18px !important;
+  padding: 18px !important;
+  background: #FFF !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.01) !important;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+.ccard:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-hover) !important;
+}
+
+/* 10. Status Teglari (Tag) - Soft iOS Colors */
+.tag {
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  border: none !important;
+}
+.tag.ok { background: #E3F5E1 !important; color: #147A28 !important; }
+.tag.warn { background: #FFF0D4 !important; color: #B36B00 !important; }
+.tag.dn, .tag.danger { background: #FDE2E1 !important; color: #CC2925 !important; }
+.tag.info { background: #E1F0FF !important; color: var(--primary-deep) !important; }
+
+/* =====================================================
+   13. ICHKI QISMLAR VA MODALLAR (Inner Details & Overlays)
+   ===================================================== */
+/* Qoraytirilgan orqa fon (Overlay) - Kuchli Glass effekt */
+.overlay {
+  background: rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Modal qutisi (Dialog) */
+.modal, #modalBox {
+  border-radius: 24px !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.1) !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  padding: 24px !important;
+  max-width: 90vw !important; /* Kichik ekranlar uchun */
+}
+
+/* Modal ichidagi Sarlavhalar */
+.modal h2.sec {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--ink) !important;
+  margin-bottom: 20px !important;
+  margin-top: 0 !important;
+  border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+  padding-bottom: 14px !important;
+}
+
+/* Modal ichidagi yozuvlar va kichik matnlar */
+.modal .muted {
+  color: var(--ink-2) !important;
+  font-size: 13px !important;
+}
+
+/* Modal ichidagi kichik kartochkalar (nested cards, masalan Buyurtma ichi) */
+.modal .card, .modal .glass.card {
+  background: #F5F5F7 !important; /* iOS da ichki kartochkalar och kulrang bo'ladi */
+  box-shadow: none !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  margin-top: 12px !important;
+  backdrop-filter: none !important; /* Ichkarida oyna keraksiz */
+}
+
+/* Ichki satrlar (Between rows - masalan Retsept qatorlari) */
+.modal .between {
+  padding: 8px 0 !important;
+  align-items: center !important;
+}
+.modal .between span {
+  font-size: 13.5px !important;
+}
+.modal .between b {
+  color: var(--ink) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+/* Modal ichidagi tugmalar guruhlari */
+.modal .row {
+  margin-top: 20px !important;
+  gap: 12px !important;
+}
+
+/* 14. Skroll chiziqlar (Scrollbars) - macOS uslubi */
+::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15) !important;
+  border-radius: 10px !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Kichik chizmalar (Avatarlar, Kichik Rasmlar) */
+.av {
+  background: var(--primary) !important;
+  box-shadow: 0 2px 6px var(--primary-glow) !important;
+  font-weight: 600 !important;
+}
+
+/* =====================================================
+   15. GLOBAL TOZALASH (KILL ALL GRADIENTS & OLD STYLES)
+   Barcha komponentlar, menyular, teglardagi eski
+   gradientlar, serif shriftlar va binafsha ranglarni yo'qotish.
+   ===================================================== */
+
+/* 1. Hamma joyda bir xil Apple shrifti (Serifni o'ldiramiz) */
+* {
+  font-family: var(--sans) !important;
+}
+
+/* 2. Global Gradient va Borderlarni O'ldirish */
+.glass::before, .glass::after, .ccard::before, .ccard::after, .card::before, .card::after {
+  display: none !important;
+  background: none !important;
+}
+
+/* 3. Userchip (O'ng tepadagi foydalanuvchi qutisi) */
+.userchip {
+  background: #FFF !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+  border-radius: 99px !important;
+  padding: 6px 12px 6px 6px !important;
+}
+.userchip .av {
+  background: #E5E5EA !important; /* Apple gray */
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+
+/* 4. Active Menyular (Yon panel) - Eski binafsha gradientni tozalash */
+.nav a.active {
+  background: #FFFFFF !important;
+  background-image: none !important;
+  color: var(--primary) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
+  border: 1px solid rgba(0,0,0,0.02) !important;
+}
+
+/* 5. Buttonlar (Tugmalar) dagi gradientlar va soyalarni tozalash */
+.btn {
+  background-image: none !important;
+  border: none !important;
+}
+.btn.pri {
+  background: var(--primary) !important;
+  background-image: none !important;
+}
+.btn.ghost, .btn.sm.ghost {
+  background: rgba(0,0,0,0.04) !important;
+  color: var(--ink) !important;
+}
+.btn.ghost:hover {
+  background: rgba(0,0,0,0.08) !important;
+}
+
+/* 6. Ikonkalar qutisi va kichik detallar */
+.ic {
+  color: inherit !important;
+}
+
+/* 7. Kassa va Moliya kartochkalari (Statistika qutilari) */
+.stat-card, .kpi-card, article {
+  background: #FFF !important;
+  background-image: none !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02) !important;
+  border-radius: 20px !important;
+}
+
+/* 8. Logotip va Brend qismi */
+.brand h1, .brand .logo {
+  font-family: var(--sans) !important;
+  letter-spacing: -0.02em !important;
+}
+.logo {
+  background: var(--ink) !important; /* Qora Apple uslubi */
+  background-image: none !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+}
+
+/* 9. Progress va chiziqlar (Order Tracker) */
+.trk .tl, .trk .td {
+  background-image: none !important;
+}
+.trk .td.on {
+  background: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.2) !important; /* Apple blue glow */
+}
+
+/* 10. Dashboard Grafiklari orqasidagi fonlar */
+canvas {
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.02)) !important;
+}
+
+/* 11. Barcha yashirin gradientlarni tutib olish */
+[class*="gradient"], [style*="gradient"] {
+  background-image: none !important;
+}
+
+/* 12. "Tizimingiz yig'ilmoqda" yoki boshqa markaziy elementlar */
+.kicker {
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  font-size: 11px !important;
+}
+
+/* 13. Tepadagi menyu (Topbar) tozaligi */
+.topbar {
+  background: rgba(255, 255, 255, 0.85) !important; /* Och kulrangdan oqqa o'tdik */
+}
+
+/* 14. Barcha oynalarni oq qilish (Moliya va HR bo'limidagi kulrang qutilar) */
+.panel, .box {
+  background: #FFF !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+}
+
+/* =====================================================
+   16. APPLE KOMPONENTLAR (KPI, Alerts, Kichik detallar)
+   ===================================================== */
+
+/* KPI Kartochkalar (iOS Health / Fitness uslubi) */
+.kpi {
+  padding: 20px !important;
+  border-radius: 22px !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.01) !important;
+  border: 1px solid rgba(0,0,0,0.03) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  transition: transform 0.2s ease !important;
+}
+.kpi:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.04) !important;
+}
+.kpi .val {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.04em !important;
+  color: var(--ink) !important;
+  margin: 12px 0 4px !important;
+  font-variant-numeric: tabular-nums !important; /* Raqamlar tekis turishi uchun */
+}
+.kpi .lab {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--ink-3) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
+}
+.kpi .ic-box {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 10px !important; /* Squircle */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--primary-glow) !important;
+  color: var(--primary) !important;
+}
+
+/* Alert Boxes (iOS Xabarnoma uslubi) */
+.alert {
+  padding: 14px 16px !important;
+  border-radius: 18px !important;
+  display: flex !important;
+  gap: 12px !important;
+  align-items: flex-start !important;
+  border: none !important;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04) !important;
+}
+.alert.o { background: rgba(52, 199, 89, 0.08) !important; color: #147A28 !important; }
+.alert.w { background: rgba(255, 149, 0, 0.08) !important; color: #B36B00 !important; }
+.alert.d { background: rgba(255, 59, 48, 0.08) !important; color: #CC2925 !important; }
+.alert .ai {
+  font-size: 20px !important;
+  margin-top: -2px !important;
+}
+.alert b {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  display: block !important;
+  margin-bottom: 2px !important;
+}
+.alert p {
+  font-size: 13px !important;
+  margin: 0 !important;
+  opacity: 0.9 !important;
+  line-height: 1.4 !important;
+}
+
+/* Kichik Chip/Teglar (Statistika ichidagi o'sish foizlari) */
+.chip {
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+.chip.up { background: #E3F5E1 !important; color: #147A28 !important; }
+.chip.dn { background: #FDE2E1 !important; color: #CC2925 !important; }
+
+/* Dashboard Tezkor Amallar (Quick Actions) */
+.dash-tez {
+  display: flex !important;
+  gap: 10px !important;
+  overflow-x: auto !important;
+  padding-bottom: 4px !important;
+}
+.dash-tez .btn {
+  background: #FFF !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+  color: var(--ink) !important;
+  border-radius: 14px !important;
+  padding: 10px 16px !important;
+  font-weight: 500 !important;
+}
+.dash-tez .btn:hover {
+  background: #F5F5F7 !important;
+}
+
+/* Accordeon (Ro'yxatlar) - Eng katta qarzdorlar qismi */
+.acc {
+  background: #FFF !important;
+  border-radius: 20px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  padding: 16px !important;
+}
+.acc .row {
+  transition: background 0.2s ease !important;
+  border-radius: 12px !important;
+  margin: 0 -8px !important;
+  padding: 10px 8px !important;
+}
+.acc .row:hover {
+  background: rgba(0,0,0,0.02) !important;
+}
+
+/* Bo'sh holat (Empty States) - "Muted" matnlar markazlashgani */
+.muted {
+  color: var(--ink-3) !important;
+  font-weight: 400 !important;
+}
+div.muted {
+  line-height: 1.5 !important;
+}
+
+/* Modallar va Jadvallar sarlavhalari ostidagi bo'shliqlar */
+.split.mb {
+  gap: 16px !important;
+}
+
+/* Ustunli Diagramma (Dashboard Bars) Apple Style */
+.bars {
+  display: flex !important;
+  align-items: flex-end !important;
+  height: 120px !important;
+  gap: 12px !important;
+  border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+  padding-bottom: 4px !important;
+}
+.bar {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  height: 100% !important;
+  justify-content: flex-end !important;
+}
+.bar .col {
+  width: 100% !important;
+  max-width: 32px !important;
+  background: var(--primary) !important;
+  border-radius: 6px 6px 0 0 !important; /* Ustunlarning tepasi yumaloq */
+  transition: height 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  opacity: 0.85 !important;
+}
+.bar:hover .col {
+  opacity: 1 !important;
+}
+.bar small {
+  margin-top: 6px !important;
+  font-size: 10px !important;
+  color: var(--ink-3) !important;
+  font-weight: 500 !important;
+}

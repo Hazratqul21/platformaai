@@ -117,12 +117,20 @@ function _renderPage(p){
   PAGE=p;renderNav();
   const seq=++NAVSEQ;
   const[t,s]=META[p];document.getElementById('ptitle').textContent=t;document.getElementById('psub').textContent=s;
-  document.getElementById('content').innerHTML='<div class="muted" style="padding:30px;text-align:center">Юкланмоқда…</div>';
-  PAGES[p]().then(html=>{if(seq!==NAVSEQ)return;
-      // sahifa o'zi render qilgan bo'lsa (html qaytarmasa) — tegmaymiz
-      if(html!==undefined&&html!==null)document.getElementById('content').innerHTML=`<div class="page show">${html}</div>`;
-      if(window._postRender){const fn=window._postRender;window._postRender=null;fn();}})
-    .catch(e=>{if(seq!==NAVSEQ)return;document.getElementById('content').innerHTML=`<div class="glass card">${esc(e.message)}</div>`;});
+  
+  const contentDiv = document.getElementById('content');
+  contentDiv.innerHTML='<div class="muted" style="padding:30px;text-align:center;animation:appleScaleFade 0.4s ease">Юкланмоқда…</div>';
+  
+  PAGES[p]().then(html=>{
+      if(seq!==NAVSEQ)return;
+      if(html!==undefined&&html!==null) {
+          contentDiv.innerHTML=`<div class="page show">${html}</div>`;
+      }
+      if(window._postRender){const fn=window._postRender;window._postRender=null;fn();}
+  }).catch(e=>{
+      if(seq!==NAVSEQ)return;
+      contentDiv.innerHTML=`<div class="glass card" style="animation:appleScaleFade 0.4s ease">${esc(e.message)}</div>`;
+  });
 }
 
 function go(p) {
