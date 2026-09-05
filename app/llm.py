@@ -256,11 +256,22 @@ def _json_yoki_bosh(matn: str) -> dict:
 #  GOOGLE GEMINI
 # =====================================================================
 
+# Client bir marta yaratiladi va qayta ishlatiladi. Ilgari HAR
+# chaqiruvda yangi `genai.Client()` ochilardi — bir suhbatda 12 qadamgacha,
+# ya'ni 12 marta TLS/sozlash. Kesh bilan bu bir martaga tushadi.
+_GEMINI_CLIENT = None
+def _gemini_client():
+    global _GEMINI_CLIENT
+    if _GEMINI_CLIENT is None:
+        from google import genai
+        _GEMINI_CLIENT = genai.Client(api_key=_muhit("GEMINI_API_KEY"))
+    return _GEMINI_CLIENT
+
+
 def _gemini(xabarlar, asboblar, korsatma, model):
-    from google import genai
     from google.genai import types
 
-    client = genai.Client(api_key=_muhit("GEMINI_API_KEY"))
+    client = _gemini_client()
 
     tarkib = []
     for x in xabarlar:

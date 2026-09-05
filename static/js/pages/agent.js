@@ -259,34 +259,80 @@ async function agentYubor() {
   kirish.value = '';
   agentXabarQosh('user', matn);
   AGENT_BAND = true;
-  const kutish = agentXabarQosh('agent', 'O\'ylayapman…');
-  kutish.classList.add('agent-kutish');
   document.getElementById('agentYubor').disabled = true;
 
+  // Kutish pufagi — endi JONLI qadam ko'rsatadi (muzlab turmaydi).
+  const kutish = agentXabarQosh('agent', 'O\'ylayapman…');
+  kutish.classList.add('agent-kutish');
+  const holatEl = kutish.querySelector('.agent-matn') || kutish;
+  const t0 = Date.now();
+  const qadamlar = [];
+  const soat = setInterval(() => {
+    const sek = Math.round((Date.now() - t0) / 1000);
+    const oxirgi = qadamlar.length ? qadamlar[qadamlar.length - 1] : 'O\'ylayapman';
+    holatEl.textContent = `${oxirgi}… ${sek}s`;
+  }, 500);
+
+  const asbobMatni = (nom) =>
+    (typeof AI_ASBOB_MATNI !== 'undefined' && AI_ASBOB_MATNI[nom]) || nom;
+
   try {
-    const j = await api('/api/agent/xabar', 'POST',
-      { matn, suhbat_id: AGENT_SUHBAT, agent: AGENT_KALIT });
-    AGENT_SUHBAT = j.suhbat_id;
-    kutish.remove();
-    agentXabarQosh('agent', j.javob,
-      // `korsat` ni izda ko'rsatmaymiz: u foydalanuvchi uchun «asbob»
-      // emas, javobning o'zi — komponent sifatida allaqachon ko'rinadi.
-      (j.izlar || []).map(i => i.asbob).filter(x => x !== 'korsat'),
-      j.komponentlar, j.suhbat_id);
-    // Agent profilni o'zgartirgan bo'lishi mumkin — sahifani yangilaymiz,
-    // aks holda ekranda eski soha maydonlari turaveradi.
-    if ((j.izlar || []).some(i =>
-        i.asbob === 'profilni_faollashtir' || i.asbob === 'profil_saqla')) {
-      // Soha almashsa MENYU ham o'zgarishi mumkin: modul standarti
-      // boshqa bo'limlar to'plamini beradi (xizmatda ombor yo'q).
-      if (typeof navYukla === 'function') { try { await navYukla(); } catch (e) {} }
-      // `route` global funksiya emas — `renderNav` va `_renderPage`.
-      if (typeof renderNav === 'function') renderNav();
-      if (typeof _renderPage === 'function' && typeof PAGE === 'string') {
-        _renderPage(PAGE);
+    // OQIM: bloklaydigan /api/agent/xabar o'rniga /api/agent/oqim.
+    // Foydalanuvchi har qadamni DARROV ko'radi — javob tugashini
+    // muzlab kutmaydi. Bu tezlikni sezilarli oshiradi (his-tuyg'uda).
+    const javob = await fetch(API + '/api/agent/oqim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ matn, suhbat_id: AGENT_SUHBAT, agent: AGENT_KALIT }),
+    });
+    if (!javob.ok) {
+      let izoh = 'Xatolik ' + javob.status;
+      try { izoh = (await javob.json()).detail || izoh; } catch (e) {}
+      throw new Error(izoh);
+    }
+
+    // NDJSON — har qator bitta hodisa; oxirgi to'liqsiz qator buferda.
+    const oquvchi = javob.body.getReader();
+    const dekoder = new TextDecoder();
+    let bufer = '', yakun = null;
+    while (true) {
+      const { value, done } = await oquvchi.read();
+      if (done) break;
+      bufer += dekoder.decode(value, { stream: true });
+      const satrlar = bufer.split('\n');
+      bufer = satrlar.pop() || '';
+      for (const satr of satrlar) {
+        if (!satr.trim()) continue;
+        let h; try { h = JSON.parse(satr); } catch (e) { continue; }
+        if (h.tur === 'boshlandi') { if (h.suhbat_id) AGENT_SUHBAT = h.suhbat_id; }
+        else if (h.tur === 'asbob') qadamlar.push(asbobMatni(h.nom));
+        else if (h.tur === 'qayta_urinish') qadamlar.push('javobni qisqartiryapman');
+        else if (h.tur === 'qayta_boshlandi') qadamlar.push('zaxira modelga o\'tyapman');
+        else if (h.tur === 'xato') throw new Error(h.matn);
+        else if (h.tur === 'yakun') { yakun = h; if (h.suhbat_id) AGENT_SUHBAT = h.suhbat_id; }
       }
     }
+
+    clearInterval(soat);
+    kutish.remove();
+    if (!yakun) { agentXabarQosh('agent', 'Javob kelmadi. Qayta urinib ko\'ring.'); return; }
+
+    const izlar = yakun.izlar || [];
+    agentXabarQosh('agent', yakun.javob,
+      izlar.map(i => i.asbob).filter(x => x !== 'korsat'),
+      yakun.komponentlar, yakun.suhbat_id);
+
+    // Agent profil YOKI bo'limlarni o'zgartirgan bo'lsa — menyu va
+    // sahifani yangilaymiz, aks holda eski holat ekranda qoladi.
+    if (izlar.some(i => ['profilni_faollashtir', 'profil_saqla',
+        'bolimlarni_sozla', 'rollarni_sozla'].includes(i.asbob))) {
+      if (typeof navYukla === 'function') { try { await navYukla(); } catch (e) {} }
+      if (typeof renderNav === 'function') renderNav();
+      if (typeof _renderPage === 'function' && typeof PAGE === 'string') _renderPage(PAGE);
+    }
   } catch (e) {
+    clearInterval(soat);
     kutish.remove();
     agentXabarQosh('agent', 'Xatolik: ' + (e.message || e));
   } finally {
