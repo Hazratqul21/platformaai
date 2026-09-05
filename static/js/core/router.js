@@ -63,17 +63,31 @@ async function navYukla(){
       p:b.kalit,
       t:NAV_TARJIMA[b.kalit]?t(NAV_TARJIMA[b.kalit]):b.nom,
       i:b.ikonka, roles:b.rollar}));
+    // KONSTRUKTOR: mijoz o'zi (yoki AI orqali) yaratgan bo'limlar ham
+    // yon menyuda ko'rinadi — «biznes uchun AI IDE» yadrosi. Ular
+    // `set`dan OLDIN, `help`dan keyin emas — asosiy ishga yaqin turadi.
+    try{
+      const cs=await api('/api/sections');
+      const custom=(cs||[]).map(x=>({
+        p:'custom-'+x.id, t:x.name, i:x.icon||'clipboard',
+        cid:x.id, custom:true, hammaga:true}));
+      if(custom.length){
+        const setIdx=NAV.findIndex(n=>n.p==='set');
+        if(setIdx>=0) NAV.splice(setIdx,0,...custom); else NAV.push(...custom);
+      }
+    }catch(e){ /* custom bo'lim yuklanmasa — asosiy menyu ishlayveradi */ }
   }catch(e){ /* zaxira NAV bilan ishlayveramiz */ }
 }
 
-function allowedNav(){return NAV.filter(n=>ME.role==='Rahbar'||n.roles.includes(ME.role));}
+function allowedNav(){return NAV.filter(n=>n.hammaga||ME.role==='Rahbar'||(n.roles&&n.roles.includes(ME.role)));}
 function renderNav(){
   const items=allowedNav();
+  const bosish=n=>n.custom?`openSection(${n.cid})`:`go('${n.p}')`;
   document.getElementById('nav').innerHTML=items.map(n=>
-    `<a class="${n.p===PAGE?'active':''}" data-label="${n.t}" onclick="go('${n.p}')"><span class="ic">${icon(n.i)}</span><span>${n.t}</span></a>`).join('');
+    `<a class="${n.p===PAGE?'active':''}" data-label="${n.t}" onclick="${bosish(n)}"><span class="ic">${icon(n.i)}</span><span>${n.t}</span></a>`).join('');
   const main3=items.slice(0,3);
   const rest=items.slice(3);
-  const link=n=>`<a class="${n.p===PAGE?'active':''}" onclick="go('${n.p}')">${icon(n.i,19)}<span>${n.t.split(' ')[0]}</span></a>`;
+  const link=n=>`<a class="${n.p===PAGE?'active':''}" onclick="${bosish(n)}">${icon(n.i,19)}<span>${n.t.split(' ')[0]}</span></a>`;
   document.getElementById('bottomNav').innerHTML=
     main3.slice(0,2).map(link).join('')
     +`<a onclick="quickSheet()" style="flex:0 0 62px"><span class="fab">${icon('plus',24)}</span></a>`

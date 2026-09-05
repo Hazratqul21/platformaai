@@ -351,7 +351,73 @@ def _bolimlarni_sozla(db, user, kirish):
                      ". Sahifani yangilang."}
 
 
+RUXSAT_MAYDON_TUR = {"matn", "raqam", "pul", "sana"}
+
+
+def _bolim_yarat(db, user, kirish):
+    """MIJOZ chatda tasvirlagan YANGI bo'limni yaratadi (AI IDE yadrosi).
+
+    Bu — ORDO ni «biznes uchun AI IDE» qiladigan qism: odam «menga
+    bilyard stollari holatini kuzatadigan joy kerak: stol raqami,
+    holat, joriy tarif» deydi, AI shu bo'limni maydonlari bilan
+    taklif qiladi, tugma bosilgach HAQIQIY bo'lim yaratiladi va yon
+    menyuda paydo bo'ladi. Kod yozilmaydi — konfiguratsiya.
+
+    `constructor.py` dagi yaratish mantig'i bilan bir xil (bitta
+    haqiqat manbai): maydon turlari matn/raqam/pul/sana bo'lishi shart.
+    """
+    import json as _json
+    from . import models as m
+    nom = (kirish.get("nom") or "").strip()
+    ikonka = (kirish.get("ikonka") or "clipboard").strip()[:10]
+    xom = kirish.get("maydonlar") or []
+    if not nom:
+        return {"xato": "Bo'lim nomi bo'sh bo'lmasin"}
+    if not xom:
+        return {"xato": "Kamida 1 ta maydon (ustun) kerak"}
+    maydonlar = []
+    for i, fld in enumerate(xom):
+        if isinstance(fld, str):                 # model faqat nom yuborsa
+            fld = {"label": fld, "type": "matn"}
+        label = str(fld.get("label") or "").strip()
+        tur = str(fld.get("type") or "matn").strip()
+        if not label:
+            return {"xato": "Maydon nomi bo'sh bo'lmasin"}
+        if tur not in RUXSAT_MAYDON_TUR:
+            return {"xato": f"Maydon turi noto'g'ri: {tur}. "
+                            f"Ruxsat: matn, raqam, pul, sana"}
+        maydonlar.append({"key": f"f{i+1}", "label": label, "type": tur})
+    mavjud = db.query(m.CustomSection).filter(m.CustomSection.name == nom).first()
+    if mavjud:
+        return {"xato": f"«{nom}» nomli bo'lim allaqachon bor"}
+    b = m.CustomSection(name=nom[:80], icon=ikonka,
+                        fields_json=_json.dumps(maydonlar, ensure_ascii=False))
+    db.add(b)
+    db.add(m.AuditLog(who=user.name, action="Yangi bo'lim yaratildi (AI konstruktor)",
+                      detail=f"{nom}: {', '.join(x['label'] for x in maydonlar)}"))
+    db.commit()
+    return {"ok": True, "section_id": b.id, "nom": nom,
+            "xabar": f"«{nom}» bo'limi yaratildi ({len(maydonlar)} ustun). "
+                     "Sahifani yangilang — u yon menyuda ko'rinadi."}
+
+
 AMALLAR = {
+    "bolim_yarat": {
+        "izoh": ("YANGI bo'lim/ro'yxat YARATISH taklifi — mijoz chatda "
+                 "«menga ... kuzatadigan joy/ro'yxat kerak» yoki «... "
+                 "bo'lim ochib ber» desa. `nom` — bo'lim nomi, `maydonlar` "
+                 "— ustunlar ro'yxati [{label, type}], type FAQAT: matn, "
+                 "raqam, pul, sana. `ikonka` — ixtiyoriy (clipboard, box, "
+                 "truck, cash, users, calendar...). Masalan «bilyard "
+                 "stollari»: nom=Stollar, maydonlar=[{label:'Stol raqami',"
+                 "type:'raqam'},{label:'Holat',type:'matn'},{label:'Tarif',"
+                 "type:'pul'}]."),
+        "tugma": "Bo'limni yaratish", "xavfli": False,
+        "kirish_namuna": {"nom": "Stollar", "ikonka": "clipboard",
+                          "maydonlar": [{"label": "Stol raqami", "type": "raqam"},
+                                        {"label": "Holat", "type": "matn"}]},
+        "rollar": ["Rahbar"], "bajar": _bolim_yarat,
+    },
     "bolimlarni_sozla": {
         "izoh": ("Yon menyudagi BO'LIMLARNI mijoz xohlaganidek yig'ish "
                  "taklifi. `kalitlar` — bo'lim kalitlari ro'yxati "
