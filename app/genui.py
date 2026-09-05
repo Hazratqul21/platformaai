@@ -439,6 +439,82 @@ def _yozuv_qosh(db, user, kirish):
                                  "Bo'limni ochib ko'ring."}
 
 
+def _bolim_tahrir(db, user, kirish):
+    """Mavjud custom bo'limga USTUN qo'shadi yoki olib tashlaydi (AI IDE).
+
+    Mijoz «Stollar bo'limiga «Mijoz» ustunini qo'sh» yoki «Tarif
+    ustunini olib tashla» deydi. AI avval `konstruktor_royxat` bilan
+    `section_id` va mavjud ustun kalitlarini biladi.
+
+    `qoshiladigan` — yangi ustunlar [{label, type}]; yangi kalit eng
+    katta mavjud f-raqamdan KEYIN beriladi, shu bois eski yozuvlar
+    buzilmaydi. `oladigan` — olib tashlanadigan ustun kalitlari yoki
+    nomlari. Ustun olib tashlansa, eski yozuvdagi qiymat `data_json`
+     da SAQLANIB qoladi (yo'qolmaydi, faqat jadvalda ko'rinmaydi) —
+    fikr o'zgarsa ustunni qayta qo'shish mumkin.
+    """
+    import json as _json
+    import re as _re
+    from . import models as m
+    sid = kirish.get("section_id")
+    b = db.get(m.CustomSection, sid) if sid else None
+    if not b:
+        return {"xato": "Bo'lim topilmadi. Avval `konstruktor_royxat` bilan id ni oling."}
+    maydonlar = _json.loads(b.fields_json)
+    qoshiladigan = kirish.get("qoshiladigan") or []
+    oladigan = kirish.get("oladigan") or []
+
+    # --- olib tashlash (kalit yoki nom bo'yicha) ---
+    olindi = []
+    if oladigan:
+        oxbor = {str(x).lower() for x in oladigan}
+        qoldi = []
+        for f in maydonlar:
+            if f["key"].lower() in oxbor or f["label"].lower() in oxbor:
+                olindi.append(f["label"])
+            else:
+                qoldi.append(f)
+        maydonlar = qoldi
+
+    # --- qo'shish (kalit eng katta f-raqamdan keyin) ---
+    qoshildi = []
+    if qoshiladigan:
+        raqamlar = [int(mn.group(1)) for f in maydonlar
+                    for mn in [_re.fullmatch(r"f(\d+)", f["key"])] if mn]
+        keyingi = (max(raqamlar) if raqamlar else 0) + 1
+        for fld in qoshiladigan:
+            if isinstance(fld, str):
+                fld = {"label": fld, "type": "matn"}
+            label = str(fld.get("label") or "").strip()
+            tur = str(fld.get("type") or "matn").strip()
+            if not label:
+                return {"xato": "Yangi ustun nomi bo'sh bo'lmasin"}
+            if tur not in RUXSAT_MAYDON_TUR:
+                return {"xato": f"Ustun turi noto'g'ri: {tur}. "
+                                f"Ruxsat: matn, raqam, pul, sana"}
+            maydonlar.append({"key": f"f{keyingi}", "label": label, "type": tur})
+            qoshildi.append(label)
+            keyingi += 1
+
+    if not qoshildi and not olindi:
+        return {"xato": "Hech qanday o'zgarish yo'q — qo'shish yoki "
+                        "olib tashlash ustunini ko'rsating"}
+    if not maydonlar:
+        return {"xato": "Bo'limda kamida 1 ta ustun qolishi kerak"}
+
+    b.fields_json = _json.dumps(maydonlar, ensure_ascii=False)
+    tafsil = []
+    if qoshildi:
+        tafsil.append("qo'shildi: " + ", ".join(qoshildi))
+    if olindi:
+        tafsil.append("olindi: " + ", ".join(olindi))
+    db.add(m.AuditLog(who=user.name, action="Bo'lim ustunlari tahrirlandi (AI)",
+                      detail=f"{b.name}: {'; '.join(tafsil)}"))
+    db.commit()
+    return {"ok": True, "xabar": f"«{b.name}» bo'limi yangilandi ({'; '.join(tafsil)}). "
+                                 "Bo'limni ochib ko'ring."}
+
+
 AMALLAR = {
     "bolim_yarat": {
         "izoh": ("YANGI bo'lim/ro'yxat YARATISH taklifi — mijoz chatda "
@@ -467,6 +543,20 @@ AMALLAR = {
                           "data": {"f1": "5", "f2": "band", "f3": "45000"}},
         "rollar": ["Rahbar", "Menejer", "Buxgalter", "Sklad mudiri",
                    "Sex boshlig'i"], "bajar": _yozuv_qosh,
+    },
+    "bolim_tahrir": {
+        "izoh": ("Mavjud QO'SHIMCHA bo'limga USTUN qo'shish yoki olib "
+                 "tashlash taklifi — mijoz «... bo'limiga «X» ustunini "
+                 "qo'sh» yoki «X ustunini olib tashla» desa. Avval "
+                 "`konstruktor_royxat` bilan `section_id` va mavjud "
+                 "ustunlarni oling. `qoshiladigan` — [{label, type}] "
+                 "(type: matn/raqam/pul/sana), `oladigan` — ustun "
+                 "kalitlari yoki nomlari. Eski yozuvlar buzilmaydi."),
+        "tugma": "Bo'limni yangilash", "xavfli": False,
+        "kirish_namuna": {"section_id": 1,
+                          "qoshiladigan": [{"label": "Mijoz", "type": "matn"}],
+                          "oladigan": []},
+        "rollar": ["Rahbar"], "bajar": _bolim_tahrir,
     },
     "bolimlarni_sozla": {
         "izoh": ("Yon menyudagi BO'LIMLARNI mijoz xohlaganidek yig'ish "
