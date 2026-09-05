@@ -401,6 +401,44 @@ def _bolim_yarat(db, user, kirish):
                      "Sahifani yangilang — u yon menyuda ko'rinadi."}
 
 
+def _yozuv_qosh(db, user, kirish):
+    """Custom bo'limga bitta YOZUV qo'shadi (AI IDE — kundalik ma'lumot).
+
+    Mijoz «stol 5 band bo'ldi, tarif 45000» deydi, AI shu bo'limga
+    yozuvni qo'shishni taklif qiladi. `section_id` — qaysi bo'lim,
+    `data` — {ustun_kaliti: qiymat}. AI ustun kalitini `konstruktor_royxat`
+    dan biladi; label yuborsa ham moslaymiz.
+    """
+    import json as _json
+    from . import models as m
+    sid = kirish.get("section_id")
+    data = kirish.get("data") or {}
+    b = db.get(m.CustomSection, sid) if sid else None
+    if not b:
+        return {"xato": "Bo'lim topilmadi. Avval `konstruktor_royxat` bilan id ni oling."}
+    maydonlar = _json.loads(b.fields_json)
+    kalitlar = {f["key"] for f in maydonlar}
+    # label -> key moslash (AI kalit o'rniga nom yuborsa)
+    label2key = {f["label"].lower(): f["key"] for f in maydonlar}
+    toza = {}
+    for k, v in data.items():
+        if k in kalitlar:
+            toza[k] = v
+        elif str(k).lower() in label2key:
+            toza[label2key[str(k).lower()]] = v
+        # notanish kalit — jimgina tashlanadi (bo'limda yo'q ustun)
+    if not toza:
+        return {"xato": "Yozuvda birorta ustun qiymati yo'q"}
+    r = m.CustomRecord(section_id=b.id,
+                       data_json=_json.dumps(toza, ensure_ascii=False))
+    db.add(r)
+    db.add(m.AuditLog(who=user.name, action="Bo'limga yozuv qo'shildi (AI)",
+                      detail=f"{b.name}: {toza}"))
+    db.commit()
+    return {"ok": True, "xabar": f"«{b.name}» bo'limiga yozuv qo'shildi. "
+                                 "Bo'limni ochib ko'ring."}
+
+
 AMALLAR = {
     "bolim_yarat": {
         "izoh": ("YANGI bo'lim/ro'yxat YARATISH taklifi — mijoz chatda "
@@ -417,6 +455,18 @@ AMALLAR = {
                           "maydonlar": [{"label": "Stol raqami", "type": "raqam"},
                                         {"label": "Holat", "type": "matn"}]},
         "rollar": ["Rahbar"], "bajar": _bolim_yarat,
+    },
+    "yozuv_qosh": {
+        "izoh": ("Qo'shimcha (konstruktor) bo'limga bitta YOZUV qo'shish "
+                 "taklifi — mijoz «... band bo'ldi», «... qo'shildi» kabi "
+                 "kundalik ma'lumot aytsa. Avval `konstruktor_royxat` bilan "
+                 "`section_id` va ustun kalitlarini oling. `data` — "
+                 "{ustun_kaliti: qiymat}."),
+        "tugma": "Yozuvni qo'shish", "xavfli": False,
+        "kirish_namuna": {"section_id": 1,
+                          "data": {"f1": "5", "f2": "band", "f3": "45000"}},
+        "rollar": ["Rahbar", "Menejer", "Buxgalter", "Sklad mudiri",
+                   "Sex boshlig'i"], "bajar": _yozuv_qosh,
     },
     "bolimlarni_sozla": {
         "izoh": ("Yon menyudagi BO'LIMLARNI mijoz xohlaganidek yig'ish "

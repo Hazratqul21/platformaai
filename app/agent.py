@@ -127,6 +127,17 @@ HAMMA_ASBOBLAR = [
             "additionalProperties": False,
         },
     },
+    {
+        "nom": "konstruktor_royxat",
+        "izoh": (
+            "Mijoz o'zi (yoki AI orqali) yaratgan QO'SHIMCHA bo'limlar "
+            "ro'yxatini va ularning ustunlarini qaytaradi. Mijoz shu "
+            "bo'limlardan biriga YOZUV qo'shishni so'rasa (masalan «stol "
+            "5 band bo'ldi») — avval SHU asbob bilan bo'lim id sini va "
+            "ustun kalitlarini bil, keyin `yozuv_qosh` amalini taklif qil."
+        ),
+        "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
 ]
 
 
@@ -569,6 +580,16 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
                         "KERAKLI bo'limlarning HAMMASINI sanang "
                         "(ro'yxat butunlay almashadi, qo'shilmaydi)."),
         }
+
+    if nom == "konstruktor_royxat":
+        import json as _json
+        from . import models as m
+        bolimlar = db.query(m.CustomSection).order_by(m.CustomSection.id).all()
+        return {"bolimlar": [
+            {"section_id": b.id, "nom": b.name,
+             "ustunlar": _json.loads(b.fields_json)}
+            for b in bolimlar
+        ] or "Hozircha qo'shimcha bo'lim yo'q — `bolim_yarat` bilan yarating."}
 
     # --- PUL VA HISOB ------------------------------------------------
     def _sana_ol(kalit, standart=None):
@@ -1247,6 +1268,11 @@ ASBOB_ROLLARI = {
     "buxgalteriya_hisoboti": ["Rahbar", "Buxgalter"],
     # Menyu tuzilishi — tizim sozlamasi, faqat Rahbar
     "bolimlarni_kor":        ["Rahbar"],
+    # Qo'shimcha (konstruktor) bo'limlar ro'yxati — yozuv qo'shishdan
+    # OLDIN id va ustun kalitlarini bilish uchun. Yozuv qo'sha oladigan
+    # rollarning hammasiga ochiq (aks holda AI id ni taxmin qiladi).
+    "konstruktor_royxat":    ["Rahbar", "Menejer", "Buxgalter",
+                              "Sklad mudiri", "Sex boshlig'i"],
 }
 
 YORDAMCHI_KALIT = "yordamchi"
