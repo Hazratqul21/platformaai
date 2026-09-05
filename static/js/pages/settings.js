@@ -397,11 +397,14 @@ async function renderConstructor(){
   </div>`).join('')||'<div class="glass card muted" style="grid-column:1/-1;text-align:center;padding:36px">Hozircha bo\'lim yo\'q — «Yangi bo\'lim» tugmasini bosing</div>'}
   </div></div>`;
 }
-const FTYPES=[['matn','Matn'],['raqam','Raqam'],['pul',"Pul (so'm)"],['sana','Sana']];
+const FTYPES=[['matn','Matn'],['raqam','Raqam'],['pul',"Pul (so'm)"],['sana','Sana'],['tanlov','Ro\'yxatdan tanlash'],['belgi','Ha/Yo\'q']];
 function fieldRow(i){
-  return `<div class="row" style="margin-bottom:6px" id="frow${i}">
+  return `<div id="frow${i}" style="margin-bottom:6px">
+    <div class="row">
     <input class="fld" placeholder="Устун номи (масалан: Изоҳ)" id="fl_${i}" style="flex:2"/>
-    <select class="fld" id="ft_${i}" style="flex:1">${FTYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>
+    <select class="fld" id="ft_${i}" style="flex:1" onchange="document.getElementById('fo_${i}').style.display=this.value==='tanlov'?'block':'none'">${FTYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>
+    </div>
+    <input class="fld" id="fo_${i}" placeholder="Вариантлар, вергул билан: банд, бўш, тозаланмоқда" style="display:none;margin-top:4px;font-size:12px"/>
   </div>`;
 }
 function sectionForm(){
@@ -420,7 +423,10 @@ function sectionForm(){
 async function saveSection(){
   const fields=[];
   for(let i=1;i<=window._fcount;i++){
-    const l=f('fl_'+i);if(l)fields.push({label:l,type:f('ft_'+i)});
+    const l=f('fl_'+i);if(!l)continue;
+    const type=f('ft_'+i);const fld={label:l,type};
+    if(type==='tanlov')fld.options=(f('fo_'+i)||'').split(',').map(x=>x.trim()).filter(Boolean);
+    fields.push(fld);
   }
   try{await post('/api/sections',{name:f('sc_name'),icon:f('sc_icon'),fields});
     closeModal();toast('o','check',"Bo'lim yaratildi",f('sc_name'));go('set');
@@ -436,7 +442,11 @@ async function openSection(id){
   const s=d.section;window._cursec=s;
   document.getElementById('ptitle').textContent=s.name;
   document.getElementById('psub').textContent='Konstruktor bo\'limi · '+d.records.length+' ta yozuv';
-  const fmt=(fld,v)=>fld.type==='pul'&&v!==''?money(+v):(v??'');
+  const fmt=(fld,v)=>{
+    if(fld.type==='belgi')return v===true?'Ha':(v===false?"Yo'q":'');
+    if(fld.type==='pul'&&v!=='')return money(+v);
+    return v??'';
+  };
   document.getElementById('content').innerHTML=`<div class="page show">
     <div class="between mb">
       <button class="btn sm" onclick="go('set')">${icon('arrowLeft',14)} Orqaga</button>
@@ -455,9 +465,17 @@ async function openSection(id){
 }
 function recordForm(){
   const s=window._cursec;
+  const inputFor=fl=>{
+    if(fl.type==='tanlov')
+      return `<select class="fld" id="rf_${fl.key}"><option value=""></option>${(fl.options||[]).map(o=>`<option>${esc(o)}</option>`).join('')}</select>`;
+    if(fl.type==='belgi')
+      return `<select class="fld" id="rf_${fl.key}"><option value="">—</option><option value="ha">Ha</option><option value="">Yo'q</option></select>`;
+    const t=fl.type==='sana'?'date':(fl.type==='raqam'||fl.type==='pul')?'number':'text';
+    return `<input class="fld" id="rf_${fl.key}" type="${t}"/>`;
+  };
   modal(`<h2 class="sec mb">${bolimIkon(s.icon,16)} ${esc(s.name)} — yangi yozuv</h2>
   ${s.fields.map(fl=>`<label class="fl">${esc(fl.label)}</label>
-    <input class="fld" id="rf_${fl.key}" type="${fl.type==='sana'?'date':fl.type==='matn'?'text':'number'}"/>`).join('')}
+    ${inputFor(fl)}`).join('')}
   <div class="row" style="margin-top:16px;justify-content:flex-end">
     <button class="btn" onclick="closeModal()">Бекор</button>
     <button class="btn pri" onclick="saveRecord()">Сақлаш</button></div>`);

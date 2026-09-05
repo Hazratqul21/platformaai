@@ -19,12 +19,14 @@ from .. import models as m
 
 router = APIRouter(prefix="/api/sections", tags=["Konstruktor"])
 
-FIELD_TYPES = ["matn", "raqam", "pul", "sana"]
+# tanlov = ro'yxatdan bittasi (dropdown), belgi = Ha/Yo'q (checkbox)
+FIELD_TYPES = ["matn", "raqam", "pul", "sana", "tanlov", "belgi"]
 
 
 class FieldIn(BaseModel):
     label: str
     type: str = "matn"
+    options: list[str] = []      # faqat `tanlov` uchun variantlar
 
 
 class SectionIn(BaseModel):
@@ -63,7 +65,13 @@ def create_section(data: SectionIn, db: Session = Depends(get_db),
             raise HTTPException(400, f"Maydon turi noto'g'ri: {f.type}. Ruxsat: {FIELD_TYPES}")
         if not f.label.strip():
             raise HTTPException(400, "Maydon nomi bo'sh bo'lmasin")
-        fields.append({"key": f"f{i+1}", "label": f.label.strip(), "type": f.type})
+        fld = {"key": f"f{i+1}", "label": f.label.strip(), "type": f.type}
+        if f.type == "tanlov":
+            variant = [o.strip() for o in (f.options or []) if o.strip()]
+            if not variant:
+                raise HTTPException(400, f"«{f.label}» uchun kamida 1 ta variant kerak")
+            fld["options"] = variant
+        fields.append(fld)
     s = m.CustomSection(name=data.name.strip(), icon=data.icon or "📋",
                         fields_json=json.dumps(fields, ensure_ascii=False))
     db.add(s)
@@ -113,6 +121,12 @@ def add_record(sid: int, data: RecordIn, db: Session = Depends(get_db),
                 v = float(v)
             except (TypeError, ValueError):
                 raise HTTPException(400, f"«{f['label']}» raqam bo'lishi kerak")
+        elif f["type"] == "belgi":
+            v = True if v in (True, "true", "1", "ha", "Ha", "on") else False
+        elif f["type"] == "tanlov" and v not in ("", None):
+            variant = f.get("options") or []
+            if variant and v not in variant:
+                raise HTTPException(400, f"«{f['label']}» uchun noto'g'ri variant: {v}")
         clean[f["key"]] = v
     r = m.CustomRecord(section_id=sid, data_json=json.dumps(clean, ensure_ascii=False))
     db.add(r)
@@ -147,9 +161,14 @@ def export_section(sid: int, db: Session = Depends(get_db), user=Depends(get_use
         cell.alignment = Alignment(horizontal="center")
     rows = (db.query(m.CustomRecord).filter(m.CustomRecord.section_id == sid)
             .order_by(m.CustomRecord.id).all())
+    def _hujayra(f, v):
+        if f["type"] == "belgi":
+            return "Ha" if v is True else ("Yo'q" if v is False else "")
+        return v if v is not None else ""
     for i, r in enumerate(rows, 1):
         d = json.loads(r.data_json)
-        ws.append([i, r.created_at.strftime("%d.%m.%Y")] + [d.get(f["key"], "") for f in fields])
+        ws.append([i, r.created_at.strftime("%d.%m.%Y")]
+                  + [_hujayra(f, d.get(f["key"], "")) for f in fields])
     for i, f in enumerate(fields):
         col = chr(ord("C") + i)
         ws.column_dimensions[col].width = 20

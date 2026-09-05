@@ -351,7 +351,32 @@ def _bolimlarni_sozla(db, user, kirish):
                      ". Sahifani yangilang."}
 
 
-RUXSAT_MAYDON_TUR = {"matn", "raqam", "pul", "sana"}
+RUXSAT_MAYDON_TUR = {"matn", "raqam", "pul", "sana", "tanlov", "belgi"}
+
+
+def _maydon_tuz(fld, indeks):
+    """Bitta maydon (ustun) ta'rifini normallashtiradi. Xato bo'lsa
+    {"xato": ...} qaytaradi, bo'lmasa maydon dict.
+
+    `tanlov` — ro'yxatdan bittasi: `variantlar` (yoki `options`) kerak.
+    `belgi` — Ha/Yo'q. Boshqalar: matn/raqam/pul/sana."""
+    if isinstance(fld, str):
+        fld = {"label": fld, "type": "matn"}
+    label = str(fld.get("label") or "").strip()
+    tur = str(fld.get("type") or "matn").strip()
+    if not label:
+        return {"xato": "Maydon nomi bo'sh bo'lmasin"}
+    if tur not in RUXSAT_MAYDON_TUR:
+        return {"xato": f"Maydon turi noto'g'ri: {tur}. Ruxsat: "
+                        "matn, raqam, pul, sana, tanlov, belgi"}
+    m = {"key": f"f{indeks}", "label": label, "type": tur}
+    if tur == "tanlov":
+        xom = fld.get("variantlar") or fld.get("options") or []
+        variant = [str(o).strip() for o in xom if str(o).strip()]
+        if not variant:
+            return {"xato": f"«{label}» (tanlov) uchun kamida 1 ta variant kerak"}
+        m["options"] = variant
+    return m
 
 
 def _bolim_yarat(db, user, kirish):
@@ -377,16 +402,10 @@ def _bolim_yarat(db, user, kirish):
         return {"xato": "Kamida 1 ta maydon (ustun) kerak"}
     maydonlar = []
     for i, fld in enumerate(xom):
-        if isinstance(fld, str):                 # model faqat nom yuborsa
-            fld = {"label": fld, "type": "matn"}
-        label = str(fld.get("label") or "").strip()
-        tur = str(fld.get("type") or "matn").strip()
-        if not label:
-            return {"xato": "Maydon nomi bo'sh bo'lmasin"}
-        if tur not in RUXSAT_MAYDON_TUR:
-            return {"xato": f"Maydon turi noto'g'ri: {tur}. "
-                            f"Ruxsat: matn, raqam, pul, sana"}
-        maydonlar.append({"key": f"f{i+1}", "label": label, "type": tur})
+        m2 = _maydon_tuz(fld, i + 1)
+        if "xato" in m2:
+            return m2
+        maydonlar.append(m2)
     mavjud = db.query(m.CustomSection).filter(m.CustomSection.name == nom).first()
     if mavjud:
         return {"xato": f"«{nom}» nomli bo'lim allaqachon bor"}
@@ -423,13 +442,27 @@ def _yozuv_qosh(db, user, kirish):
     kalitlar = {f["key"] for f in maydonlar}
     # label -> key moslash (AI kalit o'rniga nom yuborsa)
     label2key = {f["label"].lower(): f["key"] for f in maydonlar}
+    tur_bo = {f["key"]: f for f in maydonlar}
     toza = {}
     for k, v in data.items():
-        if k in kalitlar:
-            toza[k] = v
-        elif str(k).lower() in label2key:
-            toza[label2key[str(k).lower()]] = v
-        # notanish kalit — jimgina tashlanadi (bo'limda yo'q ustun)
+        key = k if k in kalitlar else label2key.get(str(k).lower())
+        if not key:
+            continue  # notanish kalit — jimgina tashlanadi (bo'limda yo'q ustun)
+        f = tur_bo[key]
+        tur = f["type"]
+        if tur == "belgi":
+            v = v in (True, "true", "1", "ha", "Ha", "on", "bor", "band")
+        elif tur in ("raqam", "pul") and v not in ("", None):
+            try:
+                v = float(v)
+            except (TypeError, ValueError):
+                return {"xato": f"«{f['label']}» raqam bo'lishi kerak"}
+        elif tur == "tanlov" and v not in ("", None):
+            variant = f.get("options") or []
+            if variant and str(v) not in variant:
+                return {"xato": f"«{f['label']}» uchun variant noto'g'ri: {v}. "
+                                f"Ruxsat: {', '.join(variant)}"}
+        toza[key] = v
     if not toza:
         return {"xato": "Yozuvda birorta ustun qiymati yo'q"}
     r = m.CustomRecord(section_id=b.id,
@@ -494,17 +527,11 @@ def _bolim_tahrir(db, user, kirish):
                     for mn in [_re.fullmatch(r"f(\d+)", f["key"])] if mn]
         keyingi = (max(raqamlar) if raqamlar else 0) + 1
         for fld in qoshiladigan:
-            if isinstance(fld, str):
-                fld = {"label": fld, "type": "matn"}
-            label = str(fld.get("label") or "").strip()
-            tur = str(fld.get("type") or "matn").strip()
-            if not label:
-                return {"xato": "Yangi ustun nomi bo'sh bo'lmasin"}
-            if tur not in RUXSAT_MAYDON_TUR:
-                return {"xato": f"Ustun turi noto'g'ri: {tur}. "
-                                f"Ruxsat: matn, raqam, pul, sana"}
-            maydonlar.append({"key": f"f{keyingi}", "label": label, "type": tur})
-            qoshildi.append(label)
+            m2 = _maydon_tuz(fld, keyingi)
+            if "xato" in m2:
+                return m2
+            maydonlar.append(m2)
+            qoshildi.append(m2["label"])
             keyingi += 1
 
     if not qoshildi and not olindi and not rol_ozgardi:
@@ -535,7 +562,10 @@ AMALLAR = {
                  "«menga ... kuzatadigan joy/ro'yxat kerak» yoki «... "
                  "bo'lim ochib ber» desa. `nom` — bo'lim nomi, `maydonlar` "
                  "— ustunlar ro'yxati [{label, type}], type FAQAT: matn, "
-                 "raqam, pul, sana. `ikonka` — ixtiyoriy (clipboard, box, "
+                 "raqam, pul, sana, tanlov, belgi. `tanlov` (ro'yxatdan "
+                 "bittasi) uchun `variantlar` ham bering (masalan {label:"
+                 "'Holat',type:'tanlov',variantlar:['band','bo\\'sh']}); "
+                 "`belgi` = Ha/Yo'q. `ikonka` — ixtiyoriy (clipboard, box, "
                  "truck, cash, users, calendar...). `rollar` — ixtiyoriy: "
                  "kim ko'radi (masalan ['Menejer','Buxgalter']); berilmasa "
                  "HAMMAGA ochiq (Rahbar doimo ko'radi). Masalan «bilyard "
