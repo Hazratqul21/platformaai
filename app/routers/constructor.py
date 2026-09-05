@@ -39,8 +39,10 @@ class RecordIn(BaseModel):
 
 def section_out(db: Session, s: m.CustomSection) -> dict:
     count = db.query(m.CustomRecord).filter(m.CustomRecord.section_id == s.id).count()
+    roles = json.loads(s.roles_json) if getattr(s, "roles_json", None) else None
     return {"id": s.id, "name": s.name, "icon": s.icon,
-            "fields": json.loads(s.fields_json), "records_count": count}
+            "fields": json.loads(s.fields_json), "records_count": count,
+            "roles": roles}
 
 
 @router.get("")

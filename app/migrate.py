@@ -40,6 +40,8 @@ MIGRATSIYALAR: list[tuple[str, str, str]] = [
     ("orders", "qqs_summa", "NUMERIC(18,2) NOT NULL DEFAULT 0"),
     # Standart parol majburan almashtiriladi (prodga tayyorlash)
     ("users", "parol_almashtirilsin", "BOOLEAN NOT NULL DEFAULT FALSE"),
+    # Konstruktor bo'limi kimga ko'rinadi (NULL = hammaga)
+    ("custom_sections", "roles_json", "TEXT"),
 ]
 
 # ---------------------------------------------------------------------

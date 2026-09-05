@@ -390,8 +390,11 @@ def _bolim_yarat(db, user, kirish):
     mavjud = db.query(m.CustomSection).filter(m.CustomSection.name == nom).first()
     if mavjud:
         return {"xato": f"«{nom}» nomli bo'lim allaqachon bor"}
+    # Kim ko'radi: rol nomlari ro'yxati. Bo'sh/berilmagan = hammaga ochiq.
+    rollar = [str(x).strip() for x in (kirish.get("rollar") or []) if str(x).strip()]
     b = m.CustomSection(name=nom[:80], icon=ikonka,
-                        fields_json=_json.dumps(maydonlar, ensure_ascii=False))
+                        fields_json=_json.dumps(maydonlar, ensure_ascii=False),
+                        roles_json=_json.dumps(rollar, ensure_ascii=False) if rollar else None)
     db.add(b)
     db.add(m.AuditLog(who=user.name, action="Yangi bo'lim yaratildi (AI konstruktor)",
                       detail=f"{nom}: {', '.join(x['label'] for x in maydonlar)}"))
@@ -463,6 +466,14 @@ def _bolim_tahrir(db, user, kirish):
     maydonlar = _json.loads(b.fields_json)
     qoshiladigan = kirish.get("qoshiladigan") or []
     oladigan = kirish.get("oladigan") or []
+    # rollar berilsa — kim ko'rishini o'zgartiramiz. `["hamma"]` yoki bo'sh
+    # ro'yxat = hammaga ochiq. Berilmasa (kalit yo'q) — tegilmaydi.
+    rol_ozgardi = False
+    if "rollar" in kirish:
+        xrol = [str(x).strip() for x in (kirish.get("rollar") or []) if str(x).strip()]
+        xrol = [r for r in xrol if r.lower() != "hamma"]
+        b.roles_json = _json.dumps(xrol, ensure_ascii=False) if xrol else None
+        rol_ozgardi = True
 
     # --- olib tashlash (kalit yoki nom bo'yicha) ---
     olindi = []
@@ -496,9 +507,9 @@ def _bolim_tahrir(db, user, kirish):
             qoshildi.append(label)
             keyingi += 1
 
-    if not qoshildi and not olindi:
-        return {"xato": "Hech qanday o'zgarish yo'q — qo'shish yoki "
-                        "olib tashlash ustunini ko'rsating"}
+    if not qoshildi and not olindi and not rol_ozgardi:
+        return {"xato": "Hech qanday o'zgarish yo'q — ustun qo'shish/olib "
+                        "tashlash yoki rollarni ko'rsating"}
     if not maydonlar:
         return {"xato": "Bo'limda kamida 1 ta ustun qolishi kerak"}
 
@@ -508,6 +519,9 @@ def _bolim_tahrir(db, user, kirish):
         tafsil.append("qo'shildi: " + ", ".join(qoshildi))
     if olindi:
         tafsil.append("olindi: " + ", ".join(olindi))
+    if rol_ozgardi:
+        rlar = _json.loads(b.roles_json) if b.roles_json else None
+        tafsil.append("ko'rish: " + (", ".join(rlar) if rlar else "hammaga"))
     db.add(m.AuditLog(who=user.name, action="Bo'lim ustunlari tahrirlandi (AI)",
                       detail=f"{b.name}: {'; '.join(tafsil)}"))
     db.commit()
@@ -522,7 +536,9 @@ AMALLAR = {
                  "bo'lim ochib ber» desa. `nom` — bo'lim nomi, `maydonlar` "
                  "— ustunlar ro'yxati [{label, type}], type FAQAT: matn, "
                  "raqam, pul, sana. `ikonka` — ixtiyoriy (clipboard, box, "
-                 "truck, cash, users, calendar...). Masalan «bilyard "
+                 "truck, cash, users, calendar...). `rollar` — ixtiyoriy: "
+                 "kim ko'radi (masalan ['Menejer','Buxgalter']); berilmasa "
+                 "HAMMAGA ochiq (Rahbar doimo ko'radi). Masalan «bilyard "
                  "stollari»: nom=Stollar, maydonlar=[{label:'Stol raqami',"
                  "type:'raqam'},{label:'Holat',type:'matn'},{label:'Tarif',"
                  "type:'pul'}]."),
@@ -551,7 +567,9 @@ AMALLAR = {
                  "`konstruktor_royxat` bilan `section_id` va mavjud "
                  "ustunlarni oling. `qoshiladigan` — [{label, type}] "
                  "(type: matn/raqam/pul/sana), `oladigan` — ustun "
-                 "kalitlari yoki nomlari. Eski yozuvlar buzilmaydi."),
+                 "kalitlari yoki nomlari. `rollar` — kim ko'rishini "
+                 "o'zgartirish (masalan ['Menejer']); bo'sh ['] yoki "
+                 "['hamma'] = hammaga ochadi. Eski yozuvlar buzilmaydi."),
         "tugma": "Bo'limni yangilash", "xavfli": False,
         "kirish_namuna": {"section_id": 1,
                           "qoshiladigan": [{"label": "Mijoz", "type": "matn"}],

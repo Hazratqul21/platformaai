@@ -68,9 +68,12 @@ async function navYukla(){
     // `set`dan OLDIN, `help`dan keyin emas — asosiy ishga yaqin turadi.
     try{
       const cs=await api('/api/sections');
-      const custom=(cs||[]).map(x=>({
-        p:'custom-'+x.id, t:x.name, i:x.icon||'clipboard',
-        cid:x.id, custom:true, hammaga:true}));
+      const custom=(cs||[]).map(x=>{
+        // roles bo'lsa — faqat o'sha rollar (+Rahbar) ko'radi; bo'lmasa hammaga.
+        const r=Array.isArray(x.roles)&&x.roles.length?x.roles:null;
+        return {p:'custom-'+x.id, t:x.name, i:x.icon||'clipboard',
+          cid:x.id, custom:true, hammaga:!r, roles:r||undefined};
+      });
       if(custom.length){
         const setIdx=NAV.findIndex(n=>n.p==='set');
         if(setIdx>=0) NAV.splice(setIdx,0,...custom); else NAV.push(...custom);

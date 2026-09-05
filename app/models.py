@@ -389,6 +389,9 @@ class CustomSection(Base):
     name: Mapped[str] = mapped_column(String(80))
     icon: Mapped[str] = mapped_column(String(10), default="📋")
     fields_json: Mapped[str] = mapped_column(Text)
+    # Kim ko'radi: rol nomlari JSON ro'yxati. NULL/bo'sh = HAMMAGA ochiq
+    # (eski bo'limlar shunday qoladi). Rahbar doimo ko'radi.
+    roles_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
