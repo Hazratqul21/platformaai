@@ -184,9 +184,11 @@ def hammasini_yop() -> None:
 # ---------------------------------------------------------------------
 _ASOSIY_DOMEN = None
 
-# Akkaunt bo'la OLMAYDIGAN subdomenlar: platforma entry (test = ro'yxatdan
-# o'tish sahifasi) va shu serverdagi boshqa loyihalar.
-BAND_SUBDOMEN = {"www", "app", "api", "admin", "test", "tizim", "archive",
+# Akkaunt bo'la OLMAYDIGAN subdomenlar: platforma entry va shu serverdagi
+# boshqa loyihalar. ESLATMA: `test` ATAYIN yo'q — u klientlarga
+# ko'rsatiladigan DEMO tenant (test.innasoft.uz), o'ylab topilgan
+# ma'lumot bilan. Ro'yxatdan o'tish apex/app/www orqali ochiladi.
+BAND_SUBDOMEN = {"www", "app", "api", "admin", "tizim", "archive",
                  "base", "diydor", "mail", "ftp", "ns", "static", "cdn"}
 
 

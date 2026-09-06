@@ -122,9 +122,11 @@ def limit_holati(db: Session, akkaunt_id: int, oy: str | None = None) -> dict:
 # ---------------------------------------------------------------------
 KOD_QOLIP = re.compile(r"^[a-z][a-z0-9-]{2,39}$")
 # Subdomen sifatida ishlatib bo'lmaydigan yoki chalkashtiradigan nomlar.
+# ESLATMA: `test` ATAYIN yo'q — u klientlarga ko'rsatiladigan DEMO
+# tenant (test.innasoft.uz). [[tenancy.BAND_SUBDOMEN]] bilan mos.
 BAND_KODLAR = {"www", "api", "app", "admin", "mail", "ftp", "ns", "static",
-               "test", "tizim", "archive", "base", "diydor",
-               "cdn", "test", "dev", "stage", "docs", "status", "innasoft"}
+               "tizim", "archive", "base", "diydor",
+               "cdn", "dev", "stage", "docs", "status", "innasoft"}
 
 
 def kod_tekshir(kod: str) -> str:
