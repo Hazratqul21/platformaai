@@ -109,8 +109,12 @@ def profilni_sina(kalit, nom, token):
     if not tekshir(kalit, "mijoz yaratish", s == 200, str(c)[:120]):
         return
 
+    # qty=1 — HAR profil uchun yaroqli (bilyard soatlab, maks 24; qty=100
+    # o'sha yerda «Miqdor 24 soatdan ko'p bo'lmasin» bilan rad etilardi).
+    # Bu smoke-test har sohada buyurtma tuzilishini tekshiradi, aniq
+    # miqdor muhim emas (realistik miqdorlar chuqur_sinov.py da).
     s, o = call("POST", "/api/orders",
-                {"client_id": c["id"], "qty": 100, "unit_price": 5000,
+                {"client_id": c["id"], "qty": 1, "unit_price": 5000,
                  "product_name": "Sinov", "attributes": attrs}, token)
     if not tekshir(kalit, "buyurtma yaratish", s == 200, str(o)[:200]):
         return

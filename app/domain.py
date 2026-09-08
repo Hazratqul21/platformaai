@@ -573,6 +573,13 @@ def soha_hammasi(order) -> dict:
             except (ValueError, TypeError, ArithmeticError):
                 pass
         q["qty"] = miqdor
+    # `birlik` HAM QO'SHILADI — xuddi `qty` kabi. Profilda «birlik» nomli
+    # maydon bo'lsa (chakana_dokon), u ustun turadi; bo'lmasa profil
+    # o'lchov birligi (`olchov.birlik`, umumiy: «dona») ishlatiladi.
+    # Usiz «{qty} {birlik}» shabloni `_tuldir` da butun bo'lakni tashlab,
+    # o'lcham matni BO'SH chiqardi (umumiy profil).
+    if "birlik" not in q:
+        q["birlik"] = getattr(p, "birlik", "") or ""
     return q
 
 
