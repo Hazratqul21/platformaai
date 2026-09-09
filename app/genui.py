@@ -560,6 +560,63 @@ def _bolim_tahrir(db, user, kirish):
                                  "Bo'limni ochib ko'ring."}
 
 
+def _kassa_yozuv(db, user, kirish):
+    """Kassa jurnaliga bitta pul harakati yozadi — XARAJAT (Chiqim) yoki
+    KIRIM (to'lov/tushum). Buxgalteriyani CHATDAN boshqarish yadrosi.
+
+    Mijoz «bugun kleyга 500 ming berdik» yoki «Sardordan 2 mln keldi»
+    deydi — AI shu yozuvni taklif qiladi, tugma bosilgach jurnalga
+    tushadi va Bosh kitobga (GL) avtomatik provodka bo'ladi.
+
+    `kirish`: {yonalish: "Kirim"|"Chiqim", kim, summa, izoh, valyuta,
+               firma, sana(YYYY-MM-DD)}. Bu `routers/kassa.add_entry`
+    bilan BIR XIL mantiq — bitta haqiqat manbai."""
+    from datetime import date as _date, datetime as _dt
+    from decimal import Decimal as _Dec
+    from . import models as m
+    from .hisob import ulash as _gl
+
+    yonalish = str(kirish.get("yonalish") or "").strip().capitalize()
+    if yonalish not in ("Kirim", "Chiqim"):
+        return {"xato": "Yo'nalish «Kirim» yoki «Chiqim» bo'lsin"}
+    kim = str(kirish.get("kim") or "").strip()
+    if not kim:
+        return {"xato": "Kimga/kimdan (kim) maydoni bo'sh bo'lmasin"}
+    try:
+        summa = float(kirish.get("summa") or 0)
+    except (TypeError, ValueError):
+        return {"xato": "Summa raqam bo'lishi kerak"}
+    if summa <= 0:
+        return {"xato": "Summa 0 dan katta bo'lsin"}
+    valyuta = str(kirish.get("valyuta") or "so'm").strip()
+    if valyuta not in ("so'm", "USD"):
+        return {"xato": "Valyuta: so'm yoki USD"}
+    qachon = _date.today()
+    sana = str(kirish.get("sana") or "").strip()
+    if sana:
+        try:
+            qachon = _dt.strptime(sana, "%Y-%m-%d").date()
+        except ValueError:
+            return {"xato": "Sana formati: YYYY-MM-DD"}
+
+    e = m.KassaEntry(firm=(str(kirish.get("firma") or "").strip() or "Asosiy"),
+                     direction=yonalish, who=kim[:120],
+                     note=str(kirish.get("izoh") or "").strip()[:200],
+                     amount=_Dec(str(summa)), currency=valyuta,
+                     entry_at=qachon, created_by=user.name)
+    db.add(e)
+    db.add(m.AuditLog(who=user.name, action=f"Kassa: {yonalish.lower()} (AI)",
+                      detail=f"{kim} · {summa:,.0f} {valyuta}".replace(",", " ")))
+    db.commit()
+    # Bosh kitobga (GL) — kassa endpointidagi bilan bir xil. GL xatosi
+    # kassa yozuvini to'xtatmaydi (ulash._xavfsiz ichida yutiladi).
+    _gl.kassa_yozuvi(db, e, kim=user.name)
+    belgi = "chiqim" if yonalish == "Chiqim" else "kirim"
+    return {"ok": True,
+            "xabar": f"Kassa {belgi}: {kim} · {summa:,.0f} {valyuta}".replace(",", " ")
+                     + " — jurnalga yozildi."}
+
+
 AMALLAR = {
     "bolim_yarat": {
         "izoh": ("YANGI bo'lim/ro'yxat YARATISH taklifi — mijoz chatda "
@@ -650,6 +707,19 @@ AMALLAR = {
         "tugma": "O'rnatish", "xavfli": False,
         "kirish_namuna": {"material_id": 3, "miqdor": 500},
         "rollar": ["Rahbar", "Sklad mudiri"], "bajar": _eng_past_qoldiq,
+    },
+    "kassa_yozuv": {
+        "izoh": ("Kassa jurnaliga pul harakati yozish taklifi — mijoz "
+                 "kundalik XARAJAT yoki KIRIM aytsa. «... berdik / to'ladik "
+                 "/ oldik / xarajat» = Chiqim; «... keldi / tushdi / to'ladi "
+                 "/ kirim» = Kirim. `summa` — raqam (so'm), `kim` — kimga "
+                 "yoki kimdan, `izoh` — nima uchun. Yozuv Bosh kitobga "
+                 "avtomatik tushadi. Summani aniq bilmasang, avval so'ra."),
+        "tugma": "Kassaga yozish", "xavfli": True,
+        "kirish_namuna": {"yonalish": "Chiqim", "kim": "Kley yetkazuvchi",
+                          "summa": 500000, "izoh": "Kley xaridi",
+                          "valyuta": "so'm"},
+        "rollar": ["Rahbar", "Buxgalter"], "bajar": _kassa_yozuv,
     },
 }
 
