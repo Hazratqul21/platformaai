@@ -83,6 +83,14 @@ async function navYukla(){
 }
 
 function allowedNav(){return NAV.filter(n=>n.hammaga||ME.role==='Rahbar'||(n.roles&&n.roles.includes(ME.role)));}
+
+// CHAT-FIRST UY: kirgan odam BIRINCHI AI chatni ko'radi («oppoq ekran»,
+// biznesni aytib to'ldirish). 'ai' bo'lim ochiq bo'lsa — o'sha bosh
+// sahifa; bo'lmasa (rol AI ko'rmasa) birinchi ruxsat etilgan bo'lim.
+// Yon menyu baribir turadi — modullarni bosib ochsa bo'ladi.
+function _boshSahifa(items){
+  return items.find(x=>x.p==='ai') ? 'ai' : (items[0]||{}).p;
+}
 function renderNav(){
   const items=allowedNav();
   const bosish=n=>n.custom?`openSection(${n.cid})`:`go('${n.p}')`;
@@ -159,7 +167,7 @@ window.addEventListener('hashchange', () => {
   let p = window.location.hash.replace('#/', '');
   if (!p || !PAGES[p]) {
     const items = allowedNav();
-    p = items[0].p;
+    p = _boshSahifa(items);
     window.location.hash = '/' + p;
     return;
   }
@@ -199,7 +207,7 @@ async function enterApp(){
   let p = window.location.hash.replace('#/', '');
   const items = allowedNav();
   if (!p || !PAGES[p] || !items.find(x => x.p === p)) {
-    p = items[0].p;
+    p = _boshSahifa(items);
     window.location.hash = '/' + p;
   } else {
     _renderPage(p);
