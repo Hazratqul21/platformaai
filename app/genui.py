@@ -438,6 +438,10 @@ def _yozuv_qosh(db, user, kirish):
     b = db.get(m.CustomSection, sid) if sid else None
     if not b:
         return {"xato": "Bo'lim topilmadi. Avval `konstruktor_royxat` bilan id ni oling."}
+    # Rol himoyasi: cheklangan bo'limga faqat o'sha rol (yoki Rahbar) yozadi.
+    brollar = _json.loads(b.roles_json) if getattr(b, "roles_json", None) else None
+    if user.role != "Rahbar" and brollar and user.role not in brollar:
+        return {"xato": "Bu bo'lim sizga ochiq emas"}
     maydonlar = _json.loads(b.fields_json)
     kalitlar = {f["key"] for f in maydonlar}
     # label -> key moslash (AI kalit o'rniga nom yuborsa)

@@ -39,17 +39,48 @@ class RecordIn(BaseModel):
     data: dict
 
 
+def _rollari(s: m.CustomSection):
+    """Bo'lim rollari ro'yxati yoki None (hammaga ochiq)."""
+    return json.loads(s.roles_json) if getattr(s, "roles_json", None) else None
+
+
+def kora_oladi(user, s: m.CustomSection) -> bool:
+    """Bo'limni shu foydalanuvchi ko'ra oladimi. Rahbar HAMMASINI ko'radi;
+    rollar bo'sh (None) = hammaga ochiq; aks holda faqat sanalgan rollar.
+
+    MUHIM: bu tekshiruv BACKENDда bo'lishi shart. Ilgari rollar faqat
+    frontendда (router.js) filtrlanardi — «faqat menejer ko'radigan»
+    bo'limni sklad mudiri /api/sections/{id}/records orqali to'g'ridan
+    o'qiy olardi. Endi backend ham rad etadi."""
+    if user.role == "Rahbar":
+        return True
+    rollar = _rollari(s)
+    return (not rollar) or (user.role in rollar)
+
+
+def _kordan(db: Session, sid: int, user) -> m.CustomSection:
+    """Bo'limni oladi; yo'q bo'lsa 404, ko'rish huquqi yo'q bo'lsa 403."""
+    s = db.get(m.CustomSection, sid)
+    if not s:
+        raise HTTPException(404, "Bo'lim topilmadi")
+    if not kora_oladi(user, s):
+        raise HTTPException(403, "Bu bo'lim sizga ochiq emas")
+    return s
+
+
 def section_out(db: Session, s: m.CustomSection) -> dict:
     count = db.query(m.CustomRecord).filter(m.CustomRecord.section_id == s.id).count()
-    roles = json.loads(s.roles_json) if getattr(s, "roles_json", None) else None
     return {"id": s.id, "name": s.name, "icon": s.icon,
             "fields": json.loads(s.fields_json), "records_count": count,
-            "roles": roles}
+            "roles": _rollari(s)}
 
 
 @router.get("")
 def list_sections(db: Session = Depends(get_db), user=Depends(get_user)):
-    return [section_out(db, s) for s in db.query(m.CustomSection).order_by(m.CustomSection.id).all()]
+    # Faqat shu foydalanuvchi ko'ra oladigan bo'limlar (backend himoyasi).
+    return [section_out(db, s)
+            for s in db.query(m.CustomSection).order_by(m.CustomSection.id).all()
+            if kora_oladi(user, s)]
 
 
 @router.post("")
@@ -96,9 +127,7 @@ def delete_section(sid: int, db: Session = Depends(get_db),
 
 @router.get("/{sid}/records")
 def list_records(sid: int, db: Session = Depends(get_db), user=Depends(get_user)):
-    s = db.get(m.CustomSection, sid)
-    if not s:
-        raise HTTPException(404, "Bo'lim topilmadi")
+    s = _kordan(db, sid, user)
     rows = (db.query(m.CustomRecord).filter(m.CustomRecord.section_id == sid)
             .order_by(m.CustomRecord.id.desc()).limit(500).all())
     return {"section": section_out(db, s),
@@ -109,9 +138,7 @@ def list_records(sid: int, db: Session = Depends(get_db), user=Depends(get_user)
 @router.post("/{sid}/records")
 def add_record(sid: int, data: RecordIn, db: Session = Depends(get_db),
                user=Depends(get_user)):
-    s = db.get(m.CustomSection, sid)
-    if not s:
-        raise HTTPException(404, "Bo'lim topilmadi")
+    s = _kordan(db, sid, user)
     fields = json.loads(s.fields_json)
     clean = {}
     for f in fields:
@@ -147,9 +174,7 @@ def delete_record(sid: int, rid: int, db: Session = Depends(get_db),
 
 @router.get("/{sid}/export.xlsx")
 def export_section(sid: int, db: Session = Depends(get_db), user=Depends(get_user)):
-    s = db.get(m.CustomSection, sid)
-    if not s:
-        raise HTTPException(404, "Bo'lim topilmadi")
+    s = _kordan(db, sid, user)
     fields = json.loads(s.fields_json)
     wb = Workbook()
     ws = wb.active
