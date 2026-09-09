@@ -400,6 +400,22 @@ def _yoq_model(e: Exception) -> bool:
     return ("404" in matn and "model" in matn.lower()) or "limit: 0" in matn
 
 
+def _kvota_tugadi(e: Exception) -> bool:
+    """Kunlik/tarif KVOTASI tugadi (bepul Gemini: RESOURCE_EXHAUSTED,
+    «exceeded your current quota»). Bu 2-6 soniyada TIKLANMAYDI — shuning
+    uchun shu modelga qayta urinish behuda, darhol keyingi modelga
+    o'tamiz. Aks holda har so'rov tugagan modellarga ~16s behuda
+    sarflaydi (prodда AI javobi 26-48s ga cho'zilardi).
+
+    Daqiqalik (per-minute) rate limit'dan farqi: u odatda «per minute»
+    yoki oddiy «rate limit» deb keladi va kutish YORDAM beradi — u
+    _otkinchimi() da qoladi."""
+    matn = str(e).lower()
+    return ("resource_exhausted" in matn
+            or "exceeded your current quota" in matn
+            or "check your plan and billing" in matn)
+
+
 MOSLASHTIRGICHLAR = {
     "anthropic": _anthropic,
     "openai": _openai,
@@ -513,9 +529,11 @@ def javob_ol(xabarlar: list[dict], asboblar: list[dict],
                 return natija
             except Exception as e:                            # noqa: BLE001
                 oxirgi = e
-                if _yoq_model(e):
-                    # Bu model umuman yo'q yoki kvotasi nol — kutish
-                    # foyda bermaydi, darhol keyingisiga o'tamiz.
+                if _yoq_model(e) or _kvota_tugadi(e):
+                    # Model yo'q, yoki kvotasi tugagan — kutish foyda
+                    # bermaydi (kvota soniyalarда tiklanmaydi), darhol
+                    # keyingi modelga o'tamiz. Shu tuzatishsiz har so'rov
+                    # tugagan modellarga ~16s behuda kutardi.
                     log.warning("«%s» ishlamadi (%s), keyingi modelga o'tamiz",
                                 model, str(e)[:90])
                     break
