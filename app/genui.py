@@ -704,7 +704,18 @@ def _mijoz_tolovi(db, user, kirish):
     xabar = (f"{c.company}: {summa:,.0f} so'm to'lov qabul qilindi"
              .replace(",", " "))
     if qoldiq is not None:
-        xabar += f". Qolgan qarz: {qoldiq:,.0f} so'm".replace(",", " ")
+        # Manfiy qoldiq = mijoz ortiqcha to'lagan (AVANS). Uni «qarz
+        # -20 567 496» deb ko'rsatish chalg'itadi — rahbar buni pul
+        # sifatida o'qiydi, shuning uchun nomi bilan aytamiz.
+        # DIQQAT: `.replace(",", " ")` faqat RAQAMga qo'llanadi — butun
+        # matnga qo'llansa jumladagi vergul ham yo'qoladi.
+        son = f"{abs(qoldiq):,.0f}".replace(",", " ")
+        if qoldiq > 0:
+            xabar += f". Qolgan qarz: {son} so'm"
+        elif qoldiq < 0:
+            xabar += f". Qarz qolmadi, avans: {son} so'm"
+        else:
+            xabar += ". Qarz to'liq yopildi."
     return {"ok": True, "xabar": xabar}
 
 
