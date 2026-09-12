@@ -158,6 +158,24 @@ HAMMA_ASBOBLAR = [
             "additionalProperties": False,
         },
     },
+    {
+        "nom": "yetkazuvchi_qidir",
+        "izoh": (
+            "Yetkazib beruvchini NOMI bo'yicha qidiradi: id si, unga "
+            "qolgan QARZ va qarz qolgan xaridlar ro'yxati. «Toshkent "
+            "Qog'ozga 10 mln berdik» kabi gap kelsa — avval SHU asbob "
+            "bilan id va qarzni bil, keyin `yetkazuvchi_tolovi` amalini "
+            "taklif qil. Nom berilmasa hamma qarzdor yetkazuvchilar."
+        ),
+        "sxema": {
+            "type": "object",
+            "properties": {
+                "nom": {"type": "string",
+                        "description": "Yetkazib beruvchi nomi yoki qismi"},
+            },
+            "additionalProperties": False,
+        },
+    },
 ]
 
 
@@ -679,6 +697,35 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
             natija.append({"mijoz_id": c.id, "nom": c.company,
                            "telefon": c.phone, "qoldiq_qarz": qarz})
         return {"mijozlar": natija}
+
+    if nom == "yetkazuvchi_qidir":
+        from . import models as m
+        from . import services as s
+        qidiruv = (kirish.get("nom") or "").strip()
+        so = db.query(m.Supplier)
+        if qidiruv:
+            so = so.filter(m.Supplier.name.ilike(f"%{qidiruv}%"))
+        topilgan = so.order_by(m.Supplier.name).limit(10).all()
+        if not topilgan:
+            return {"yetkazuvchilar": [],
+                    "izoh": (f"«{qidiruv}» bo'yicha yetkazib beruvchi topilmadi."
+                             if qidiruv else "Yetkazib beruvchi yo'q.")}
+        natija = []
+        for sup in topilgan:
+            qarz = None
+            try:
+                qarz = float(s.supplier_balance(db, sup.id)["debt"])
+            except Exception:                              # noqa: BLE001
+                pass
+            ochiq = genui.yetkazuvchi_ochiq_xaridlar(db, sup.id)
+            natija.append({
+                "yetkazuvchi_id": sup.id, "nom": sup.name,
+                "telefon": sup.phone, "qoldiq_qarz": qarz,
+                "qarzli_xaridlar": [{"xarid_id": p.id, "qarz": float(q),
+                                     "sana": str(p.purchased_at)}
+                                    for p, q in ochiq[:10]],
+            })
+        return {"yetkazuvchilar": natija}
 
     # --- PUL VA HISOB ------------------------------------------------
     def _sana_ol(kalit, standart=None):
@@ -1375,6 +1422,8 @@ ASBOB_ROLLARI = {
     # Mijozni nomi bo'yicha topish — mijoz bilan ishlaydigan rollarga.
     # `qarzdorlar` faqat qarzi borlarni beradi, bu esa hammasini topadi.
     "mijoz_qidir":           ["Rahbar", "Menejer", "Buxgalter"],
+    # Yetkazib beruvchi qarzi — pul ma'lumoti, moliya doirasida.
+    "yetkazuvchi_qidir":     ["Rahbar", "Buxgalter"],
 }
 
 YORDAMCHI_KALIT = "yordamchi"

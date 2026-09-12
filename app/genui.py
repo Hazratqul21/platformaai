@@ -719,6 +719,151 @@ def _mijoz_tolovi(db, user, kirish):
     return {"ok": True, "xabar": xabar}
 
 
+def yetkazuvchi_ochiq_xaridlar(db, supplier_id: int) -> list:
+    """Yetkazib beruvchining QARZI QOLGAN xaridlari — eskisidan boshlab.
+
+    `routers/purchase.supplier_debts` bilan bir xil hisob: to'langan =
+    xarid paytidagi pul + keyingi to'lovlar. Qaytadi: [(Purchase, qarz)].
+    Agent ham, `_yetkazuvchi_tolovi` ham SHU ro'yxatdan foydalanadi —
+    bitta haqiqat manbai."""
+    from decimal import Decimal as _Dec
+    from sqlalchemy import func as _f
+    from . import models as m
+
+    xaridlar = (db.query(m.Purchase)
+                .filter(m.Purchase.supplier_id == supplier_id,
+                        m.Purchase.payment_type != "Naqd")
+                .order_by(m.Purchase.purchased_at, m.Purchase.id).all())
+    ochiq = []
+    for p in xaridlar:
+        tolangan = _Dec(p.paid_amount or 0) + _Dec(
+            db.query(_f.coalesce(_f.sum(m.PurchasePayment.amount), 0))
+            .filter(m.PurchasePayment.purchase_id == p.id).scalar() or 0)
+        qarz = _Dec(p.total) - tolangan
+        if qarz > 0:
+            ochiq.append((p, qarz))
+    return ochiq
+
+
+def _yetkazuvchi_tolovi(db, user, kirish):
+    """YETKAZIB BERUVCHIGA berilgan pulni yozadi — xarid QARZIDAN ayiriladi.
+
+    «Toshkent Qog'ozga 10 mln berdik» — AI shuni taklif qiladi, tugma
+    bosilgach: pul eng ESKI qarzdan boshlab xaridlarga taqsimlanadi
+    (FIFO), har bo'lak uchun kassa Chiqimi va Bosh kitob provodkasi
+    yoziladi. Ya'ni `routers/purchase.pay_purchase` bilan BIR XIL
+    mantiq, faqat ko'p xaridga bo'linadi.
+
+    `kirish`: {yetkazuvchi_id yoki yetkazuvchi (nomi), summa, usul,
+               izoh, xarid_id (ixtiyoriy — aniq bitta xaridga)}."""
+    from datetime import date as _date
+    from decimal import Decimal as _Dec
+    from . import models as m
+    from . import kassa_sync as _ks
+    from . import services as _s
+    from .hisob import ulash as _gl
+
+    # Yetkazib beruvchini topamiz: id bo'lsa id, bo'lmasa nomi bo'yicha.
+    sup = None
+    sid = kirish.get("yetkazuvchi_id") or kirish.get("supplier_id")
+    if sid:
+        try:
+            sup = db.get(m.Supplier, int(sid))
+        except (TypeError, ValueError):
+            sup = None
+    if sup is None:
+        nom = str(kirish.get("yetkazuvchi") or kirish.get("nom") or "").strip()
+        if nom:
+            topilgan = (db.query(m.Supplier)
+                        .filter(m.Supplier.name.ilike(f"%{nom}%"))
+                        .order_by(m.Supplier.id).limit(5).all())
+            if len(topilgan) > 1:
+                return {"xato": "Bir nechta yetkazib beruvchi mos keldi: "
+                                + ", ".join(f"#{x.id} {x.name}" for x in topilgan)
+                                + ". Qaysi biri ekanini `yetkazuvchi_id` bilan "
+                                  "aniq ko'rsating."}
+            sup = topilgan[0] if topilgan else None
+    if sup is None:
+        return {"xato": "Yetkazib beruvchi topilmadi. `yetkazuvchi_qidir` "
+                        "asbobi bilan id sini aniqlang."}
+
+    try:
+        summa = _Dec(str(float(kirish.get("summa") or 0)))
+    except (TypeError, ValueError):
+        return {"xato": "Summa raqam bo'lishi kerak"}
+    if summa <= 0:
+        return {"xato": "To'lov summasi 0 dan katta bo'lsin"}
+
+    # Qaysi xaridlarga taqsimlanadi.
+    xarid_id = kirish.get("xarid_id") or kirish.get("purchase_id") or None
+    if xarid_id:
+        p = db.get(m.Purchase, xarid_id)
+        if not p or p.supplier_id != sup.id:
+            return {"xato": "Bu xarid shu yetkazib beruvchiga tegishli emas"}
+        ochiq = [(p, None)]
+    else:
+        ochiq = yetkazuvchi_ochiq_xaridlar(db, sup.id)
+    if not ochiq:
+        return {"xato": f"{sup.name}ga qarz yo'q. Qarzga bog'liq bo'lmagan "
+                        "pul bo'lsa `kassa_yozuv` (Chiqim) ishlating."}
+
+    usul = str(kirish.get("usul") or "Naqd").strip()[:20] or "Naqd"
+    izoh = str(kirish.get("izoh") or "").strip()[:200]
+    qoldi = summa
+    boklaklar = []
+    for p, qarz in ochiq:
+        if qoldi <= 0:
+            break
+        # Aniq xarid ko'rsatilgan bo'lsa, qarzidan ortiq to'lash mumkin
+        # (avans) — foydalanuvchi ataylab shuni tanlagan.
+        ulush = qoldi if qarz is None else min(qoldi, qarz)
+        pp = m.PurchasePayment(purchase_id=p.id, amount=ulush,
+                               method=usul, note=izoh)
+        db.add(pp)
+        db.flush()
+        # Kassa + Bosh kitob — endpointdagi bilan bir xil tartib.
+        _ks.xarid_qarziga_tolov(db, pp, user.name)
+        _gl.yetkazuvchiga_tolov(db, pp.amount, _date.today(), p.id, user.name)
+        boklaklar.append((p.id, ulush))
+        qoldi -= ulush
+
+    berildi = summa - qoldi
+    db.add(m.AuditLog(who=user.name, action="Yetkazib beruvchiga to'lov (AI)",
+                      detail=f"{sup.name} · {float(berildi):,.0f} so'm · {usul}"
+                      .replace(",", " ")))
+    db.commit()
+
+    son = f"{float(berildi):,.0f}".replace(",", " ")
+    xabar = f"{sup.name}ga {son} so'm to'landi"
+    # Katta to'lov o'nlab xaridga bo'linishi mumkin — hammasini sanash
+    # xabarni o'qib bo'lmas qiladi, shuning uchun 3 tadan ko'pi yig'ib
+    # aytiladi (batafsili kassa jurnalida turadi).
+    if len(boklaklar) > 3:
+        xabar += f" — {len(boklaklar)} ta xaridga taqsimlandi (eng eskisidan)"
+    elif len(boklaklar) > 1:
+        xabar += " (" + ", ".join(f"xarid #{i}: {float(u):,.0f}".replace(",", " ")
+                                  for i, u in boklaklar) + ")"
+    elif boklaklar:
+        xabar += f" (xarid #{boklaklar[0][0]})"
+    if qoldi > 0:
+        # Qarzdan ortiq pul berilgan — yozilmagan qismini yashirmaymiz.
+        ortiq = f"{float(qoldi):,.0f}".replace(",", " ")
+        xabar += (f". Diqqat: {ortiq} so'm qarzdan ortiq — u yozilmadi, "
+                  "kerak bo'lsa kassaga Chiqim qilib yozing")
+    try:
+        qolgan = float(_s.supplier_balance(db, sup.id)["debt"])
+        qson = f"{abs(qolgan):,.0f}".replace(",", " ")
+        if qolgan > 0:
+            xabar += f". Qolgan qarz: {qson} so'm"
+        elif qolgan < 0:
+            xabar += f". Qarz qolmadi, avans: {qson} so'm"
+        else:
+            xabar += ". Qarz to'liq yopildi."
+    except Exception:                                         # noqa: BLE001
+        pass
+    return {"ok": True, "xabar": xabar}
+
+
 AMALLAR = {
     "bolim_yarat": {
         "izoh": ("YANGI bo'lim/ro'yxat YARATISH taklifi — mijoz chatda "
@@ -836,6 +981,20 @@ AMALLAR = {
         "kirish_namuna": {"mijoz_id": 7, "summa": 3000000,
                           "usul": "Naqd", "izoh": ""},
         "rollar": ["Rahbar", "Buxgalter", "Menejer"], "bajar": _mijoz_tolovi,
+    },
+    "yetkazuvchi_tolovi": {
+        "izoh": ("YETKAZIB BERUVCHIGA berilgan pulni yozish taklifi — "
+                 "«Toshkent Qog'ozga 10 mln berdik», «yetkazuvchiga pul "
+                 "o'tkazdik» kabi. Pul uning XARID QARZIDAN ayiriladi "
+                 "(eng eski qarzdan boshlab), kassaga Chiqim va Bosh "
+                 "kitobga tushadi. Id ni `yetkazuvchi_qidir` bilan "
+                 "aniqlang (nomini yuborsangiz ham topamiz). `usul` — "
+                 "Naqd yoki O'tkazma. MUHIM: qarzga bog'liq bo'lmagan "
+                 "oddiy xarajat bo'lsa `kassa_yozuv` (Chiqim) ishlating."),
+        "tugma": "To'lovni yozish", "xavfli": True,
+        "kirish_namuna": {"yetkazuvchi_id": 3, "summa": 10000000,
+                          "usul": "O'tkazma", "izoh": ""},
+        "rollar": ["Rahbar", "Buxgalter"], "bajar": _yetkazuvchi_tolovi,
     },
 }
 
