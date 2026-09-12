@@ -96,8 +96,13 @@ function renderNav(){
   const bosish=n=>n.custom?`openSection(${n.cid})`:`go('${n.p}')`;
   document.getElementById('nav').innerHTML=items.map(n=>
     `<a class="${n.p===PAGE?'active':''}" data-label="${n.t}" onclick="${bosish(n)}"><span class="ic">${icon(n.i)}</span><span>${n.t}</span></a>`).join('');
-  const main3=items.slice(0,3);
-  const rest=items.slice(3);
+  // MOBIL pastki panel: chat (AI) endi BOSH EKRAN — uni birinchi slotда
+  // qo'yamiz, bir teginishда uyga qaytilsin. Desktop yon menyu (#nav)
+  // tartibi o'zgarmaydi.
+  const aiItem=items.find(x=>x.p==='ai');
+  const panelItems=aiItem?[aiItem,...items.filter(x=>x.p!=='ai')]:items;
+  const main3=panelItems.slice(0,3);
+  const rest=panelItems.slice(3);
   const link=n=>`<a class="${n.p===PAGE?'active':''}" onclick="${bosish(n)}">${icon(n.i,19)}<span>${n.t.split(' ')[0]}</span></a>`;
   document.getElementById('bottomNav').innerHTML=
     main3.slice(0,2).map(link).join('')
