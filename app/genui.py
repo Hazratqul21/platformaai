@@ -28,7 +28,10 @@ maydon yoki juda katta ro'yxat frontendga umuman yetib bormaydi.
 Frontend esa matnni faqat `textContent` bilan qo'yadi (HTML sifatida
 talqin qilinmaydi).
 """
+import logging
 from decimal import Decimal
+
+log = logging.getLogger("gofra.genui")
 
 # Bitta javobda nechta komponent va har birida nechta qator bo'lishi
 # mumkin. Model «hamma buyurtmani ko'rsat» deb 10 000 qator yuborsa
@@ -223,14 +226,23 @@ def tekshir(k: dict) -> dict:
 
 def tekshir_royxat(komponentlar) -> list[dict]:
     """Ro'yxatni tekshiradi. Buzuq komponent BUTUN javobni yiqitmaydi —
-    u tashlab yuboriladi va qolganlari ko'rsatiladi."""
+    u tashlab yuboriladi va qolganlari ko'rsatiladi.
+
+    RAD ETILGANI LOGGA YOZILADI: ilgari komponent jimgina yo'qolardi va
+    «nega tasdiq tugmasi chiqmadi?» degan savolga javob topib bo'lmasdi
+    (prodда mijoz to'lovi taklifida aynan shu bo'ldi). Endi sabab va
+    komponentning qisqa ko'rinishi logda qoladi."""
     if not isinstance(komponentlar, list):
+        log.warning("GenUI: komponentlar ro'yxat emas: %s",
+                    str(type(komponentlar))[:60])
         return []
     natija = []
     for k in komponentlar[:MAX_KOMPONENT]:
         try:
             natija.append(tekshir(k))
-        except KomponentXato:
+        except KomponentXato as e:
+            log.warning("GenUI: komponent RAD ETILDI (%s) — %s",
+                        str(e)[:120], str(k)[:220])
             continue
     return natija
 
