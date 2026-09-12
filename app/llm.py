@@ -71,6 +71,17 @@ def joriy_model() -> str:
     return _muhit("LLM_MODEL") or PROVAYDERLAR[p][1]
 
 
+# Oxirgi HAQIQATAN javob bergan (provayder, model). `javob_ol` muvaffaqiyatда
+# yangilaydi. Jarayon bo'yicha umumiy (LLM sozlamasi .env dan — hamma
+# tenantga bir xil). Kvota tiklansa keyingi so'rov yana yuqori modelga
+# tushib buni yangilaydi — ya'ni o'zini o'zi to'g'rilaydi.
+_OXIRGI_ISHLAGAN: tuple[str, str] | None = None
+
+
+def oxirgi_ishlagan() -> tuple[str, str] | None:
+    return _OXIRGI_ISHLAGAN
+
+
 def ulangan_provayderlar() -> list[str]:
     """HAQIQIY kaliti bor provayderlar — afzallik tartibida.
 
@@ -118,9 +129,18 @@ def holat() -> dict:
     """Hamma provayderlar holati — sozlamalar va AI ekrani uchun."""
     tayyor, izoh = tayyormi()
     ulangan = ulangan_provayderlar()
+    # AMALDAGI model — oxirgi ishlaganini ko'rsatamiz (agar shu provayderда
+    # bo'lsa). Sozlangani (`joriy_model`) tugagan bo'lsa ham rahbar
+    # nima aslida javob berayotganini ko'radi.
+    amaldagi = _OXIRGI_ISHLAGAN
+    model = (amaldagi[1] if amaldagi and amaldagi[0] == joriy_provayder()
+             else joriy_model())
+    if tayyor and amaldagi and amaldagi[1] != joriy_model():
+        izoh = f"{joriy_provayder()} · {model}"
     return {
         "tayyor": tayyor, "izoh": izoh,
-        "provayder": joriy_provayder(), "model": joriy_model(),
+        "provayder": joriy_provayder(), "model": model,
+        "sozlangan_model": joriy_model(),
         # Ulangan provayderlar TARTIB bilan: birinchisi ishlatiladi,
         # kvotasi tugasa keyingisiga o'tiladi.
         "ulangan": ulangan,
@@ -526,6 +546,12 @@ def javob_ol(xabarlar: list[dict], asboblar: list[dict],
                 natija = MOSLASHTIRGICHLAR[provayder](
                     xabarlar, asboblar, korsatma, model)
                 natija["provayder"], natija["model"] = provayder, model
+                # AMALDA ishlagan modelni eslab qolamiz — holat ekranida
+                # ROST ko'rsatish uchun. Sozlangan `gemini-3.5-flash`
+                # kvotasi tugab, aslida `flash-lite` javob berayotgan
+                # bo'lsa, rahbar buni bilib tursin (chat endi bosh ekran).
+                global _OXIRGI_ISHLAGAN
+                _OXIRGI_ISHLAGAN = (provayder, model)
                 return natija
             except Exception as e:                            # noqa: BLE001
                 oxirgi = e
