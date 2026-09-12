@@ -617,6 +617,85 @@ def _kassa_yozuv(db, user, kirish):
                      + " — jurnalga yozildi."}
 
 
+def _mijoz_tolovi(db, user, kirish):
+    """MIJOZDAN kelgan to'lovni yozadi — uning QARZIDAN ayiriladi.
+
+    Mijoz «Botir 3 mln to'ladi» deydi — AI shu to'lovni taklif qiladi,
+    tugma bosilgach: to'lov yoziladi, kassa jurnaliga tushadi va Bosh
+    kitobga provodka bo'ladi. `routers/finance.add_payment` bilan BIR
+    XIL mantiq (bitta haqiqat manbai).
+
+    `kirish`: {mijoz_id yoki mijoz (nomi), summa, usul, izoh,
+               buyurtma_id (ixtiyoriy)}.
+    Oddiy kassa «Kirim»idan farqi: bu ANIQ mijozga bog'lanadi va
+    qarzini kamaytiradi — shuning uchun mijoz aytilsa shu amal ishlatiladi."""
+    from decimal import Decimal as _Dec
+    from . import models as m
+    from . import kassa_sync as _ks
+    from . import services as _s
+    from .hisob import ulash as _gl
+
+    # Mijozni topamiz: id bo'lsa id, bo'lmasa nomi bo'yicha.
+    c = None
+    mid = kirish.get("mijoz_id")
+    if mid:
+        try:
+            c = db.get(m.Client, int(mid))
+        except (TypeError, ValueError):
+            c = None
+    if c is None:
+        nom = str(kirish.get("mijoz") or kirish.get("mijoz_nomi") or "").strip()
+        if nom:
+            topilgan = (db.query(m.Client)
+                        .filter(m.Client.company.ilike(f"%{nom}%"))
+                        .order_by(m.Client.id).limit(5).all())
+            if len(topilgan) > 1:
+                return {"xato": "Bir nechta mijoz mos keldi: "
+                                + ", ".join(f"#{x.id} {x.company}" for x in topilgan)
+                                + ". Qaysi biri ekanini `mijoz_id` bilan aniq ko'rsating."}
+            c = topilgan[0] if topilgan else None
+    if c is None:
+        return {"xato": "Mijoz topilmadi. `qarzdorlar` yoki `mijoz_hisobi` "
+                        "asbobi bilan mijoz id sini aniqlang."}
+
+    try:
+        summa = float(kirish.get("summa") or 0)
+    except (TypeError, ValueError):
+        return {"xato": "Summa raqam bo'lishi kerak"}
+    if summa <= 0:
+        return {"xato": "To'lov summasi 0 dan katta bo'lsin"}
+
+    buyurtma_id = kirish.get("buyurtma_id") or None
+    if buyurtma_id:
+        o = db.get(m.Order, buyurtma_id)
+        if not o or o.client_id != c.id:
+            return {"xato": "Bu buyurtma shu mijozga tegishli emas"}
+
+    usul = str(kirish.get("usul") or "Naqd").strip()[:20] or "Naqd"
+    p = m.Payment(client_id=c.id, order_id=buyurtma_id,
+                  amount=_Dec(str(summa)), method=usul,
+                  note=str(kirish.get("izoh") or "").strip()[:200])
+    db.add(p)
+    db.flush()
+    # Kassa jurnali + Bosh kitob — endpointдаgi bilan bir xil tartib.
+    _ks.mijoz_tolovi(db, p, user.name)
+    _gl.mijoz_tolovi(db, p, user.name)
+    db.add(m.AuditLog(who=user.name, action="To'lov qabul qilindi (AI)",
+                      detail=f"{c.company} · {summa:,.0f} so'm · {usul}".replace(",", " ")))
+    db.commit()
+
+    qoldiq = None
+    try:
+        qoldiq = float(_s.client_balance(db, c.id)["debt"])
+    except Exception:                                     # noqa: BLE001
+        pass
+    xabar = (f"{c.company}: {summa:,.0f} so'm to'lov qabul qilindi"
+             .replace(",", " "))
+    if qoldiq is not None:
+        xabar += f". Qolgan qarz: {qoldiq:,.0f} so'm".replace(",", " ")
+    return {"ok": True, "xabar": xabar}
+
+
 AMALLAR = {
     "bolim_yarat": {
         "izoh": ("YANGI bo'lim/ro'yxat YARATISH taklifi — mijoz chatda "
@@ -720,6 +799,20 @@ AMALLAR = {
                           "summa": 500000, "izoh": "Kley xaridi",
                           "valyuta": "so'm"},
         "rollar": ["Rahbar", "Buxgalter"], "bajar": _kassa_yozuv,
+    },
+    "mijoz_tolovi": {
+        "izoh": ("ANIQ MIJOZDAN kelgan to'lovni yozish taklifi — «Botir "
+                 "3 mln to'ladi», «Kompaniya A pul o'tkazdi» kabi. To'lov "
+                 "o'sha mijozning QARZIDAN ayiriladi, kassa jurnaliga va "
+                 "Bosh kitobga ham tushadi. Mijoz id sini `qarzdorlar` yoki "
+                 "`mijoz_hisobi` bilan aniqlang (nomini yuborsangiz ham "
+                 "topamiz). `usul` — Naqd yoki O'tkazma. MUHIM: mijoz "
+                 "aytilmagan umumiy tushum bo'lsa `kassa_yozuv` (Kirim) "
+                 "ishlating, bu amal FAQAT mijozga bog'liq to'lov uchun."),
+        "tugma": "To'lovni qabul qilish", "xavfli": True,
+        "kirish_namuna": {"mijoz_id": 7, "summa": 3000000,
+                          "usul": "Naqd", "izoh": ""},
+        "rollar": ["Rahbar", "Buxgalter", "Menejer"], "bajar": _mijoz_tolovi,
     },
 }
 
