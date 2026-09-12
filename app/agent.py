@@ -138,6 +138,25 @@ HAMMA_ASBOBLAR = [
         ),
         "sxema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
+    {
+        "nom": "mijoz_qidir",
+        "izoh": (
+            "Mijozni NOMI bo'yicha qidiradi va id sini qaytaradi. "
+            "Mijoz nomi aytilib id kerak bo'lganda SHU asbobni ishlat "
+            "(masalan to'lov yozishdan oldin). `qarzdorlar` faqat QARZI "
+            "BORlarni beradi — qarzi yo'q mijoz u yerda chiqmaydi, "
+            "shuning uchun nom bo'yicha qidirishga shu asbob kerak."
+        ),
+        "sxema": {
+            "type": "object",
+            "properties": {
+                "nom": {"type": "string",
+                        "description": "Mijoz nomi yoki uning bir qismi"},
+            },
+            "required": ["nom"],
+            "additionalProperties": False,
+        },
+    },
 ]
 
 
@@ -590,6 +609,29 @@ def _asbobni_bajar(db, nom: str, kirish: dict) -> dict:
              "ustunlar": _json.loads(b.fields_json)}
             for b in bolimlar
         ] or "Hozircha qo'shimcha bo'lim yo'q — `bolim_yarat` bilan yarating."}
+
+    if nom == "mijoz_qidir":
+        from . import models as m
+        from . import services as s
+        qidiruv = (kirish.get("nom") or "").strip()
+        if not qidiruv:
+            return {"xato": "Qidiruv uchun mijoz nomini bering"}
+        topilgan = (db.query(m.Client)
+                    .filter(m.Client.company.ilike(f"%{qidiruv}%"))
+                    .order_by(m.Client.company).limit(10).all())
+        if not topilgan:
+            return {"mijozlar": [],
+                    "izoh": f"«{qidiruv}» bo'yicha mijoz topilmadi."}
+        natija = []
+        for c in topilgan:
+            qarz = None
+            try:
+                qarz = float(s.client_balance(db, c.id)["debt"])
+            except Exception:                              # noqa: BLE001
+                pass
+            natija.append({"mijoz_id": c.id, "nom": c.company,
+                           "telefon": c.phone, "qoldiq_qarz": qarz})
+        return {"mijozlar": natija}
 
     # --- PUL VA HISOB ------------------------------------------------
     def _sana_ol(kalit, standart=None):
@@ -1273,6 +1315,9 @@ ASBOB_ROLLARI = {
     # rollarning hammasiga ochiq (aks holda AI id ni taxmin qiladi).
     "konstruktor_royxat":    ["Rahbar", "Menejer", "Buxgalter",
                               "Sklad mudiri", "Sex boshlig'i"],
+    # Mijozni nomi bo'yicha topish — mijoz bilan ishlaydigan rollarga.
+    # `qarzdorlar` faqat qarzi borlarni beradi, bu esa hammasini topadi.
+    "mijoz_qidir":           ["Rahbar", "Menejer", "Buxgalter"],
 }
 
 YORDAMCHI_KALIT = "yordamchi"
