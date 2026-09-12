@@ -19,6 +19,7 @@ hujjatidagi «manual agentic loop» naqshi.
 """
 import json
 import logging
+import re
 
 from . import genui, llm
 
@@ -164,6 +165,52 @@ HAMMA_ASBOBLAR = [
 # orqali yuboradi. Nega asbob: javob matnining ichiga JSON yozdirish
 # ishonchsiz (model kod bloki, izoh yoki noto'g'ri qavs qo'shib yuboradi),
 # asbob chaqiruvi esa provayder darajasida tuzilgan JSON kafolatlaydi.
+def _matndan_komponent(matn: str):
+    """Javob MATNI ichiga yozib yuborilgan komponent JSON'ini qutqaradi.
+
+    Model komponentni `korsat` asbobi bilan yuborishi kerak, lekin ba'zan
+    uni javob matniga ```json bloki qilib yozadi. U holda foydalanuvchi
+    tasdiq tugmasi o'rniga xom JSON ko'radi — ya'ni amal BAJARILMAY
+    qoladi. Bu funksiya shunday blokni topib, tekshiruvdan o'tkazib,
+    haqiqiy komponentga aylantiradi va matndan olib tashlaydi.
+
+    Tekshiruv `korsat` bilan bir xil (`genui.tekshir_royxat`) — matndan
+    kelgani uchun imtiyoz yo'q.
+
+    Qaytaradi: (tozalangan_matn, komponentlar).
+    """
+    if not matn or '"tur"' not in matn:
+        return matn, []
+    # ```json ... ``` yoki ``` ... ``` bloklari
+    bloklar = re.findall(r"```(?:json)?\s*(\[.*?\]|\{.*?\})\s*```", matn,
+                         re.DOTALL)
+    # Blok bo'lmasa — matn butunlay JSON bo'lishi mumkin
+    if not bloklar:
+        tozam = matn.strip()
+        if tozam.startswith(("[", "{")):
+            bloklar = [tozam]
+    for xom in bloklar:
+        try:
+            royxat = json.loads(xom)
+        except ValueError:
+            continue
+        if isinstance(royxat, dict):
+            royxat = [royxat]
+        if not (isinstance(royxat, list) and royxat
+                and all(isinstance(x, dict) and "tur" in x for x in royxat)):
+            continue
+        toza = genui.tekshir_royxat(royxat)
+        if not toza:
+            continue
+        # Blokni matndan olib tashlaymiz — ikki marta ko'rinmasin
+        yangi = re.sub(r"```(?:json)?\s*" + re.escape(xom) + r"\s*```", "",
+                       matn, count=1, flags=re.DOTALL)
+        if yangi == matn:            # blok emas, butun matn JSON edi
+            yangi = ""
+        return yangi.strip(), toza
+    return matn, []
+
+
 KORSAT_ASBOBI = {
     "nom": "korsat",
     "izoh": (
@@ -971,6 +1018,16 @@ def suhbat_oqim(db, xabarlar: list[dict], agent_kalit: str = "yordamchi",
     provayder = model = ""
 
     def yakun(javob_matni):
+        # QUTQARUV: model ba'zan komponentni `korsat` asbobi orqali emas,
+        # javob MATNI ichiga ```json bloki qilib yozadi. U holda
+        # foydalanuvchi tasdiq tugmasi o'rniga xom JSON ko'rardi
+        # (prodда to'lov taklifida ushlandi). Bunday blokni topsak —
+        # haqiqiy komponentga aylantirib, matndan olib tashlaymiz.
+        # Tekshiruv `korsat` bilan BIR XIL (`genui.tekshir_royxat`).
+        if not komponentlar:
+            javob_matni, qutqarilgan = _matndan_komponent(javob_matni)
+            if qutqarilgan:
+                komponentlar.extend(qutqarilgan)
         return {"tur": "yakun", "xabarlar": tarix, "javob": javob_matni,
                 "izlar": izlar, "komponentlar": komponentlar,
                 "provayder": provayder, "model": model}
